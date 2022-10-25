@@ -1,5 +1,12 @@
 set(SRCS
-  src/variable_extender.cpp
+  src/variable_extend.cpp
+  src/variable_rename.cpp
+  src/eliminate_equivalence.cpp
+  src/eliminate_implication.cpp
+  src/hash_variables.cpp
+  src/distribute_nots.cpp
+  src/distribute_ors.cpp
+  src/cnf.cpp
 )
 
 add_library(booleguru-transform STATIC ${SRCS})

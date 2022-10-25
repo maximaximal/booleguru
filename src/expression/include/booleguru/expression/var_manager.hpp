@@ -27,5 +27,12 @@ class var_ref : public reference<variable, var_manager> {
 class var_manager : public manager<var_ref, var_manager> {
   public:
   using base = manager<var_ref, var_manager>;
+  using base::base;
 };
+
+std::ostream&
+operator<<(std::ostream& o, const variable& v);
+
+std::ostream&
+operator<<(std::ostream& o, const var_ref& v);
 }

@@ -26,7 +26,7 @@ class reference {
     : mgr_(const_cast<M*>(&m))
     , id_(id) {}
 
-  inline constexpr operator bool() const { return mgr_; }
+  inline constexpr bool valid() const { return mgr_; }
   inline constexpr uint32_t operator[](uint32_t id) { return get_mgr()[id]; }
   inline constexpr const T* operator->() const {
     return &get_mgr().getobj(id_);

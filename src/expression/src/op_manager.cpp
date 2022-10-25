@@ -142,7 +142,7 @@ op_tostr_visit(std::ostream& o,
 
 std::ostream&
 operator<<(std::ostream& o, const op_ref& e) {
-  if(!static_cast<bool>(e))
+  if(!e.valid())
     return o << "(-)";
   e->visit([&o, &e](op_type t, const auto& ex) {
     op_tostr_visit(o, e.get_mgr(), t, ex);

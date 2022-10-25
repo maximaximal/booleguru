@@ -13,10 +13,12 @@ struct visitor {
   using op_ref = expression::op_ref;
   using op_type = expression::op_type;
   using op = expression::op;
+  using variable = expression::variable;
+  using script = expression::script;
 
   inline ReturnType operator()(op_ref o) {
     using namespace expression;
-    assert(o);
+    assert(o.valid());
     switch(o->type) {
       case op_type::Exists:
         return static_cast<Derived*>(this)->walk_exists(o);

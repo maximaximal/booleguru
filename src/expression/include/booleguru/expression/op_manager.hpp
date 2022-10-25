@@ -39,22 +39,22 @@ class op_manager : public manager<op_ref, op_manager> {
 };
 
 op_ref inline
-operator!(op_ref& r) {
-  assert(r);
+operator!(op_ref r) {
+  assert(r.valid());
   return r.get_mgr().get(op(op_type::Not, r.get_id(), 0));
 }
 
 op_ref inline constexpr
-operator&&(op_ref& l, op_ref& r) {
-  assert(l);
-  assert(r);
+operator&&(op_ref l, op_ref r) {
+  assert(l.valid());
+  assert(r.valid());
   return l.get_mgr().get(op(op_type::And, l.get_id(), r.get_id()));
 }
 
 op_ref inline constexpr
-operator||(op_ref& l, op_ref& r) {
-  assert(l);
-  assert(r);
+operator||(op_ref l, op_ref r) {
+  assert(l.valid());
+  assert(r.valid());
   return l.get_mgr().get(op(op_type::Or, l.get_id(), r.get_id()));
 }
 

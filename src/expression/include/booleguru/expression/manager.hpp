@@ -58,7 +58,7 @@ class manager {
   constexpr inline R get(const T& obj) {
     auto obj_hash = obj.hash();
     R ref = static_cast<C*>(this)->get_from_map(obj, obj_hash);
-    if(ref)
+    if(ref.valid())
       return ref;
 
     return static_cast<C*>(this)->insert(std::move(obj), obj_hash);
@@ -66,7 +66,7 @@ class manager {
   constexpr inline R get(T&& obj) {
     auto obj_hash = obj.hash();
     R ref = static_cast<C*>(this)->get_from_map(obj, obj_hash);
-    if(ref)
+    if(ref.valid())
       return ref;
 
     return static_cast<C*>(this)->insert(std::move(obj), obj_hash);

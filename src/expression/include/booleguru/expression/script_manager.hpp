@@ -30,5 +30,6 @@ class script_ref : public reference<script, script_manager> {
 class script_manager : public manager<script_ref, script_manager> {
   public:
   using base = manager<script_ref, script_manager>;
+  using base::base;
 };
 }
