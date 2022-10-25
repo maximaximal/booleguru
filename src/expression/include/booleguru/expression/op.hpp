@@ -1,10 +1,12 @@
 #pragma once
 
-#include "unop.hpp"
+#include <ostream>
+
 #include "binop.hpp"
-#include "scriptop.hpp"
-#include "varop.hpp"
 #include "quantop.hpp"
+#include "scriptop.hpp"
+#include "unop.hpp"
+#include "varop.hpp"
 
 namespace booleguru::expression {
 enum op_type {
@@ -44,20 +46,19 @@ struct op {
     quantop quant;
   };
 
-  inline constexpr op(op_type type, uint32_t r1, uint32_t r2)
-      : type(type),
-        mark(false),
-        and_inside(false),
-        user_flag3(false),
-        user_flag4(false),
-        user_flag5(false),
-        user_flag6(false),
-        user_flag7(false),
-        user_flag8(false),
-        user_int16(0),
-        user_int32(0),
-        bin(0, 0)
-    {
+  inline explicit constexpr op(op_type type, uint32_t r1, uint32_t r2)
+    : type(type)
+    , mark(false)
+    , and_inside(false)
+    , user_flag3(false)
+    , user_flag4(false)
+    , user_flag5(false)
+    , user_flag6(false)
+    , user_flag7(false)
+    , user_flag8(false)
+    , user_int16(0)
+    , user_int32(0)
+    , bin(0, 0) {
 
     switch(type) {
       case Exists:
@@ -159,4 +160,14 @@ struct op {
     return visit([this](op_type t, const auto& e) { return e.right(); });
   }
 };
+
+const char*
+op_type_to_str(op_type t);
+const char*
+op_type_to_sym(op_type t);
+
+struct op_ref;
+
+std::ostream&
+operator<<(std::ostream& o, op_type t);
 }
