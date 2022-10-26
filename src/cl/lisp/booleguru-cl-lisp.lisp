@@ -1,1 +1,1 @@
-(defun test-func (n) n)
+(defun test-func-arg-incr (n) (+ n 1))
