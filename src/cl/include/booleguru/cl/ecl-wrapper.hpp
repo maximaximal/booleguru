@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <variant>
 
 namespace booleguru::cl {
 /** @brief Wraps ECL being initialized.
@@ -21,5 +22,7 @@ class ecl_wrapper {
 
   public:
   static ecl_wrapper& get();
+  using supported_return_types = std::variant<std::monostate, long int>;
+  supported_return_types eval(const char* code);
 };
 }

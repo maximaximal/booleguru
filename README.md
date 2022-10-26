@@ -50,6 +50,12 @@ clearly mark lispy code. If performance of some transformation becomes a
 problem, one can move implementations. Stuff is imported into other namespaces
 with `using` or by importing namespaces (e.g. `booleguru::cl::transform`).
 
+To integrate C++ and Lisp, one could look at this project:
+https://github.com/Islam0mar/CLCXX-ECL
+
+Generally, one could think about using something besides ECL, but ECL is a good
+idea for portability, which stays a high priority for this project.
+
 ### Internal API `booleguru::api`
 
 Used to bind multiple languages into booleguru. Uses stuff from everywhere.
