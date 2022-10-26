@@ -120,8 +120,10 @@ struct op {
   }
 
   inline constexpr size_t hash() const {
-    return static_cast<size_t>(type) +
-           visit([](op_type t, const auto& e) { return e.hash(); });
+    return static_cast<size_t>(type) + visit([](op_type t, const auto& e) {
+             (void)t;
+             return e.hash();
+           });
   }
 
   constexpr inline size_t operator()() const { return hash(); }
@@ -154,10 +156,16 @@ struct op {
   }
 
   constexpr inline uint32_t left() const {
-    return visit([this](op_type t, const auto& e) { return e.left(); });
+    return visit([this](op_type t, const auto& e) {
+      (void)t;
+      return e.left();
+    });
   }
   constexpr inline uint32_t right() const {
-    return visit([this](op_type t, const auto& e) { return e.right(); });
+    return visit([this](op_type t, const auto& e) {
+      (void)t;
+      return e.right();
+    });
   }
 };
 
