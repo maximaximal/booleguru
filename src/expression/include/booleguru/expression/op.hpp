@@ -156,13 +156,13 @@ struct op {
   }
 
   constexpr inline uint32_t left() const {
-    return visit([this](op_type t, const auto& e) {
+    return visit([](op_type t, const auto& e) {
       (void)t;
       return e.left();
     });
   }
   constexpr inline uint32_t right() const {
-    return visit([this](op_type t, const auto& e) {
+    return visit([](op_type t, const auto& e) {
       (void)t;
       return e.right();
     });
@@ -174,7 +174,7 @@ op_type_to_str(op_type t);
 const char*
 op_type_to_sym(op_type t);
 
-struct op_ref;
+class op_ref;
 
 std::ostream&
 operator<<(std::ostream& o, op_type t);

@@ -19,6 +19,11 @@ op_tostr_visit(std::ostream& o,
                op_type t,
                const T& expr,
                op_type parent_type = op_type::None) {
+  (void)o;
+  (void)exprs;
+  (void)t;
+  (void)expr;
+  (void)parent_type;
   assert(false);
 }
 
@@ -164,7 +169,7 @@ op_manager::insert(T&& obj, size_t obj_hash) {
     case op_type::Impl:
     case op_type::Equi:
       obj.and_inside =
-        (*this)[obj.left()]->and_inside | (*this)[obj.right()]->and_inside;
+        (*this)[obj.left()]->and_inside || (*this)[obj.right()]->and_inside;
       break;
     case op_type::Not:
       obj.and_inside = (*this)[obj.left()]->and_inside;
