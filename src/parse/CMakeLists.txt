@@ -1,4 +1,5 @@
 set(SRCS
+  src/base.cpp
   src/boole.cpp
 )
 

@@ -17,7 +17,9 @@ struct script {
   std::string code;
   type kind;
 
-  inline size_t hash() const { return std::hash<decltype(code)>{}(code); }
+  inline size_t hash() const {
+    return 4017271 * kind + 70200511 * std::hash<decltype(code)>{}(code);
+  }
 
   inline bool operator==(const script& o) { return code == o.code; }
 };
