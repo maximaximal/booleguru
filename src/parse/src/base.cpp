@@ -20,11 +20,22 @@ base::base(std::istream& in, base& b)
 base::~base() {}
 
 result
-base::generate_result() {
-  return result{ .vars = vars_,
+base::generate_result(expression::op_ref expr) {
+  return result{ .expr = expr,
+                 .vars = vars_,
                  .scripts = scripts_,
                  .ops = ops_,
                  .line = line_,
                  .column = column_ };
+}
+
+result
+base::error(std::string_view error) {
+  return result{ .vars = vars_,
+                 .scripts = scripts_,
+                 .ops = ops_,
+                 .line = line_,
+                 .column = column_,
+                 .message{ std::string(error) } };
 }
 }
