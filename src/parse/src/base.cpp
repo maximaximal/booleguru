@@ -1,3 +1,7 @@
+#include <booleguru/expression/op_manager.hpp>
+#include <booleguru/expression/script_manager.hpp>
+#include <booleguru/expression/var_manager.hpp>
+
 #include <booleguru/parse/base.hpp>
 #include <booleguru/parse/result.hpp>
 
@@ -17,24 +21,22 @@ base::base(std::istream& in, base& b)
   , scripts_(b.scripts_)
   , ops_(b.ops_) {}
 
+base::base(std::istream& in)
+  : in_(in)
+  , vars_(std::make_shared<expression::var_manager>())
+  , scripts_(std::make_shared<expression::script_manager>())
+  , ops_(std::make_shared<expression::op_manager>(vars_, scripts_)) {}
+
 base::~base() {}
 
 result
 base::generate_result(expression::op_ref expr) {
-  return result{ .expr = expr,
-                 .vars = vars_,
-                 .scripts = scripts_,
-                 .ops = ops_,
-                 .line = line_,
-                 .column = column_ };
+  return result{ .expr = expr, .line = line_, .column = column_ };
 }
 
 result
 base::error(std::string_view error) {
-  return result{ .vars = vars_,
-                 .scripts = scripts_,
-                 .ops = ops_,
-                 .line = line_,
+  return result{ .line = line_,
                  .column = column_,
                  .message{ std::string(error) } };
 }

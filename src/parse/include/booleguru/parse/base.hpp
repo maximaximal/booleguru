@@ -4,6 +4,7 @@
 #include <memory>
 
 namespace booleguru::expression {
+enum class op_type;
 class op_ref;
 class var_manager;
 class op_manager;
@@ -33,6 +34,8 @@ class base {
        std::shared_ptr<expression::op_manager> ops);
 
   base(std::istream& in, base& b);
+
+  base(std::istream& in);
 
   virtual ~base();
 

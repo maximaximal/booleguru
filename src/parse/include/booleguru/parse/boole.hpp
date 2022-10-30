@@ -34,6 +34,8 @@ class boole : public base {
     uint64_t line = 0, col = 0;
   };
 
+  token::token_type token_type_from_op_type(expression::op_type t);
+
   int script_ = 0;
   bool comment_ = false;
 
@@ -52,6 +54,16 @@ class boole : public base {
 
   bool next();
 
+  template<expression::op_type type, typename Functor>
+  result parse_assoc_op(Functor next);
+
+  result parse_iff();
+  result parse_implies();
+  result parse_seilpmi();
+  result parse_or();
+  result parse_and();
+  result parse_not();
+  result parse_basic();
   result parse_expr();
 
   public:

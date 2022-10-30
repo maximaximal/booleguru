@@ -1,7 +1,12 @@
 #include <booleguru/parse/boole.hpp>
 #include <booleguru/parse/result.hpp>
 
+#include <booleguru/expression/script_manager.hpp>
+#include <booleguru/expression/var_manager.hpp>
+
 namespace booleguru::parse {
+using namespace expression;
+
 boole::token::token() {}
 boole::token::~token() {}
 
@@ -24,6 +29,24 @@ boole::token::operator=(token&& o) {
   col = o.col;
 
   return *this;
+}
+
+boole::token::token_type
+boole::token_type_from_op_type(expression::op_type t) {
+  switch(t) {
+    case op_type::And:
+      return token::And;
+    case op_type::Impl:
+      return token::Implies;
+    case op_type::Equi:
+      return token::Equivalence;
+    case op_type::Lpmi:
+      return token::Seilpmi;
+    case op_type::Or:
+      return token::Or;
+    default:
+      return token::None;
+  }
 }
 
 bool
@@ -250,9 +273,137 @@ boole::next() {
   }
 }
 
+template<expression::op_type type, typename Functor>
+result
+boole::parse_assoc_op(Functor next) {
+  result res;
+  bool done = false;
+  do {
+    result child = next();
+    if(child) {
+      res =
+        res
+          ? generate_result(ops_->get(op(type, res->get_id(), child->get_id())))
+          : child;
+      if(cur_.type == token_type_from_op_type(type)) {
+        this->next();
+      } else {
+        done = true;
+      }
+    }
+  } while(res && !done);
+
+  return res;
+}
+
+result
+boole::parse_iff() {
+  return parse_assoc_op<op_type::Equi>([this]() { return parse_implies(); });
+}
+result
+boole::parse_implies() {
+  return parse_assoc_op<op_type::Impl>([this]() { return parse_seilpmi(); });
+}
+result
+boole::parse_seilpmi() {
+  return parse_assoc_op<op_type::Lpmi>([this]() { return parse_or(); });
+}
+result
+boole::parse_or() {
+  return parse_assoc_op<op_type::Or>([this]() { return parse_and(); });
+}
+result
+boole::parse_and() {
+  return parse_assoc_op<op_type::And>([this]() { return parse_not(); });
+}
+
+result
+boole::parse_not() {
+  if(cur_.type == token::Not) {
+    next();
+    result child = parse_not();
+    if(child) {
+      return generate_result(ops_->get(op(op_type::Not, child->get_id(), 0)));
+    } else {
+      return child;
+    }
+  } else {
+    return parse_basic();
+  }
+}
+
+result
+boole::parse_basic() {
+  if(cur_.type == token::LPar) {
+    next();
+    result child = parse_expr();
+    if(cur_.type != token::RPar) {
+      return error("Expected )");
+    }
+    next();
+    return child;
+  } else if(cur_.type == token::Ident) {
+    auto varref = vars_->get(variable{ std::move(cur_.ident) });
+    next();
+    auto v = ops_->get(op(op_type::Var, varref.get_id(), 0));
+    return generate_result(v);
+  } else if(cur_.type == token::Script) {
+    auto scriptref = scripts_->get(script{ std::move(cur_.ident) });
+    next();
+    auto script = ops_->get(op(op_type::Script, -1, scriptref.get_id()));
+    // TODO
+    // return _lua->handle_script(script);
+  } else {
+    return error("Expected ident or script while in parse_basic");
+  }
+
+  return error("No other parsing in parse_basic!");
+}
+
 result
 boole::parse_expr() {
-  return error("Expr Unimplemented");
+  if((cur_.type == token::Exists || cur_.type == token::Forall)) {
+    op_type quanttype;
+    if(cur_.type == token::Exists)
+      quanttype = op_type::Exists;
+    if(cur_.type == token::Forall)
+      quanttype = op_type::Forall;
+    if(!next())
+      return error("Expected ident, got no new token.");
+
+    if(cur_.type != token::Ident) {
+      return error("Expected ident");
+    }
+    auto varref = vars_->get(variable{ std::move(cur_.ident) });
+    if(!next())
+      return error("Expected sub-expression, got no new token");
+    auto child = parse_expr();
+    if(child)
+      return generate_result(
+        ops_->get(op(quanttype, child->get_id(), varref.get_id())));
+    else
+      return error("Expected some sub-expression");
+  }
+
+  // If there is no other expression, try to parse a new expression from Lua.
+  if(cur_.type == token::Script) {
+    auto scriptref = scripts_->get(script{ std::move(cur_.ident) });
+    next();
+    auto script = ops_->get(op(op_type::Script, -1, scriptref.get_id()));
+    // TODO
+    // return lua_->handle_script(script);
+  }
+
+  auto iff = parse_iff();
+  while(cur_.type == token::Script) {
+    auto scriptref = scripts_->get(script{ std::move(cur_.ident) });
+    next();
+    auto script =
+      ops_->get(op(op_type::Script, iff->get_id(), scriptref.get_id()));
+    // TODO
+    // iff = _lua->handle_script(script);
+  }
+  return iff;
 }
 
 result

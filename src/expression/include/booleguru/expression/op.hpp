@@ -9,7 +9,7 @@
 #include "varop.hpp"
 
 namespace booleguru::expression {
-enum op_type {
+enum class op_type {
   None,
   Script,
   Exists,
@@ -61,34 +61,34 @@ struct op {
     , bin(0, 0) {
 
     switch(type) {
-      case Exists:
-      case Forall:
+      case op_type::Exists:
+      case op_type::Forall:
         quant.e = r1;
         quant.v = r2;
         break;
-      case Not:
+      case op_type::Not:
         un.c = r1;
         break;
-      case And:
+      case op_type::And:
         and_inside = true;
         bin.l = r1;
         bin.r = r2;
         break;
-      case Or:
-      case Equi:
-      case Impl:
-      case Lpmi:
+      case op_type::Or:
+      case op_type::Equi:
+      case op_type::Impl:
+      case op_type::Lpmi:
         bin.l = r1;
         bin.r = r2;
         break;
-      case Script:
+      case op_type::Script:
         script.c = r1;
         script.script_id = r2;
         break;
-      case Var:
+      case op_type::Var:
         var.v = r1;
         break;
-      case None:
+      case op_type::None:
         break;
     }
   }
@@ -96,22 +96,22 @@ struct op {
   template<typename Functor>
   inline constexpr auto visit(Functor f) const {
     switch(type) {
-      case Exists:
-      case Forall:
+      case op_type::Exists:
+      case op_type::Forall:
         return f(type, quant);
-      case Not:
+      case op_type::Not:
         return f(type, un);
-      case And:
-      case Or:
-      case Equi:
-      case Impl:
-      case Lpmi:
+      case op_type::And:
+      case op_type::Or:
+      case op_type::Equi:
+      case op_type::Impl:
+      case op_type::Lpmi:
         return f(type, bin);
-      case Script:
+      case op_type::Script:
         return f(type, script);
-      case Var:
+      case op_type::Var:
         return f(type, var);
-      case None:
+      case op_type::None:
         return f(type, un);
     }
 
@@ -133,22 +133,22 @@ struct op {
       return false;
 
     switch(type) {
-      case Exists:
-      case Forall:
+      case op_type::Exists:
+      case op_type::Forall:
         return quant == o.quant;
-      case Not:
+      case op_type::Not:
         return un == o.un;
-      case And:
-      case Or:
-      case Equi:
-      case Impl:
-      case Lpmi:
+      case op_type::And:
+      case op_type::Or:
+      case op_type::Equi:
+      case op_type::Impl:
+      case op_type::Lpmi:
         return bin == o.bin;
-      case Script:
+      case op_type::Script:
         return script == o.script;
-      case Var:
+      case op_type::Var:
         return var == o.var;
-      case None:
+      case op_type::None:
         return true;
     }
     // Never occurs, but silences compiler warnings.
