@@ -40,5 +40,12 @@ TEST_CASE("Parse example boole formulas and check the resulting expressions") {
   boole parser(is);
   auto res = parser();
 
+  std::stringstream s;
+  s << *res;
+  std::string inputs(input);
+  std::string stringified = s.str();
+
+  CAPTURE(inputs);
+  CAPTURE(*res);
   REQUIRE(res);
 }
