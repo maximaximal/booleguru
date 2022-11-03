@@ -1,5 +1,6 @@
 set(TEST_SRCS
   test-parse-boole.cpp
+  test-sexp-tracker.cpp
 )
 
 add_executable(booleguru-parse-test ${TEST_SRCS})

@@ -4,6 +4,8 @@
 #include <booleguru/expression/script_manager.hpp>
 #include <booleguru/expression/var_manager.hpp>
 
+#include <booleguru/cl/ecl-wrapper.hpp>
+
 namespace booleguru::parse {
 using namespace expression;
 
@@ -75,6 +77,15 @@ boole::next() {
       ++next_.line;
     } else {
       ++next_.col;
+    }
+
+    if(sexp_.append(c_)) {
+      c_processed_ = true;
+      continue;
+    } else if(sexp_.stopped()) {
+      c_processed_ = true;
+      sexp_.stop_handled();
+      return true;
     }
 
     if(comment_) {
@@ -385,23 +396,27 @@ boole::parse_expr() {
       return error("Expected some sub-expression");
   }
 
-  // If there is no other expression, try to parse a new expression from Lua.
-  if(cur_.type == token::Script) {
-    auto scriptref = scripts_->get(script{ std::move(cur_.ident) });
+  result iff = parse_iff();
+  if(cur_.type == token::Ident || cur_.type == token::LPar) {
+    const bool replace = cur_.type == token::Ident;
+    assert(!sexp_.stopped());
+    sexp_.stop();
     next();
-    auto script = ops_->get(op(op_type::Script, -1, scriptref.get_id()));
-    // TODO
-    // return lua_->handle_script(script);
-  }
-
-  auto iff = parse_iff();
-  while(cur_.type == token::Script) {
-    auto scriptref = scripts_->get(script{ std::move(cur_.ident) });
+    if(sexp_.str()[0] != '(') {
+      return error("SEXP must start with '('! Could not parse.");
+    }
+    cl::ecl_wrapper& ecl = cl::ecl_wrapper::get();
+    auto ret = ecl.eval(sexp_.str());
+    if(std::holds_alternative<std::string>(ret)) {
+      return error("Error occurred during non-interactive lisp execution: " +
+                   std::get<std::string>(ret));
+    }
+    if(replace) {
+      if(std::holds_alternative<op_ref>(ret)) {
+        iff = generate_result(std::get<op_ref>(ret));
+      }
+    }
     next();
-    auto script =
-      ops_->get(op(op_type::Script, iff->get_id(), scriptref.get_id()));
-    // TODO
-    // iff = _lua->handle_script(script);
   }
   return iff;
 }
@@ -416,10 +431,19 @@ boole::operator()() {
   res = parse_expr();
 
   if(cur_.type != token::None) {
+    std::string msg;
+    if(!res) {
+      msg = " - and error during parsing: " + res.message;
+    }
+
     return error(
       std::string(
         "Did not finish parsing, last token was not consumed! Token: ") +
-      token_type_str[cur_.type]);
+      token_type_str[cur_.type] + " (ident=" + cur_.ident + ")" + msg);
+  }
+
+  if(!res) {
+    return res;
   }
 
   return res;

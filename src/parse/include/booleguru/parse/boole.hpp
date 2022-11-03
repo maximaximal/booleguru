@@ -1,6 +1,7 @@
 #pragma once
 
 #include "base.hpp"
+#include "sexpr-tracker.hpp"
 
 namespace booleguru::parse {
 class boole : public base {
@@ -35,6 +36,8 @@ class boole : public base {
   };
 
   token::token_type token_type_from_op_type(expression::op_type t);
+
+  sexpr_tracker sexp_;
 
   int script_ = 0;
   bool comment_ = false;

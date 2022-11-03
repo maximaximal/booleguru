@@ -32,6 +32,8 @@ target_include_directories(booleguru-cl PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
 target_include_directories(booleguru-cl PRIVATE SYSTEM ${ECL_INCLUDE_DIRS})
 
+target_link_libraries(booleguru-cl PUBLIC booleguru-expression booleguru-util)
+
 if(TARGET Catch2::Catch2)
   add_subdirectory(test)
 endif()

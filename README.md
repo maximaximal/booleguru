@@ -56,6 +56,9 @@ https://github.com/Islam0mar/CLCXX-ECL
 Generally, one could think about using something besides ECL, but ECL is a good
 idea for portability, which stays a high priority for this project.
 
+ECL also is the gateway to other languages. It provides functions to execute
+code.
+
 ### Internal API `booleguru::api`
 
 Used to bind multiple languages into booleguru. Uses stuff from everywhere.

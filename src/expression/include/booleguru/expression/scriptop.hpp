@@ -5,7 +5,7 @@
 
 namespace booleguru::expression {
 struct scriptop {
-  uint32_t c;
+  uint32_t c : 30;
   uint32_t script_id;
 
   inline constexpr size_t hash() const {
@@ -20,4 +20,3 @@ struct scriptop {
   }
 };
 }
-

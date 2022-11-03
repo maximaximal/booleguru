@@ -49,3 +49,33 @@ TEST_CASE("Parse example boole formulas and check the resulting expressions") {
   CAPTURE(*res);
   REQUIRE(res);
 }
+
+TEST_CASE("Parse invalid boolean formulas") {
+  std::string_view input = GENERATE("a b a");
+  auto is = isviewstream(input);
+  boole parser(is);
+  auto res = parser();
+
+  std::string inputs(input);
+
+  CAPTURE(inputs);
+  CAPTURE(res.message);
+  REQUIRE(!res);
+}
+
+TEST_CASE("Parse formula containing lisp code") {
+  // Interesting case: "(list 'nil) a"
+  // Currently, the parser does not support first executing lisp, then
+  // continuing with the rest of the formula!
+
+  std::string_view input = GENERATE("a (list 'nil)");
+  auto is = isviewstream(input);
+  boole parser(is);
+  auto res = parser();
+
+  std::string inputs(input);
+
+  CAPTURE(inputs);
+  CAPTURE(res.message);
+  REQUIRE(res);
+}
