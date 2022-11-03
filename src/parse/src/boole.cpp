@@ -406,7 +406,7 @@ boole::parse_expr() {
       return error("SEXP must start with '('! Could not parse.");
     }
     cl::ecl_wrapper& ecl = cl::ecl_wrapper::get();
-    auto ret = ecl.eval(sexp_.str());
+    auto ret = ecl.eval(sexp_.str(), ops_);
     if(std::holds_alternative<std::string>(ret)) {
       return error("Error occurred during non-interactive lisp execution: " +
                    std::get<std::string>(ret));

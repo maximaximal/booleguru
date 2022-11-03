@@ -2,6 +2,10 @@
 
 #include <booleguru/cl/ecl-wrapper.hpp>
 
+// Interesting: https://lambdafaktorie.com/embedding-lisp-in-c-a-recipe/
+//
+// Another good example: https://gist.github.com/vwood/662109
+
 extern "C" {
 #include <init-wrapper.h>
 extern void ECL_INIT_LIB_FUNC(cl_object);
@@ -42,7 +46,16 @@ ecl_string_to_string(cl_object echar) {
 
 std::unique_ptr<ecl_wrapper, ecl_wrapper::deleter> ecl_wrapper::wrapper_;
 
-cl_object clfun_eval;
+static cl_object clfun_eval;
+static thread_local booleguru::expression::op_manager* op_manager = nullptr;
+
+#define DEFUN(name, fun, args) \
+  ecl_def_c_function(c_string_to_object(name), (cl_objectfn_fixed)fun, args)
+
+cl_object
+clfun_var(cl_object name) {
+  return name;
+}
 
 ecl_wrapper::ecl_wrapper() {
   char* argv[] = { NULL };
@@ -51,6 +64,8 @@ ecl_wrapper::ecl_wrapper() {
   ecl_init_module(NULL, ECL_INIT_LIB_FUNC);
 
   clfun_eval = cl_eval(c_string_to_object("#'eval-sexp-and-catch-errors"));
+
+  DEFUN("var", clfun_var, 1);
 }
 ecl_wrapper::~ecl_wrapper() {
   cl_shutdown();
@@ -64,10 +79,14 @@ ecl_wrapper::get() {
 }
 
 ecl_wrapper::supported_return_types
-ecl_wrapper::eval(const char* code) {
+ecl_wrapper::eval(const char* code,
+                  std::shared_ptr<expression::op_manager> ops) {
   cl_object form = c_string_to_object(code);
 
   cl_object ret;
+
+  if(ops)
+    op_manager = ops.get();
 
   cl_env_ptr env = ecl_process_env();
   ECL_CATCH_ALL_BEGIN(env) {

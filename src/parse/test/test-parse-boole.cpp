@@ -64,11 +64,15 @@ TEST_CASE("Parse invalid boolean formulas") {
 }
 
 TEST_CASE("Parse formula containing lisp code") {
+  // TODO:
   // Interesting case: "(list 'nil) a"
   // Currently, the parser does not support first executing lisp, then
   // continuing with the rest of the formula!
+  //
+  // Another case that's still to do: "a & (list 'nil)". This loops in
+  // parse_assoc_op<and>.
 
-  std::string_view input = GENERATE("a (list 'nil)");
+  std::string_view input = GENERATE("a (list 'nil)", "a (print (var 'test))");
   auto is = isviewstream(input);
   boole parser(is);
   auto res = parser();
