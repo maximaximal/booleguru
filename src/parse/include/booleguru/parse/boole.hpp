@@ -19,6 +19,7 @@ class boole : public base {
       Or,
       And,
       Not,
+      Unknown,
       None
     };
     static const char* token_type_str[];
@@ -67,6 +68,7 @@ class boole : public base {
   result parse_not();
   result parse_basic();
   result parse_expr();
+  result parse_lisp();
 
   friend std::ostream& operator<<(std::ostream&, const token& t);
 

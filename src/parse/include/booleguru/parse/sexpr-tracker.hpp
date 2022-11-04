@@ -18,15 +18,13 @@ namespace booleguru::parse {
 class sexpr_tracker {
   std::string str_;
   std::stack<size_t> scope_;
-  size_t stopped_at_ = 0;
   size_t last_popped_scope_ = 0;
-  bool stopped_ = false;
 
   public:
   sexpr_tracker() = default;
   ~sexpr_tracker() = default;
 
-  inline bool append(char c) {
+  inline void append(char c) {
     switch(c) {
       case '(':
         if(scope_.empty()) {
@@ -34,41 +32,19 @@ class sexpr_tracker {
         }
         scope_.push(str_.size());
         str_.push_back('(');
-        return stopped_;
+        return;
       case ')': {
         if(scope_.empty()) {
-          return false;
+          return;
         }
-        const size_t last_size = scope_.size();
         last_popped_scope_ = scope_.top();
         scope_.pop();
-        if(last_size == stopped_at_) {
-          str_.push_back(c);
-          return false;
-        }
-        break;
+        str_.push_back(')');
+        return;
       }
     }
-    str_.push_back(c);
-    return stopped_;
-  }
-
-  /** @brief Parsing has stopped.
-   *
-   * Returns true if the parser should pass all following chars to the
-   * sexp_tracker so that some code may be executed. The parser shall then
-   * append() everything while append() returns true.
-   */
-  inline bool stop() noexcept {
-    stopped_at_ = scope_.size();
-    stopped_ = true;
-    return !scope_.empty();
-  }
-
-  inline bool stopped() const noexcept { return stopped_; }
-  inline void stop_handled() noexcept {
-    stopped_at_ = 0;
-    stopped_ = false;
+    if(scope_.size() > 0)
+      str_.push_back(c);
   }
 
   inline const char* str() const noexcept {

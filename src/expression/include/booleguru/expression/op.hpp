@@ -11,7 +11,6 @@
 namespace booleguru::expression {
 enum class op_type {
   None,
-  Script,
   Exists,
   Forall,
   Equi,
@@ -41,7 +40,6 @@ struct op {
   union {
     unop un;
     binop bin;
-    scriptop script;
     varop var;
     quantop quant;
   };
@@ -81,10 +79,6 @@ struct op {
         bin.l = r1;
         bin.r = r2;
         break;
-      case op_type::Script:
-        script.c = r1;
-        script.script_id = r2;
-        break;
       case op_type::Var:
         var.v = r1;
         break;
@@ -107,8 +101,6 @@ struct op {
       case op_type::Impl:
       case op_type::Lpmi:
         return f(type, bin);
-      case op_type::Script:
-        return f(type, script);
       case op_type::Var:
         return f(type, var);
       case op_type::None:
@@ -144,8 +136,6 @@ struct op {
       case op_type::Impl:
       case op_type::Lpmi:
         return bin == o.bin;
-      case op_type::Script:
-        return script == o.script;
       case op_type::Var:
         return var == o.var;
       case op_type::None:

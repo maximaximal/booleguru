@@ -16,9 +16,10 @@ boole::token::~token() {}
 
 const char* token_type_str[] = { "Ident",  "LPar",        "RPar",    "Exists",
                                  "Forall", "Equivalence", "Implies", "Seilpmi",
-                                 "Or",     "And",         "Not",     "None" };
-const char* token_type_sym[] = { "_",  "(",  ")", "?", "@", "<->",
-                                 "->", "<-", "|", "&", "!", "." };
+                                 "Or",     "And",         "Not",     "Unknown",
+                                 "None" };
+const char* token_type_sym[] = { "_",  "(", ")", "?", "@", "<->", "->",
+                                 "<-", "|", "&", "!", ".", "." };
 
 boole::token&
 boole::token::operator=(token&& o) {
@@ -57,23 +58,29 @@ boole::next() {
   cur_ = std::move(next_);
   next_.ident.clear();
 
-  next_.type = token::None;
+  next_.type = token::Unknown;
 
   auto& type = next_.type;
   auto& ident = next_.ident;
 
   for(;;) {
+    // Only ever add the last read character! sexp_ is at the same state as
+    // cur_.
+    if(!c_appended_) {
+      c_appended_ = true;
+      sexp_.append(c_);
+    }
+
     if(c_processed_) {
       in_ >> c_;
       c_processed_ = false;
       c_appended_ = false;
 
-      std::cout << "Cur: " << cur_ << ", Parsed " << c_
-                << ", stopped: " << sexp_.stopped() << std::endl;
-
       if(c_ == EOF || in_.eof()) {
         comment_ = false;
         c_ = '\0';
+        type = token::None;
+        return false;
       }
     }
 
@@ -90,21 +97,6 @@ boole::next() {
         comment_ = false;
       }
       continue;
-    }
-
-    if(!c_appended_) {
-      c_appended_ = true;
-      std::cout << "append: " << c_ << " stopped: " << sexp_.stopped()
-                << std::endl;
-      if(sexp_.append(c_)) {
-        c_processed_ = true;
-        continue;
-      } else if(sexp_.stopped()) {
-        c_processed_ = true;
-        sexp_.stop_handled();
-        next_.type = token::RPar;
-        return true;
-      }
     }
 
     auto ident_end_detect = [this, &type, &ident]() -> bool {
@@ -343,10 +335,10 @@ boole::parse_basic() {
     next();
     if(next_.type == token::RPar) {
       // This is a lisp expression, not a boolean expression! Does not matter
-      // what cur_ is, as this is just (something).
+      // what cur_ is, as this is just (something). Also: We would not be here
+      // if the expression before was invalid. This means, that this MUST be a
+      // lisp expression.
 
-      // Stop at the ident in-between.
-      sexp_.stop();
       // Continue to the RPar.
       next();
       // Advance over the RPar.
@@ -361,17 +353,17 @@ boole::parse_basic() {
       if(std::holds_alternative<op_ref>(ret)) {
         return generate_result(std::get<op_ref>(ret));
       }
-      return generate_result(op_ref());
+      return error("Lisp expression does not return expression!");
     } else {
       // Okay, this is not just some (variable), but actually more content.
       // Could be a logical expression.
       result child = parse_expr();
       if(!child) {
-        return error("No child parsed in parse_basic(), because: " +
-                     child.message);
+        return child;
       }
       if(cur_.type != token::RPar) {
-        return error("Expected )");
+        // Could not parse basic! This means a lisp expression was opened.
+        return parse_lisp();
       }
       next();
       return child;
@@ -386,6 +378,37 @@ boole::parse_basic() {
   }
 
   return error("No other parsing in parse_basic!");
+}
+
+result
+boole::parse_lisp() {
+  int paren_level = 1;
+  while(cur_.type != token::None && paren_level != 0) {
+    next();
+    switch(cur_.type) {
+      case token::LPar:
+        ++paren_level;
+        break;
+      case token::RPar:
+        --paren_level;
+        break;
+      default:
+        break;
+    }
+  }
+
+  cl::ecl_wrapper& ecl = cl::ecl_wrapper::get();
+  auto ret = ecl.eval(sexp_.str(), ops_);
+  if(std::holds_alternative<std::string>(ret)) {
+    return error("Error occurred during non-interactive lisp execution: " +
+                 std::get<std::string>(ret));
+  }
+  if(std::holds_alternative<op_ref>(ret)) {
+    auto res = generate_result(std::get<op_ref>(ret));
+    next();
+    return res;
+  }
+  return error("Lisp expression does not return expression!");
 }
 
 result
@@ -414,38 +437,6 @@ boole::parse_expr() {
   }
 
   result iff = parse_iff();
-  if(!iff) {
-    // Expression could not be parsed! Maybe stop parsing and try lisp.
-    assert(!sexp_.stopped());
-    sexp_.stop();
-    next();
-
-    cl::ecl_wrapper& ecl = cl::ecl_wrapper::get();
-    auto ret = ecl.eval(sexp_.str(), ops_);
-    if(std::holds_alternative<std::string>(ret)) {
-      return error("Error occurred during non-interactive lisp execution: " +
-                   std::get<std::string>(ret));
-    }
-    if(std::holds_alternative<op_ref>(ret)) {
-      iff = generate_result(std::get<op_ref>(ret));
-    } else {
-      // The lisp expression didn't return anything. Check if a new expression
-      // could follow and reset parsing there.
-      std::cout << "Reset! Cur: " << cur_ << std::endl;
-      if(cur_.type == token::LPar || cur_.type == token::Ident ||
-         cur_.type == token::Exists || cur_.type == token::Forall)
-        return parse_expr();
-    }
-  } else if(cur_.type == token::LPar || cur_.type == token::Ident ||
-            cur_.type == token::Exists || cur_.type == token::Forall) {
-    // The prior expression was parsed and works. Now comes a new expression.
-    // This breaks the expression again! This means that the following
-    // expression either is a lisp expression, or the whole thing is a lisp
-    // expression. The latter is more reasonable, as it limits parsing
-    // possibilities. This means we break out of this branch.
-    return error(
-      "No logical connective between expression and next expression!");
-  }
   return iff;
 }
 

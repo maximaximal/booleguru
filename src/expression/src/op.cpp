@@ -24,8 +24,6 @@ op_type_to_str(op_type t) {
       return "Or";
     case op_type::Var:
       return "Var";
-    case op_type::Script:
-      return "Script";
     case op_type::None:
       return "None";
   }

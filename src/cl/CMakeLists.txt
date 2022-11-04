@@ -12,10 +12,20 @@ set(LISP_SRCS
 # query the symbols and are done with it. This way seems to work well. We have
 # to report this upstream though.
 
+# Add include directories from expression.
+get_target_property(BOOLEGURU_EXPRESSION_INCLUDES booleguru-expression INCLUDE_DIRECTORIES)
+# Construct the compiler string for the include directories.
+foreach(dir ${BOOLEGURU_EXPRESSION_INCLUDES})
+  string(APPEND ECL_INCLUDES "-I${dir} ")
+endforeach()
+
+message(STATUS ${ECL_INCLUDES})
+
+# The cut removes the mangled C++ name.
 add_custom_command(
   DEPENDS ${LISP_SRCS}
   OUTPUT booleguru-cl-lisp--all-systems.a init-wrapper.h
-  COMMAND ${ECL_BIN_PATH} --norc --eval "(require :asdf)" --eval "(push \"${CMAKE_CURRENT_SOURCE_DIR}/lisp/\" asdf:*central-registry*)" --eval "(asdf:make-build :booleguru-cl-lisp :type :static-library :move-here \"${CMAKE_CURRENT_BINARY_DIR}\" :init-name \"init_lib__BOOLEGURU_CL\" :monolithic t)" --eval "(quit)"
+  COMMAND ${ECL_BIN_PATH} --norc --eval "(require :asdf)" --eval "(setq compiler:*cc* \"${CMAKE_CXX_COMPILER} -std=c++2b -Wno-deprecated-volatile -Wno-deprecated-register ${ECL_INCLUDES}\")" --eval "(push \"${CMAKE_CURRENT_SOURCE_DIR}/lisp/\" asdf:*central-registry*)" --eval "(asdf:make-build :booleguru-cl-lisp :type :static-library :move-here \"${CMAKE_CURRENT_BINARY_DIR}\" :init-name \"init_lib__BOOLEGURU_CL\" :monolithic t)" --eval "(quit)"
   COMMAND bash -c "printf \"#pragma once\\n #define ECL_INIT_LIB_FUNC $(strings booleguru-cl-lisp--all-systems.a | grep --max-count=1 init_lib)\\n\" > init-wrapper.h"
   VERBATIM
   COMMENT "Run ECL (Embeddable Common Lisp) to compile lispy dependencies")

@@ -64,14 +64,6 @@ inline std::ostream&
 op_tostr_visit(std::ostream& o,
                const op_manager& exprs,
                op_type t,
-               const decltype(op::script)& op,
-               op_type parent_type);
-
-template<>
-inline std::ostream&
-op_tostr_visit(std::ostream& o,
-               const op_manager& exprs,
-               op_type t,
                const decltype(op::bin)& op,
                op_type parent_type) {
   bool parens = parens_required(parent_type, t);
@@ -129,20 +121,6 @@ op_tostr_visit(std::ostream& o,
   (void)t;
   (void)parent_type;
   return o << exprs.vars()[expr.v]->name;
-}
-
-template<>
-inline std::ostream&
-op_tostr_visit(std::ostream& o,
-               const op_manager& exprs,
-               op_type t,
-               const decltype(op::script)& expr,
-               op_type parent_type) {
-  (void)parent_type;
-  exprs[expr.c]->visit([&o, &exprs, t](op_type ct, auto& e) {
-    op_tostr_visit(o, exprs, ct, e, t);
-  });
-  return o << " [ " << exprs.scripts()[expr.script_id]->code << " ]";
 }
 
 std::ostream&

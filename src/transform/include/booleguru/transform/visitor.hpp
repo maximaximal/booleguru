@@ -36,8 +36,6 @@ struct visitor {
         return static_cast<Derived*>(this)->walk_impl(o);
       case op_type::Lpmi:
         return static_cast<Derived*>(this)->walk_lpmi(o);
-      case op_type::Script:
-        return static_cast<Derived*>(this)->walk_script(o);
       case op_type::Var:
         return static_cast<Derived*>(this)->walk_var(o);
       case op_type::None:
@@ -73,10 +71,6 @@ struct visitor {
   inline ReturnType walk_lpmi(op_ref ex) {
     return ex.get_mgr().get(op(op_type::Lpmi, l(ex).get_id(), r(ex).get_id()));
   }
-  inline ReturnType walk_script(op_ref ex) {
-    return ex.get_mgr().get(
-      op(op_type::Script, sc(ex).get_id(), ex->script.script_id));
-  }
   inline ReturnType walk_var(op_ref ex) { return ex; }
 
   inline constexpr ReturnType l(op_ref e) {
@@ -105,19 +99,5 @@ struct visitor {
     return (*static_cast<Derived*>(this))(e.get_mgr()[e->quant.e]);
   }
   inline constexpr ReturnType ed(op_ref e) { return e.get_mgr()[e->quant.e]; }
-
-  inline constexpr ReturnType sc(op_ref e) {
-    return (*static_cast<Derived*>(this))(e.get_mgr()[e->script.c]);
-  }
-  inline constexpr ReturnType scd(op_ref e) {
-    return e.get_mgr()[e->script.script_id];
-  }
-
-  inline constexpr ReturnType ss(op_ref e) {
-    return (*static_cast<Derived*>(this))(e.get_mgr()[e->script.c]);
-  }
-  inline constexpr ReturnType ssd(op_ref e) {
-    return e.get_mgr()[e->script.script_id];
-  }
 };
 }

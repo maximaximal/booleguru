@@ -2,6 +2,11 @@
 
 #include <booleguru/cl/ecl-wrapper.hpp>
 
+#include <booleguru/expression/op_manager.hpp>
+#include <booleguru/expression/var_manager.hpp>
+
+#include <iostream>
+
 // Interesting: https://lambdafaktorie.com/embedding-lisp-in-c-a-recipe/
 //
 // Another good example: https://gist.github.com/vwood/662109
@@ -54,7 +59,16 @@ static thread_local booleguru::expression::op_manager* op_manager = nullptr;
 
 cl_object
 clfun_var(cl_object name) {
-  return name;
+  // The symbol: std::cout << ecl_string_to_string(cl_symbol_name(name)) <<
+  // std::endl;
+  if(ECL_SYMBOLP(name)) {
+    name = cl_symbol_name(name);
+  }
+
+  std::string varname = ecl_string_to_string(name);
+  uint32_t varid =
+    op_manager->vars().get(expression::variable{ varname }).get_id();
+  return ecl_make_uint32_t(varid);
 }
 
 ecl_wrapper::ecl_wrapper() {
