@@ -20,6 +20,7 @@ class sexpr_tracker {
   std::stack<size_t> scope_;
   size_t stopped_at_ = 0;
   size_t last_popped_scope_ = 0;
+  bool stopped_ = false;
 
   public:
   sexpr_tracker() = default;
@@ -33,7 +34,7 @@ class sexpr_tracker {
         }
         scope_.push(str_.size());
         str_.push_back('(');
-        return stopped();
+        return stopped_;
       case ')': {
         if(scope_.empty()) {
           return false;
@@ -49,7 +50,7 @@ class sexpr_tracker {
       }
     }
     str_.push_back(c);
-    return stopped();
+    return stopped_;
   }
 
   /** @brief Parsing has stopped.
@@ -60,11 +61,15 @@ class sexpr_tracker {
    */
   inline bool stop() noexcept {
     stopped_at_ = scope_.size();
+    stopped_ = true;
     return !scope_.empty();
   }
 
-  inline bool stopped() const noexcept { return stopped_at_ != 0; }
-  inline void stop_handled() noexcept { stopped_at_ = 0; }
+  inline bool stopped() const noexcept { return stopped_; }
+  inline void stop_handled() noexcept {
+    stopped_at_ = 0;
+    stopped_ = false;
+  }
 
   inline const char* str() const noexcept {
     return str_.c_str() + last_popped_scope_;

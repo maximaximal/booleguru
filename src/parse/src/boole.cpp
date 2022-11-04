@@ -6,22 +6,23 @@
 
 #include <booleguru/cl/ecl-wrapper.hpp>
 
+#include <iostream>
+
 namespace booleguru::parse {
 using namespace expression;
 
 boole::token::token() {}
 boole::token::~token() {}
 
-const char* token_type_str[] = { "Script",  "Ident",  "LPar",        "RPar",
-                                 "Exists",  "Forall", "Equivalence", "Implies",
-                                 "Seilpmi", "Or",     "And",         "Not",
-                                 "None" };
-const char* token_type_sym[] = { "Script", "_",  "(", ")", "?", "@", "<->",
-                                 "->",     "<-", "|", "&", "!", "." };
+const char* token_type_str[] = { "Ident",  "LPar",        "RPar",    "Exists",
+                                 "Forall", "Equivalence", "Implies", "Seilpmi",
+                                 "Or",     "And",         "Not",     "None" };
+const char* token_type_sym[] = { "_",  "(",  ")", "?", "@", "<->",
+                                 "->", "<-", "|", "&", "!", "." };
 
 boole::token&
 boole::token::operator=(token&& o) {
-  if(o.type == Ident || o.type == Script) {
+  if(o.type == Ident) {
     ident = std::move(o.ident);
   } else
     ident.clear();
@@ -65,6 +66,10 @@ boole::next() {
     if(c_processed_) {
       in_ >> c_;
       c_processed_ = false;
+      c_appended_ = false;
+
+      std::cout << "Cur: " << cur_ << ", Parsed " << c_
+                << ", stopped: " << sexp_.stopped() << std::endl;
 
       if(c_ == EOF || in_.eof()) {
         comment_ = false;
@@ -79,15 +84,6 @@ boole::next() {
       ++next_.col;
     }
 
-    if(sexp_.append(c_)) {
-      c_processed_ = true;
-      continue;
-    } else if(sexp_.stopped()) {
-      c_processed_ = true;
-      sexp_.stop_handled();
-      return true;
-    }
-
     if(comment_) {
       c_processed_ = true;
       if(c_ == '\n') {
@@ -96,10 +92,19 @@ boole::next() {
       continue;
     }
 
-    if(c_ != '[' && c_ != ']' && script_ > 0) {
-      c_processed_ = true;
-      ident.push_back(c_);
-      continue;
+    if(!c_appended_) {
+      c_appended_ = true;
+      std::cout << "append: " << c_ << " stopped: " << sexp_.stopped()
+                << std::endl;
+      if(sexp_.append(c_)) {
+        c_processed_ = true;
+        continue;
+      } else if(sexp_.stopped()) {
+        c_processed_ = true;
+        sexp_.stop_handled();
+        next_.type = token::RPar;
+        return true;
+      }
     }
 
     auto ident_end_detect = [this, &type, &ident]() -> bool {
@@ -218,7 +223,7 @@ boole::next() {
         continue;
       }
 
-      if(script_ == 0 && ident_end_detect())
+      if(ident_end_detect())
         return true;
 
       // All other processes swallow the current character.
@@ -233,21 +238,6 @@ boole::next() {
       }
 
       switch(c_) {
-        case '[':
-          if(script_ > 0)
-            ident.push_back(c_);
-          ++script_;
-          continue;
-        case ']':
-          --script_;
-          if(script_ == 0) {
-            type = token::Script;
-            return true;
-          } else {
-            if(script_ > 0)
-              ident.push_back(c_);
-            continue;
-          }
         case '(':
           type = token::LPar;
           break;
@@ -276,7 +266,9 @@ boole::next() {
           comment_ = true;
           continue;
         default:
-          return error(std::string("Invalid character '") + c_ + "'!");
+          // Lisp execution means that everything that cannot be understood is
+          // an ident.
+          type = token::Ident;
       }
 
       return true;
@@ -301,6 +293,8 @@ boole::parse_assoc_op(Functor next) {
       } else {
         done = true;
       }
+    } else {
+      return child;
     }
   } while(res && !done);
 
@@ -347,25 +341,48 @@ result
 boole::parse_basic() {
   if(cur_.type == token::LPar) {
     next();
-    result child = parse_expr();
-    if(cur_.type != token::RPar) {
-      return error("Expected )");
+    if(next_.type == token::RPar) {
+      // This is a lisp expression, not a boolean expression! Does not matter
+      // what cur_ is, as this is just (something).
+
+      // Stop at the ident in-between.
+      sexp_.stop();
+      // Continue to the RPar.
+      next();
+      // Advance over the RPar.
+      next();
+
+      cl::ecl_wrapper& ecl = cl::ecl_wrapper::get();
+      auto ret = ecl.eval(sexp_.str(), ops_);
+      if(std::holds_alternative<std::string>(ret)) {
+        return error("Error occurred during non-interactive lisp execution: " +
+                     std::get<std::string>(ret));
+      }
+      if(std::holds_alternative<op_ref>(ret)) {
+        return generate_result(std::get<op_ref>(ret));
+      }
+      return generate_result(op_ref());
+    } else {
+      // Okay, this is not just some (variable), but actually more content.
+      // Could be a logical expression.
+      result child = parse_expr();
+      if(!child) {
+        return error("No child parsed in parse_basic(), because: " +
+                     child.message);
+      }
+      if(cur_.type != token::RPar) {
+        return error("Expected )");
+      }
+      next();
+      return child;
     }
-    next();
-    return child;
   } else if(cur_.type == token::Ident) {
     auto varref = vars_->get(variable{ std::move(cur_.ident) });
     next();
     auto v = ops_->get(op(op_type::Var, varref.get_id(), 0));
     return generate_result(v);
-  } else if(cur_.type == token::Script) {
-    auto scriptref = scripts_->get(script{ std::move(cur_.ident) });
-    next();
-    auto script = ops_->get(op(op_type::Script, -1, scriptref.get_id()));
-    // TODO
-    // return _lua->handle_script(script);
   } else {
-    return error("Expected ident or script while in parse_basic");
+    return error("Expected ident in parse_basic");
   }
 
   return error("No other parsing in parse_basic!");
@@ -397,26 +414,37 @@ boole::parse_expr() {
   }
 
   result iff = parse_iff();
-  if(cur_.type == token::Ident || cur_.type == token::LPar) {
-    const bool replace = cur_.type == token::Ident;
+  if(!iff) {
+    // Expression could not be parsed! Maybe stop parsing and try lisp.
     assert(!sexp_.stopped());
     sexp_.stop();
     next();
-    if(sexp_.str()[0] != '(') {
-      return error("SEXP must start with '('! Could not parse.");
-    }
+
     cl::ecl_wrapper& ecl = cl::ecl_wrapper::get();
     auto ret = ecl.eval(sexp_.str(), ops_);
     if(std::holds_alternative<std::string>(ret)) {
       return error("Error occurred during non-interactive lisp execution: " +
                    std::get<std::string>(ret));
     }
-    if(replace) {
-      if(std::holds_alternative<op_ref>(ret)) {
-        iff = generate_result(std::get<op_ref>(ret));
-      }
+    if(std::holds_alternative<op_ref>(ret)) {
+      iff = generate_result(std::get<op_ref>(ret));
+    } else {
+      // The lisp expression didn't return anything. Check if a new expression
+      // could follow and reset parsing there.
+      std::cout << "Reset! Cur: " << cur_ << std::endl;
+      if(cur_.type == token::LPar || cur_.type == token::Ident ||
+         cur_.type == token::Exists || cur_.type == token::Forall)
+        return parse_expr();
     }
-    next();
+  } else if(cur_.type == token::LPar || cur_.type == token::Ident ||
+            cur_.type == token::Exists || cur_.type == token::Forall) {
+    // The prior expression was parsed and works. Now comes a new expression.
+    // This breaks the expression again! This means that the following
+    // expression either is a lisp expression, or the whole thing is a lisp
+    // expression. The latter is more reasonable, as it limits parsing
+    // possibilities. This means we break out of this branch.
+    return error(
+      "No logical connective between expression and next expression!");
   }
   return iff;
 }
@@ -447,5 +475,13 @@ boole::operator()() {
   }
 
   return res;
+}
+
+std::ostream&
+operator<<(std::ostream& o, const boole::token& t) {
+  o << token_type_str[t.type];
+  if(t.type == boole::token::Ident)
+    o << "{" << t.ident << "}";
+  return o;
 }
 }

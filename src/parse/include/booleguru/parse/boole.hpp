@@ -8,7 +8,6 @@ class boole : public base {
   protected:
   struct token {
     enum token_type {
-      Script,
       Ident,
       LPar,
       RPar,
@@ -39,7 +38,6 @@ class boole : public base {
 
   sexpr_tracker sexp_;
 
-  int script_ = 0;
   bool comment_ = false;
 
   bool implies_ = false;
@@ -54,6 +52,7 @@ class boole : public base {
   token next_;
   char c_ = 0;
   bool c_processed_ = true;
+  bool c_appended_ = true;
 
   bool next();
 
@@ -68,6 +67,8 @@ class boole : public base {
   result parse_not();
   result parse_basic();
   result parse_expr();
+
+  friend std::ostream& operator<<(std::ostream&, const token& t);
 
   public:
   using base::base;

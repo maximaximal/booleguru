@@ -35,18 +35,23 @@ TEST_CASE("Parse example boole formulas and check the resulting expressions") {
                                     u8"?a @ö a∧ö",
                                     u8"?a@ö a∧ö",
                                     u8"?a ∃ö a∧ö",
-                                    "(a) <-> (ll -> b)");
+                                    "a <-> (ll -> b)");
   auto is = isviewstream(input);
   boole parser(is);
   auto res = parser();
 
   std::stringstream s;
-  s << *res;
+  if(res)
+    s << *res;
+  else
+    s << "((#no-expr#))";
   std::string inputs(input);
   std::string stringified = s.str();
 
   CAPTURE(inputs);
-  CAPTURE(*res);
+  if(res) {
+    CAPTURE(*res);
+  }
   REQUIRE(res);
 }
 
@@ -72,7 +77,11 @@ TEST_CASE("Parse formula containing lisp code") {
   // Another case that's still to do: "a & (list 'nil)". This loops in
   // parse_assoc_op<and>.
 
-  std::string_view input = GENERATE("a (list 'nil)", "a (print (var 'test))");
+  std::string_view input = GENERATE(//"a (list 'nil)",
+                                    //"a (print (var 'test))",
+                                    "(print 'demo1) a"
+                                    );
+                                    //"(print (values 'demo 'demo)) a");
   auto is = isviewstream(input);
   boole parser(is);
   auto res = parser();
@@ -81,5 +90,9 @@ TEST_CASE("Parse formula containing lisp code") {
 
   CAPTURE(inputs);
   CAPTURE(res.message);
+  if(res) {
+    CAPTURE(*res);
+    REQUIRE(false);
+  }
   REQUIRE(res);
 }

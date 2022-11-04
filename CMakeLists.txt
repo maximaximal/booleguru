@@ -14,6 +14,8 @@ if(TARGET Catch2::Catch2)
   include(Catch)
 endif()
 
+set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR})
+
 add_subdirectory(src)
 
 if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
