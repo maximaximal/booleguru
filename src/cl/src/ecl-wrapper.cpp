@@ -52,13 +52,15 @@ ecl_string_to_string(cl_object echar) {
 std::unique_ptr<ecl_wrapper, ecl_wrapper::deleter> ecl_wrapper::wrapper_;
 
 static cl_object clfun_eval;
+static cl_object cltype_variable;
+static cl_object cltype_op;
 static thread_local booleguru::expression::op_manager* op_manager = nullptr;
 
 #define DEFUN(name, fun, args) \
   ecl_def_c_function(c_string_to_object(name), (cl_objectfn_fixed)fun, args)
 
 cl_object
-clfun_var(cl_object name) {
+clfun_get_varop_id(cl_object name) {
   // The symbol: std::cout << ecl_string_to_string(cl_symbol_name(name)) <<
   // std::endl;
   if(ECL_SYMBOLP(name)) {
@@ -68,7 +70,30 @@ clfun_var(cl_object name) {
   std::string varname = ecl_string_to_string(name);
   uint32_t varid =
     op_manager->vars().get(expression::variable{ varname }).get_id();
-  return ecl_make_uint32_t(varid);
+
+  auto ref =
+    op_manager->get(expression::op(expression::op_type::Var, varid, 0));
+
+  return ecl_make_uint32_t(ref.get_id());
+}
+
+cl_object
+clfun_get_op_type(cl_object op) {
+  if(!ECL_INSTANCEP(op) || ECL_STRUCT_NAME(op) != cltype_op) {
+    // TODO: Throw a lisp error.
+    assert(false);
+  }
+
+  uint32_t id = ecl_to_uint32_t(ECL_STRUCT_SLOT(op, 0));
+
+  auto ref = (*op_manager)[id];
+
+  return ecl_make_uint8_t(ref->type);
+}
+
+static cl_object
+ecl_call(const char* call) {
+  return cl_safe_eval(c_string_to_object(call), Cnil, Cnil);
 }
 
 ecl_wrapper::ecl_wrapper() {
@@ -78,8 +103,11 @@ ecl_wrapper::ecl_wrapper() {
   ecl_init_module(NULL, ECL_INIT_LIB_FUNC);
 
   clfun_eval = cl_eval(c_string_to_object("#'eval-sexp-and-catch-errors"));
+  cltype_variable = c_string_to_object("variable");
+  cltype_op = c_string_to_object("op");
 
-  DEFUN("var", clfun_var, 1);
+  DEFUN("booleguru-get-varop-id", clfun_get_varop_id, 1);
+  DEFUN("booleguru-op-type", clfun_get_op_type, 1);
 }
 ecl_wrapper::~ecl_wrapper() {
   cl_shutdown();
@@ -123,8 +151,15 @@ ecl_wrapper::eval(const char* code,
   }
   ECL_CATCH_ALL_END;
 
-  if(ecl_t_of(ret) == t_fixnum) {
+  if(ECL_FIXNUMP(ret)) {
     return static_cast<long int>(ecl_fixnum(ret));
+  }
+  if(ECL_INSTANCEP(ret)) {
+    cl_object structname = ECL_STRUCT_NAME(ret);
+    if(structname == cltype_op) {
+      int id = ecl_fixnum(ECL_STRUCT_SLOT(ret, 0));
+      return (*op_manager)[id];
+    }
   }
   return std::monostate();
 }

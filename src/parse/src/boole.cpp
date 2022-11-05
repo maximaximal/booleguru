@@ -54,7 +54,7 @@ boole::token_type_from_op_type(expression::op_type t) {
 }
 
 bool
-boole::next() {
+boole::next(bool lispmode) {
   cur_ = std::move(next_);
   next_.ident.clear();
 
@@ -72,11 +72,20 @@ boole::next() {
     }
 
     if(c_processed_) {
+      if(in_.eof()) {
+        comment_ = false;
+        c_ = '\0';
+        type = token::None;
+        return false;
+      }
+
       in_ >> c_;
       c_processed_ = false;
       c_appended_ = false;
 
-      if(c_ == EOF || in_.eof()) {
+      std::cout << "Read : " << c_ << std::endl;
+
+      if(c_ == EOF) {
         comment_ = false;
         c_ = '\0';
         type = token::None;
@@ -97,6 +106,22 @@ boole::next() {
         comment_ = false;
       }
       continue;
+    }
+
+    if(lispmode) {
+      switch(c_) {
+        case '(':
+          type = token::LPar;
+          break;
+        case ')':
+          type = token::RPar;
+          break;
+        default:
+          type = token::Unknown;
+          break;
+      }
+      c_processed_ = true;
+      return true;
     }
 
     auto ident_end_detect = [this, &type, &ident]() -> bool {
@@ -212,6 +237,7 @@ boole::next() {
       if(std::isalnum(c_) || c_ == '_') {
         ident.push_back(c_);
         c_processed_ = true;
+        std::cout << "IDENTTT: " << ident << std::endl;
         continue;
       }
 
@@ -274,6 +300,7 @@ boole::parse_assoc_op(Functor next) {
   result res;
   bool done = false;
   do {
+    std::cout << "Cur before child: " << cur_ << std::endl;
     result child = next();
     if(child) {
       res =
@@ -281,11 +308,15 @@ boole::parse_assoc_op(Functor next) {
           ? generate_result(ops_->get(op(type, res->get_id(), child->get_id())))
           : child;
       if(cur_.type == token_type_from_op_type(type)) {
+        std::cout << "Cur before next: " << cur_ << std::endl;
         this->next();
+        std::cout << "Cur after next: " << cur_ << std::endl;
       } else {
         done = true;
       }
     } else {
+      if(res)
+        return res;
       return child;
     }
   } while(res && !done);
@@ -331,6 +362,7 @@ boole::parse_not() {
 
 result
 boole::parse_basic() {
+  std::cout << cur_ << std::endl;
   if(cur_.type == token::LPar) {
     next();
     if(next_.type == token::RPar) {
@@ -374,7 +406,8 @@ boole::parse_basic() {
     auto v = ops_->get(op(op_type::Var, varref.get_id(), 0));
     return generate_result(v);
   } else {
-    return error("Expected ident in parse_basic");
+    return error(std::string("Expected ident in parse_basic, but got ") +
+                 token_type_str[cur_.type]);
   }
 
   return error("No other parsing in parse_basic!");
@@ -383,9 +416,9 @@ boole::parse_basic() {
 result
 boole::parse_lisp() {
   int paren_level = 1;
-  while(cur_.type != token::None && paren_level != 0) {
-    next();
-    switch(cur_.type) {
+  while(next_.type != token::None && paren_level != 0) {
+    next(true);
+    switch(next_.type) {
       case token::LPar:
         ++paren_level;
         break;
@@ -397,6 +430,12 @@ boole::parse_lisp() {
     }
   }
 
+  // Jump over last rpar.
+  next();
+  std::cout << "Cur: " << cur_ << std::endl;
+  next();
+  std::cout << "Cur: " << cur_ << std::endl;
+
   cl::ecl_wrapper& ecl = cl::ecl_wrapper::get();
   auto ret = ecl.eval(sexp_.str(), ops_);
   if(std::holds_alternative<std::string>(ret)) {
@@ -405,7 +444,6 @@ boole::parse_lisp() {
   }
   if(std::holds_alternative<op_ref>(ret)) {
     auto res = generate_result(std::get<op_ref>(ret));
-    next();
     return res;
   }
   return error("Lisp expression does not return expression!");

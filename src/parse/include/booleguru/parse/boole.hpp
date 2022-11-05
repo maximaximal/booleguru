@@ -55,7 +55,7 @@ class boole : public base {
   bool c_processed_ = true;
   bool c_appended_ = true;
 
-  bool next();
+  bool next(bool lispmode = false);
 
   template<expression::op_type type, typename Functor>
   result parse_assoc_op(Functor next);

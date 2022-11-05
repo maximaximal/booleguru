@@ -11,19 +11,10 @@
 (ffi:clines "#include <booleguru/expression/var_manager.hpp>")
 (ffi:clines "#include <booleguru/expression/op_manager.hpp>")
 
-(ffi:def-foreign-type variable :uint32_t)
-(ffi:def-foreign-type op :uint32_t)
+(ffi:def-foreign-type variable-id :uint32_t)
+(ffi:def-foreign-type op-id :uint32_t)
 
-(ffi:def-struct unop (c :op))
-(ffi:def-struct binop (l :op) (r :op))
-(ffi:def-struct quantop (v :variable) (c :op))
-(ffi:def-struct varop (v :variable))
+(defstruct op (id 0 :type fixnum))
 
-(ffi:def-union op-member
-			   (un unop)
-			   (bin binop)
-			   (quant quantop))
-
-(ffi:def-struct op
-				(flags :uint64_t)
-				(member :op-member))
+(defun var (name)
+  (make-op :id (booleguru-get-varop-id name)))
