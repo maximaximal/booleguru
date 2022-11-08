@@ -77,11 +77,10 @@ TEST_CASE("Parse formula containing lisp code") {
   // Another case that's still to do: "a & (list 'nil)". This loops in
   // parse_assoc_op<and>.
 
-  std::string_view input = GENERATE(//"a (list 'nil)",
-                                    //"a (print (var 'test))",
-                                    "(var 'a) & a"
-                                    );
-                                    //"(print (values 'demo 'demo)) a");
+  std::string_view input = GENERATE("a (list 'nil)",
+                                    "a (print (var 'test))",
+                                    "(var 'a) & a",
+                                    "(print (values 'demo 'demo)) a");
   auto is = isviewstream(input);
   boole parser(is);
   auto res = parser();

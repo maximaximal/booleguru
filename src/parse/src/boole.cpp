@@ -83,9 +83,10 @@ boole::next(bool lispmode) {
       c_processed_ = false;
       c_appended_ = false;
 
-      std::cout << "Read : " << c_ << std::endl;
-
-      if(c_ == EOF) {
+      if(c_ == EOF || in_.eof()) {
+        if(type == token::Ident) {
+          return true;
+        }
         comment_ = false;
         c_ = '\0';
         type = token::None;
@@ -237,7 +238,7 @@ boole::next(bool lispmode) {
       if(std::isalnum(c_) || c_ == '_') {
         ident.push_back(c_);
         c_processed_ = true;
-        std::cout << "IDENTTT: " << ident << std::endl;
+        type = token::Ident;
         continue;
       }
 
@@ -300,7 +301,6 @@ boole::parse_assoc_op(Functor next) {
   result res;
   bool done = false;
   do {
-    std::cout << "Cur before child: " << cur_ << std::endl;
     result child = next();
     if(child) {
       res =
@@ -308,9 +308,7 @@ boole::parse_assoc_op(Functor next) {
           ? generate_result(ops_->get(op(type, res->get_id(), child->get_id())))
           : child;
       if(cur_.type == token_type_from_op_type(type)) {
-        std::cout << "Cur before next: " << cur_ << std::endl;
         this->next();
-        std::cout << "Cur after next: " << cur_ << std::endl;
       } else {
         done = true;
       }
@@ -362,7 +360,6 @@ boole::parse_not() {
 
 result
 boole::parse_basic() {
-  std::cout << cur_ << std::endl;
   if(cur_.type == token::LPar) {
     next();
     if(next_.type == token::RPar) {
@@ -432,9 +429,7 @@ boole::parse_lisp() {
 
   // Jump over last rpar.
   next();
-  std::cout << "Cur: " << cur_ << std::endl;
   next();
-  std::cout << "Cur: " << cur_ << std::endl;
 
   cl::ecl_wrapper& ecl = cl::ecl_wrapper::get();
   auto ret = ecl.eval(sexp_.str(), ops_);
