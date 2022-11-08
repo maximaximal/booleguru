@@ -99,7 +99,7 @@ makefun_binop() {
 
     expression::op_ref res = B(a_, b_);
 
-    return cl_funcall(2, clfun_b_make_op, ecl_make_uint32_t(res.get_id()));
+    return ecl_make_uint32_t(res.get_id());
   };
 }
 
@@ -129,7 +129,7 @@ clfun_op_not(cl_object a) {
 
   expression::op_ref res = !a_;
 
-  return cl_funcall(2, clfun_b_make_op, ecl_make_uint32_t(res.get_id()));
+  return ecl_make_uint32_t(res.get_id());
 }
 
 static cl_object
@@ -202,7 +202,8 @@ ecl_wrapper::eval(const char* code,
   ECL_CATCH_ALL_END;
 
   if(ECL_FIXNUMP(ret)) {
-    return static_cast<long int>(ecl_fixnum(ret));
+    int id = ecl_to_uint32_t(ret);
+    return (*op_manager)[id];
   }
   if(ECL_INSTANCEP(ret)) {
     cl_object structname = ECL_STRUCT_NAME(ret);
