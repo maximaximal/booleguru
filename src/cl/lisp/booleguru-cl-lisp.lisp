@@ -18,3 +18,12 @@
 
 (defun var (name)
   (make-op :id (booleguru-get-varop-id name)))
+
+(defun b& (a b)
+  (make-op :id (booleguru-and a b)))
+
+(defun b/ (a b)
+  (make-op :id (booleguru-and a b)))
+
+(defun b-> (a b)
+  (make-op :id (booleguru-implies a b)))

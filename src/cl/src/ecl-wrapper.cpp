@@ -1,5 +1,7 @@
 #include <ecl/ecl.h>
 
+#include <booleguru/cl/cl-function.hpp>
+#include <booleguru/cl/cl-globals.hpp>
 #include <booleguru/cl/ecl-wrapper.hpp>
 
 #include <booleguru/expression/op_manager.hpp>
@@ -51,11 +53,6 @@ ecl_string_to_string(cl_object echar) {
 
 std::unique_ptr<ecl_wrapper, ecl_wrapper::deleter> ecl_wrapper::wrapper_;
 
-static cl_object clfun_eval;
-static cl_object cltype_variable;
-static cl_object cltype_op;
-static thread_local booleguru::expression::op_manager* op_manager = nullptr;
-
 #define DEFUN(name, fun, args) \
   ecl_def_c_function(c_string_to_object(name), (cl_objectfn_fixed)fun, args)
 
@@ -79,14 +76,20 @@ clfun_get_varop_id(cl_object name) {
 
 cl_object
 clfun_get_op_type(cl_object op) {
-  if(!ECL_INSTANCEP(op) || ECL_STRUCT_NAME(op) != cltype_op) {
-    // TODO: Throw a lisp error.
-    assert(false);
+  expression::op_ref ref;
+  if(auto error = cl_object_conv(op, ref)) {
+    return *error;
   }
 
-  uint32_t id = ecl_to_uint32_t(ECL_STRUCT_SLOT(op, 0));
+  return ecl_make_uint8_t(ref->type);
+}
 
-  auto ref = (*op_manager)[id];
+cl_object
+clfun_op_and(cl_object a, cl_object b) {
+  expression::op_ref a_;
+  if(auto error = cl_object_conv(a, a_)) {
+    return *error;
+  }
 
   return ecl_make_uint8_t(ref->type);
 }

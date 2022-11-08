@@ -1,5 +1,7 @@
 set(SRCS
   src/ecl-wrapper.cpp
+  src/cl-function.cpp
+  src/cl-globals.cpp
 )
 
 set(LISP_SRCS
