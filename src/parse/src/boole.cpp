@@ -375,7 +375,7 @@ boole::parse_basic() {
       // Could be a logical expression.
       result child = parse_expr();
       if(child.code == result::INCORRECT_IDENT_FOLLOWUP) {
-        return parse_lisp();
+        return parse_lisp(next_.type == token::LPar ? 2 : 1);
       }
       next();
       return child;

@@ -71,7 +71,9 @@ TEST_CASE("Parse invalid boolean formulas") {
 TEST_CASE("Parse formula containing lisp code") {
   std::string_view input = GENERATE("a & (var \"b\")",
                                     "(var \"a\") & b",
-                                    "(a & (var \"b\"))");
+                                    "(a & (var \"b\"))",
+                                    "(var \"a\") & (var \"b\")",
+                                    "(b-and (var \"a\") (var \"b\"))");
   auto is = isviewstream(input);
   boole parser(is);
   auto res = parser();

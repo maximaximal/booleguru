@@ -15,8 +15,7 @@ std::optional<cl_object>
 cl_object_conv(const cl_object& src, expression::op_ref& tgt);
 
 cl_object
-make_error(std::string symbol,
-           std::map<std::string, std::string> properties = {});
+make_type_error(std::string datum, std::string expected);
 
 
 }

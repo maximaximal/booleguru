@@ -84,14 +84,52 @@ clfun_get_op_type(cl_object op) {
   return ecl_make_uint8_t(ref->type);
 }
 
+template<expression::op_ref (*B)(expression::op_ref, expression::op_ref)>
+consteval static auto
+makefun_binop() {
+  return [](cl_object a, cl_object b) -> cl_object {
+    expression::op_ref a_;
+    if(auto error = cl_object_conv(a, a_)) {
+      return *error;
+    }
+    expression::op_ref b_;
+    if(auto error = cl_object_conv(b, b_)) {
+      return *error;
+    }
+
+    expression::op_ref res = B(a_, b_);
+
+    return cl_funcall(2, clfun_b_make_op, ecl_make_uint32_t(res.get_id()));
+  };
+}
+
+static auto clfun_op_and =
+  makefun_binop<[](auto a, auto b) { return a && b; }>();
+static auto clfun_op_or =
+  makefun_binop<[](auto a, auto b) { return a || b; }>();
+static auto clfun_op_equi = makefun_binop<[](auto a, auto b) {
+  return a.get_mgr().get(
+    expression::op(expression::op_type::Equi, a.get_id(), b.get_id()));
+}>();
+static auto clfun_op_impl = makefun_binop<[](auto a, auto b) {
+  return a.get_mgr().get(
+    expression::op(expression::op_type::Impl, a.get_id(), b.get_id()));
+}>();
+static auto clfun_op_lpmi = makefun_binop<[](auto a, auto b) {
+  return a.get_mgr().get(
+    expression::op(expression::op_type::Lpmi, a.get_id(), b.get_id()));
+}>();
+
 cl_object
-clfun_op_and(cl_object a, cl_object b) {
+clfun_op_not(cl_object a, cl_object b) {
   expression::op_ref a_;
   if(auto error = cl_object_conv(a, a_)) {
     return *error;
   }
 
-  return ecl_make_uint8_t(ref->type);
+  expression::op_ref res = !a_;
+
+  return cl_funcall(2, clfun_b_make_op, ecl_make_uint32_t(res.get_id()));
 }
 
 static cl_object
@@ -106,11 +144,20 @@ ecl_wrapper::ecl_wrapper() {
   ecl_init_module(NULL, ECL_INIT_LIB_FUNC);
 
   clfun_eval = cl_eval(c_string_to_object("#'eval-sexp-and-catch-errors"));
+  clfun_b_make_op = cl_eval(c_string_to_object("#'b-make-op"));
   cltype_variable = c_string_to_object("variable");
   cltype_op = c_string_to_object("op");
 
   DEFUN("booleguru-get-varop-id", clfun_get_varop_id, 1);
   DEFUN("booleguru-op-type", clfun_get_op_type, 1);
+  DEFUN("b-and", +clfun_op_and, 2);
+  DEFUN("b-or", +clfun_op_or, 2);
+  DEFUN("b-equi", +clfun_op_equi, 2);
+  DEFUN("b-impl", +clfun_op_impl, 2);
+  DEFUN("b-lpmi", +clfun_op_lpmi, 2);
+  DEFUN("b-not", clfun_op_not, 2);
+
+  DEFUN("booleguru-", clfun_get_varop_id, 1);
 }
 ecl_wrapper::~ecl_wrapper() {
   cl_shutdown();
