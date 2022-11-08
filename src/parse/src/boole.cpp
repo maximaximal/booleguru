@@ -369,38 +369,13 @@ boole::parse_basic() {
       // what cur_ is, as this is just (something). Also: We would not be here
       // if the expression before was invalid. This means, that this MUST be a
       // lisp expression.
-
-      // Continue to the RPar.
-      next();
-      // Advance over the RPar.
-      next();
-
-      cl::ecl_wrapper& ecl = cl::ecl_wrapper::get();
-      auto ret = ecl.eval(sexp_.str(), ops_);
-      if(std::holds_alternative<std::string>(ret)) {
-        return error("Error occurred during non-interactive lisp execution: " +
-                     std::get<std::string>(ret));
-      }
-      if(std::holds_alternative<op_ref>(ret)) {
-        return generate_result(std::get<op_ref>(ret));
-      }
-      return error("Lisp expression does not return expression!",
-                   result::LISP_NO_RETURN_EXPRESSION);
+      return parse_lisp();
     } else {
       // Okay, this is not just some (variable), but actually more content.
       // Could be a logical expression.
       result child = parse_expr();
-      if(!child && child.code != result::INCORRECT_IDENT_FOLLOWUP) {
-        return child;
-      }
-      if(cur_.type != token::RPar || !child) {
-        // Could not parse basic! This means a lisp expression was opened.
-        result res = parse_lisp();
-        if(cur_.is_binop_operator()) {
-          return res;
-        } else if(res.code == result::LISP_NO_RETURN_EXPRESSION) {
-          return parse_expr();
-        }
+      if(child.code == result::INCORRECT_IDENT_FOLLOWUP) {
+        return parse_lisp();
       }
       next();
       return child;
@@ -409,7 +384,6 @@ boole::parse_basic() {
     if(next_.type != token::RPar && !next_.is_binop_operator() &&
        next_.type != token::None) {
       // Invalid ident!
-      std::cout << "Followed by " << next_ << std::endl;
       return error("Ident must be followed by some operator or right paren!",
                    result::INCORRECT_IDENT_FOLLOWUP);
     }
@@ -442,16 +416,13 @@ boole::parse_lisp(int paren_level) {
     }
   }
 
-  std::cout << cur_ << ", " << next_ << std::endl;
-
-  // Jump over last rpar.
   next();
-  std::cout << cur_ << ", " << next_ << std::endl;
-  next();
-  std::cout << cur_ << ", " << next_ << std::endl;
 
   cl::ecl_wrapper& ecl = cl::ecl_wrapper::get();
-  auto ret = ecl.eval(sexp_.str(paren_level), ops_);
+  auto ret = ecl.eval(sexp_.str(0), ops_);
+
+  next();
+
   if(std::holds_alternative<std::string>(ret)) {
     return error("Error occurred during non-interactive lisp execution: " +
                  std::get<std::string>(ret));
@@ -490,21 +461,6 @@ boole::parse_expr() {
   }
 
   result iff = parse_iff();
-  if(iff)
-    std::cout << *iff << std::endl;
-  else
-    std::cout << "NO IFF CUR: " << cur_ << " next " << next_ << std::endl;
-  while(!iff && iff.code == result::INCORRECT_IDENT_FOLLOWUP &&
-        next_.type == token::LPar) {
-    result lispres = parse_lisp(1);
-    if(!lispres && lispres.code != result::LISP_NO_RETURN_EXPRESSION)
-      return lispres;
-  }
-  while(iff && cur_.type == token::LPar) {
-    result lispres = parse_lisp();
-    if(!lispres && lispres.code != result::LISP_NO_RETURN_EXPRESSION)
-      return lispres;
-  }
   return iff;
 }
 

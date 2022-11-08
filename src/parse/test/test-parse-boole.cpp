@@ -69,18 +69,9 @@ TEST_CASE("Parse invalid boolean formulas") {
 }
 
 TEST_CASE("Parse formula containing lisp code") {
-  // TODO:
-  // Interesting case: "(list 'nil) a"
-  // Currently, the parser does not support first executing lisp, then
-  // continuing with the rest of the formula!
-  //
-  // Another case that's still to do: "a & (list 'nil)". This loops in
-  // parse_assoc_op<and>.
-
-  std::string_view input = GENERATE("a (list 'nil)",
-                                    "a (print (var 'test))",
-                                    "(var 'a) & a",
-                                    "(print (values 'demo 'demo)) & a");
+  std::string_view input = GENERATE("a & (var \"b\")",
+                                    "(var \"a\") & b",
+                                    "(a & (var \"b\"))");
   auto is = isviewstream(input);
   boole parser(is);
   auto res = parser();
@@ -90,8 +81,9 @@ TEST_CASE("Parse formula containing lisp code") {
   CAPTURE(inputs);
   CAPTURE(res.message);
   if(res) {
-    CAPTURE(*res);
-    REQUIRE(false);
+    std::stringstream f;
+    f << *res;
+    REQUIRE(f.str() == "a & b");
   }
   REQUIRE(res);
 }

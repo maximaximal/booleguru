@@ -47,6 +47,9 @@ that is then run as a program and that is outside the expression tree.
 Counter example: (print (var 'a)). Is (var 'a) an expression that should be run
 on it's own and print just some variable, or is (print (var 'a)) the expression?
 
+It would still be possible to just force operators and if they are missing I
+break out. I'll do that.
+
 ### Solve / Evaluate / Execute Formulas `booleguru::solve`
 
 Call a SAT solver to actually solve a formula. Could also include QBF solvers
