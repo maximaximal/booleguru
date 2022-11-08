@@ -121,7 +121,7 @@ static auto clfun_op_lpmi = makefun_binop<[](auto a, auto b) {
 }>();
 
 cl_object
-clfun_op_not(cl_object a, cl_object b) {
+clfun_op_not(cl_object a) {
   expression::op_ref a_;
   if(auto error = cl_object_conv(a, a_)) {
     return *error;
@@ -155,7 +155,7 @@ ecl_wrapper::ecl_wrapper() {
   DEFUN("b-equi", +clfun_op_equi, 2);
   DEFUN("b-impl", +clfun_op_impl, 2);
   DEFUN("b-lpmi", +clfun_op_lpmi, 2);
-  DEFUN("b-not", clfun_op_not, 2);
+  DEFUN("b-not", clfun_op_not, 1);
 
   DEFUN("booleguru-", clfun_get_varop_id, 1);
 }
