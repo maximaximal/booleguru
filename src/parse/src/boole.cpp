@@ -7,6 +7,7 @@
 #include <booleguru/cl/ecl-wrapper.hpp>
 
 #include <iostream>
+#include <sstream>
 
 namespace booleguru::parse {
 using namespace expression;
@@ -85,6 +86,7 @@ boole::next(bool lispmode) {
 
       if(c_ == EOF || in_.eof()) {
         if(type == token::Ident) {
+          c_processed_ = true;
           return true;
         }
         comment_ = false;
@@ -382,22 +384,35 @@ boole::parse_basic() {
       if(std::holds_alternative<op_ref>(ret)) {
         return generate_result(std::get<op_ref>(ret));
       }
-      return error("Lisp expression does not return expression!");
+      return error("Lisp expression does not return expression!",
+                   result::LISP_NO_RETURN_EXPRESSION);
     } else {
       // Okay, this is not just some (variable), but actually more content.
       // Could be a logical expression.
       result child = parse_expr();
-      if(!child) {
+      if(!child && child.code != result::INCORRECT_IDENT_FOLLOWUP) {
         return child;
       }
-      if(cur_.type != token::RPar) {
+      if(cur_.type != token::RPar || !child) {
         // Could not parse basic! This means a lisp expression was opened.
-        return parse_lisp();
+        result res = parse_lisp();
+        if(cur_.is_binop_operator()) {
+          return res;
+        } else if(res.code == result::LISP_NO_RETURN_EXPRESSION) {
+          return parse_expr();
+        }
       }
       next();
       return child;
     }
   } else if(cur_.type == token::Ident) {
+    if(next_.type != token::RPar && !next_.is_binop_operator() &&
+       next_.type != token::None) {
+      // Invalid ident!
+      std::cout << "Followed by " << next_ << std::endl;
+      return error("Ident must be followed by some operator or right paren!",
+                   result::INCORRECT_IDENT_FOLLOWUP);
+    }
     auto varref = vars_->get(variable{ std::move(cur_.ident) });
     next();
     auto v = ops_->get(op(op_type::Var, varref.get_id(), 0));
@@ -411,28 +426,32 @@ boole::parse_basic() {
 }
 
 result
-boole::parse_lisp() {
-  int paren_level = 1;
-  while(next_.type != token::None && paren_level != 0) {
+boole::parse_lisp(int paren_level) {
+  int p = paren_level;
+  while(next_.type != token::None && p != 0) {
     next(true);
     switch(next_.type) {
       case token::LPar:
-        ++paren_level;
+        ++p;
         break;
       case token::RPar:
-        --paren_level;
+        --p;
         break;
       default:
         break;
     }
   }
 
+  std::cout << cur_ << ", " << next_ << std::endl;
+
   // Jump over last rpar.
   next();
+  std::cout << cur_ << ", " << next_ << std::endl;
   next();
+  std::cout << cur_ << ", " << next_ << std::endl;
 
   cl::ecl_wrapper& ecl = cl::ecl_wrapper::get();
-  auto ret = ecl.eval(sexp_.str(), ops_);
+  auto ret = ecl.eval(sexp_.str(paren_level), ops_);
   if(std::holds_alternative<std::string>(ret)) {
     return error("Error occurred during non-interactive lisp execution: " +
                  std::get<std::string>(ret));
@@ -441,7 +460,8 @@ boole::parse_lisp() {
     auto res = generate_result(std::get<op_ref>(ret));
     return res;
   }
-  return error("Lisp expression does not return expression!");
+  return error("Lisp expression does not return expression!",
+               result::LISP_NO_RETURN_EXPRESSION);
 }
 
 result
@@ -470,6 +490,21 @@ boole::parse_expr() {
   }
 
   result iff = parse_iff();
+  if(iff)
+    std::cout << *iff << std::endl;
+  else
+    std::cout << "NO IFF CUR: " << cur_ << " next " << next_ << std::endl;
+  while(!iff && iff.code == result::INCORRECT_IDENT_FOLLOWUP &&
+        next_.type == token::LPar) {
+    result lispres = parse_lisp(1);
+    if(!lispres && lispres.code != result::LISP_NO_RETURN_EXPRESSION)
+      return lispres;
+  }
+  while(iff && cur_.type == token::LPar) {
+    result lispres = parse_lisp();
+    if(!lispres && lispres.code != result::LISP_NO_RETURN_EXPRESSION)
+      return lispres;
+  }
   return iff;
 }
 
@@ -482,16 +517,18 @@ boole::operator()() {
   result res;
   res = parse_expr();
 
-  if(cur_.type != token::None) {
+  if(cur_.type != token::None && cur_.type != token::Unknown) {
     std::string msg;
     if(!res) {
       msg = " - and error during parsing: " + res.message;
     }
 
+    std::stringstream tok;
+    tok << cur_;
     return error(
       std::string(
         "Did not finish parsing, last token was not consumed! Token: ") +
-      token_type_str[cur_.type] + " (ident=" + cur_.ident + ")" + msg);
+      tok.str() + msg);
   }
 
   if(!res) {
@@ -506,6 +543,7 @@ operator<<(std::ostream& o, const boole::token& t) {
   o << token_type_str[t.type];
   if(t.type == boole::token::Ident)
     o << "{" << t.ident << "}";
+  o << "@" << t.line << ":" << t.col;
   return o;
 }
 }

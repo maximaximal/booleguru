@@ -35,9 +35,12 @@ base::generate_result(expression::op_ref expr) {
 }
 
 result
-base::error(std::string_view error) {
+base::error(std::string_view error, int code) {
   return result{ .line = line_,
                  .column = column_,
-                 .message{ std::string(error) } };
+                 .message{
+                   std::string(error),
+                 },
+                 .code = static_cast<result::error_code>(code) };
 }
 }

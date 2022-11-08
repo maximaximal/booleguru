@@ -25,7 +25,7 @@ class base {
   int column_ = 0;
 
   result generate_result(expression::op_ref expr);
-  result error(std::string_view error);
+  result error(std::string_view error, int code = 0);
 
   public:
   base(std::istream& in,

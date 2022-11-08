@@ -2,8 +2,8 @@
 
 #include <cassert>
 #include <limits>
-#include <stack>
 #include <string>
+#include <vector>
 
 namespace booleguru::parse {
 /** @brief Tracks s-expressions while parsing a stream.
@@ -17,7 +17,7 @@ namespace booleguru::parse {
 
 class sexpr_tracker {
   std::string str_;
-  std::stack<size_t> scope_;
+  std::vector<size_t> scope_;
   size_t last_popped_scope_ = 0;
 
   public:
@@ -30,15 +30,15 @@ class sexpr_tracker {
         if(scope_.empty()) {
           str_.clear();
         }
-        scope_.push(str_.size());
+        scope_.push_back(str_.size());
         str_.push_back('(');
         return;
       case ')': {
         if(scope_.empty()) {
           return;
         }
-        last_popped_scope_ = scope_.top();
-        scope_.pop();
+        last_popped_scope_ = scope_.back();
+        scope_.pop_back();
         str_.push_back(')');
         return;
       }
@@ -47,8 +47,11 @@ class sexpr_tracker {
       str_.push_back(c);
   }
 
-  inline const char* str() const noexcept {
-    return str_.c_str() + last_popped_scope_;
+  inline const char* str(size_t depth = 1) const noexcept {
+    size_t s = scope_.size();
+    if(s >= depth)
+      s -= depth;
+    return str_.c_str() + scope_[s];
   }
 };
 }

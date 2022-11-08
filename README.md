@@ -37,6 +37,16 @@ Optimized expression transformations, optimizations, etc..
 
 Parses inputs (qcir, qdimacs, smtlib, etc). Produces expressions and/or output.
 
+Inline-Lisp: Not possible, when no operators have to be between expressions. If
+I force operators everywhere, I cannot do meta-definitions. I would have to
+include other files using some other mechanism. With purely inline lisp, I'd put
+some operator somewhere, and as soon as the operator is missing, parsing breaks
+and lisp is executed. I'd have to define a sort of extra-syntax using e.g. []
+that is then run as a program and that is outside the expression tree.
+
+Counter example: (print (var 'a)). Is (var 'a) an expression that should be run
+on it's own and print just some variable, or is (print (var 'a)) the expression?
+
 ### Solve / Evaluate / Execute Formulas `booleguru::solve`
 
 Call a SAT solver to actually solve a formula. Could also include QBF solvers

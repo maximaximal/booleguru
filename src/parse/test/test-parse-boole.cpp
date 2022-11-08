@@ -80,7 +80,7 @@ TEST_CASE("Parse formula containing lisp code") {
   std::string_view input = GENERATE("a (list 'nil)",
                                     "a (print (var 'test))",
                                     "(var 'a) & a",
-                                    "(print (values 'demo 'demo)) a");
+                                    "(print (values 'demo 'demo)) & a");
   auto is = isviewstream(input);
   boole parser(is);
   auto res = parser();

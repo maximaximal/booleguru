@@ -25,6 +25,20 @@ class boole : public base {
     static const char* token_type_str[];
     static const char* token_type_sym[];
 
+    constexpr inline bool is_binop_operator() const {
+      switch(type) {
+        case Equivalence:
+        case Implies:
+        case Seilpmi:
+        case Or:
+        case And:
+        case Not:
+          return true;
+        default:
+          return false;
+      }
+    }
+
     token_type type = None;
 
     token();
@@ -68,7 +82,7 @@ class boole : public base {
   result parse_not();
   result parse_basic();
   result parse_expr();
-  result parse_lisp();
+  result parse_lisp(int paren_level = 1);
 
   friend std::ostream& operator<<(std::ostream&, const token& t);
 
