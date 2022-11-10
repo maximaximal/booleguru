@@ -7,10 +7,6 @@
 
 (ffi:def-enum op-type (:exists :forall :equi :impl :lpmi :or :and :not :var))
 
-(ffi:clines "#include <string>")
-(ffi:clines "#include <booleguru/expression/var_manager.hpp>")
-(ffi:clines "#include <booleguru/expression/op_manager.hpp>")
-
 (ffi:def-foreign-type variable-id :uint32_t)
 (ffi:def-foreign-type op-id :uint32_t)
 
