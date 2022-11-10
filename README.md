@@ -72,6 +72,9 @@ idea for portability, which stays a high priority for this project.
 ECL also is the gateway to other languages. It provides functions to execute
 code.
 
+ECL is currently being ported to the web, it should actually be somehow possible
+to use it then: https://old.reddit.com/r/lisp/comments/xx92w8/ecl_running_in_a_browser_poc/
+
 ### Internal API `booleguru::api`
 
 Used to bind multiple languages into booleguru. Uses stuff from everywhere.
