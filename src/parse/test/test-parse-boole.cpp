@@ -73,6 +73,7 @@ TEST_CASE("Parse formula containing lisp code") {
     "a & (var \"b\")",
     "(var \"a\") & b",
     "(a & (var \"b\"))",
+    "(a & (var 'b)) :(b-var-rename *last-op* 'b \"b\")",
     "(var \"a\") & (var \"b\")",
     "(b-and (var \"a\") (var \"b\"))",
     "(b-and (var \"a\") (var \"b\")) :(b-and (var \"a\") (var \"b\"))",

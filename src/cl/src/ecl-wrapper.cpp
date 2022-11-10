@@ -80,7 +80,12 @@ clfun_get_varop_id(cl_object name) {
 
 cl_object
 clfun_varnames_extend(cl_object left, cl_object right) {
-  if(SYMBOLP(left) || ECL_STRINGP(left)) {
+  if(SYMBOLP(left))
+    left = cl_symbol_name(left);
+  if(SYMBOLP(right))
+    right = cl_symbol_name(right);
+
+  if(ECL_STRINGP(left)) {
     expression::op_ref r;
     if(auto error = cl_object_conv(right, r)) {
       return *error;
@@ -89,7 +94,7 @@ clfun_varnames_extend(cl_object left, cl_object right) {
     auto ex = transform::variable_extend(ecl_string_to_string(left), "");
     auto res = ex(r);
     return ecl_make_uint32_t(res.get_id());
-  } else if(SYMBOLP(right) || ECL_STRINGP(right)) {
+  } else if(ECL_STRINGP(right)) {
     expression::op_ref l;
     if(auto error = cl_object_conv(left, l)) {
       return *error;
@@ -112,6 +117,8 @@ clfun_var_rename(cl_object op, cl_object oldname, cl_object newname) {
 
   std::string oldname_;
   std::string newname_;
+  if(ECL_SYMBOLP(oldname))
+    oldname = cl_symbol_name(oldname);
   if(ECL_STRINGP(oldname)) {
     oldname_ = ecl_string_to_string(oldname);
   } else if(ECL_FIXNUMP(oldname)) {
@@ -125,6 +132,8 @@ clfun_var_rename(cl_object op, cl_object oldname, cl_object newname) {
     oldname_ = op_manager->vars()[oldname_varop->var.v]->name;
   }
 
+  if(ECL_SYMBOLP(newname))
+    newname = cl_symbol_name(newname);
   if(ECL_STRINGP(newname)) {
     newname_ = ecl_string_to_string(newname);
   } else if(ECL_FIXNUMP(newname)) {
