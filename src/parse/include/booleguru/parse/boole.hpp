@@ -1,5 +1,7 @@
 #pragma once
 
+#include <variant>
+
 #include "base.hpp"
 #include "sexpr-tracker.hpp"
 
@@ -9,6 +11,7 @@ class boole : public base {
   struct token {
     enum token_type {
       Ident,
+      SubstitutingLPar,
       LPar,
       RPar,
       Exists,
@@ -59,6 +62,7 @@ class boole : public base {
   bool seilpmi_ = false;
   bool equivalent_ = false;
   bool middledash_ = false;
+  bool colon_ = false;
 
   bool unicode_op_prefix1_ = false;
   bool unicode_op_prefix2_ = false;
@@ -68,8 +72,9 @@ class boole : public base {
   char c_ = 0;
   bool c_processed_ = true;
   bool c_appended_ = true;
+  bool scanner_in_error_state_ = false;
 
-  bool next(bool lispmode = false);
+  std::variant<bool, result> next(bool lispmode = false);
 
   template<expression::op_type type, typename Functor>
   result parse_assoc_op(Functor next);

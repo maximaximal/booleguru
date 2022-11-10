@@ -56,7 +56,7 @@ TEST_CASE("Parse example boole formulas and check the resulting expressions") {
 }
 
 TEST_CASE("Parse invalid boolean formulas") {
-  std::string_view input = GENERATE("a b a");
+  std::string_view input = GENERATE("a b a", "a & :(b)", "a :( b", "a : b");
   auto is = isviewstream(input);
   boole parser(is);
   auto res = parser();
@@ -69,11 +69,15 @@ TEST_CASE("Parse invalid boolean formulas") {
 }
 
 TEST_CASE("Parse formula containing lisp code") {
-  std::string_view input = GENERATE("a & (var \"b\")",
-                                    "(var \"a\") & b",
-                                    "(a & (var \"b\"))",
-                                    "(var \"a\") & (var \"b\")",
-                                    "(b-and (var \"a\") (var \"b\"))");
+  std::string_view input =
+    GENERATE("a & (var \"b\")",
+             "(var \"a\") & b",
+             "(a & (var \"b\"))",
+             "(var \"a\") & (var \"b\")",
+             "(b-and (var \"a\") (var \"b\"))",
+             "(b-and (var \"a\") (var \"b\")) :(b-and (var \"a\") (var \"b\"))",
+             "(b-and (var \"a\") (var \"b\")) :(b-and (var \"aa\") (var "
+             "\"bb\")) :(b-and (var \"a\") (var \"b\"))");
   auto is = isviewstream(input);
   boole parser(is);
   auto res = parser();
