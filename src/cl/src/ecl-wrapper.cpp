@@ -7,11 +7,15 @@
 #include <booleguru/expression/op_manager.hpp>
 #include <booleguru/expression/var_manager.hpp>
 
+#include <booleguru/transform/variable_extend.hpp>
+#include <booleguru/transform/variable_rename.hpp>
+
 #include <iostream>
 
 // Interesting: https://lambdafaktorie.com/embedding-lisp-in-c-a-recipe/
 //
 // Another good example: https://gist.github.com/vwood/662109
+// Another one: https://github.com/earl-ducaine/stupid-ecl-tricks-1
 
 extern "C" {
 #include <init-wrapper.h>
@@ -72,6 +76,72 @@ clfun_get_varop_id(cl_object name) {
     op_manager->get(expression::op(expression::op_type::Var, varid, 0));
 
   return ecl_make_uint32_t(ref.get_id());
+}
+
+cl_object
+clfun_varnames_extend(cl_object left, cl_object right) {
+  if(SYMBOLP(left) || ECL_STRINGP(left)) {
+    expression::op_ref r;
+    if(auto error = cl_object_conv(right, r)) {
+      return *error;
+    }
+
+    auto ex = transform::variable_extend(ecl_string_to_string(left), "");
+    auto res = ex(r);
+    return ecl_make_uint32_t(res.get_id());
+  } else if(SYMBOLP(right) || ECL_STRINGP(right)) {
+    expression::op_ref l;
+    if(auto error = cl_object_conv(left, l)) {
+      return *error;
+    }
+
+    auto ex = transform::variable_extend("", ecl_string_to_string(right));
+    auto res = ex(l);
+    return ecl_make_uint32_t(res.get_id());
+  } else {
+    return make_type_error("'left", "'string");
+  }
+}
+
+cl_object
+clfun_var_rename(cl_object op, cl_object oldname, cl_object newname) {
+  expression::op_ref o;
+  if(auto error = cl_object_conv(op, o)) {
+    return *error;
+  }
+
+  std::string oldname_;
+  std::string newname_;
+  if(ECL_STRINGP(oldname)) {
+    oldname_ = ecl_string_to_string(oldname);
+  } else if(ECL_FIXNUMP(oldname)) {
+    expression::op_ref oldname_varop;
+    if(auto error = cl_object_conv(oldname, oldname_varop)) {
+      return *error;
+    }
+    if(oldname_varop->type != expression::op_type::Var) {
+      return make_type_error("'oldname", "'string");
+    }
+    oldname_ = op_manager->vars()[oldname_varop->var.v]->name;
+  }
+
+  if(ECL_STRINGP(newname)) {
+    newname_ = ecl_string_to_string(newname);
+  } else if(ECL_FIXNUMP(newname)) {
+    expression::op_ref newname_varop;
+    if(auto error = cl_object_conv(newname, newname_varop)) {
+      return *error;
+    }
+    if(newname_varop->type != expression::op_type::Var) {
+      return make_type_error("'newname", "'string");
+    }
+    newname_ = op_manager->vars()[newname_varop->var.v]->name;
+  }
+
+  auto renamer =
+    transform::variable_rename(op_manager->vars(), oldname_, newname_);
+  auto renamed = renamer(o);
+  return ecl_make_uint32_t(renamed.get_id());
 }
 
 cl_object
@@ -145,6 +215,8 @@ ecl_wrapper::ecl_wrapper() {
 
   clfun_eval = cl_eval(c_string_to_object("#'eval-sexp-and-catch-errors"));
   clfun_b_make_op = cl_eval(c_string_to_object("#'b-make-op"));
+  clfun_b_define_global_last_op =
+    cl_eval(c_string_to_object("#'b-define-global-last-op"));
   cltype_variable = c_string_to_object("variable");
   cltype_op = c_string_to_object("op");
 
@@ -156,6 +228,9 @@ ecl_wrapper::ecl_wrapper() {
   DEFUN("b-impl", +clfun_op_impl, 2);
   DEFUN("b-lpmi", +clfun_op_lpmi, 2);
   DEFUN("b-not", clfun_op_not, 1);
+
+  DEFUN("b-vars-extend", clfun_varnames_extend, 2);
+  DEFUN("b-var-rename", clfun_var_rename, 3);
 
   DEFUN("booleguru-", clfun_get_varop_id, 1);
 }
@@ -172,8 +247,12 @@ ecl_wrapper::get() {
 
 ecl_wrapper::supported_return_types
 ecl_wrapper::eval(const char* code,
-                  std::shared_ptr<expression::op_manager> ops) {
+                  std::shared_ptr<expression::op_manager> ops,
+                  std::optional<uint32_t> last_op) {
   cl_object form = c_string_to_object(code);
+
+  if(last_op)
+    cl_funcall(2, clfun_b_define_global_last_op, ecl_make_uint32_t(*last_op));
 
   cl_object ret;
 

@@ -87,7 +87,8 @@ class boole : public base {
   result parse_not();
   result parse_basic();
   result parse_expr();
-  result parse_lisp(int paren_level = 1);
+  result parse_lisp(int paren_level = 1,
+                    std::optional<uint32_t> last_op = std::nullopt);
 
   friend std::ostream& operator<<(std::ostream&, const token& t);
 

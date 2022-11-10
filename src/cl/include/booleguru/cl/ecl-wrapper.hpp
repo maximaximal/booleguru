@@ -31,7 +31,8 @@ class ecl_wrapper {
     std::variant<std::monostate, long int, std::string, expression::op_ref>;
   supported_return_types eval(
     const char* code,
-    std::shared_ptr<expression::op_manager> ops = nullptr);
+    std::shared_ptr<expression::op_manager> ops = nullptr,
+    std::optional<uint32_t> last_op = std::nullopt);
 
   void interactive_debugger(bool enable);
 };

@@ -77,7 +77,8 @@ TEST_CASE("Parse formula containing lisp code") {
              "(b-and (var \"a\") (var \"b\"))",
              "(b-and (var \"a\") (var \"b\")) :(b-and (var \"a\") (var \"b\"))",
              "(b-and (var \"a\") (var \"b\")) :(b-and (var \"aa\") (var "
-             "\"bb\")) :(b-and (var \"a\") (var \"b\"))");
+             "\"bb\")) :(b-and (var \"a\") (var \"b\"))",
+             "(b-and (var \"a\") (var \"b_\")) :(b-var-rename *last-op* \"b_\" \"b\")");
   auto is = isviewstream(input);
   boole parser(is);
   auto res = parser();

@@ -454,7 +454,7 @@ boole::parse_basic() {
 }
 
 result
-boole::parse_lisp(int paren_level) {
+boole::parse_lisp(int paren_level, std::optional<uint32_t> last_op) {
   int p = paren_level;
   while(next_.type != token::None && p != 0) {
     NEXT_TRUE_OR_RETURN_;
@@ -473,7 +473,7 @@ boole::parse_lisp(int paren_level) {
   NEXT_OR_RETURN_;
 
   cl::ecl_wrapper& ecl = cl::ecl_wrapper::get();
-  auto ret = ecl.eval(sexp_.str(0), ops_);
+  auto ret = ecl.eval(sexp_.str(0), ops_, last_op);
 
   NEXT_OR_RETURN_;
 
@@ -521,7 +521,10 @@ boole::parse_expr() {
   result iff = parse_iff();
 
   while(cur_.type == token::SubstitutingLPar) {
-    auto ret = parse_lisp();
+    std::optional<uint32_t> lastop = std::nullopt;
+    if(iff)
+      lastop = iff->get_id();
+    auto ret = parse_lisp(1, lastop);
     if(ret || ret.code != result::LISP_NO_RETURN_EXPRESSION) {
       iff = ret;
     }

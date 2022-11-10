@@ -12,6 +12,9 @@
 
 (defstruct op (id 0 :type fixnum))
 
+(defun b-define-global-last-op (last-op)
+  (setq *last-op* last-op))
+
 (defun b-make-op (id)
   (make-op :id id))
 

@@ -1,18 +1,22 @@
 #pragma once
 
+#include <optional>
+
 #include "visitor.hpp"
 
 namespace booleguru::transform {
 struct variable_extend : public visitor<variable_extend> {
-  variable_extend(std::string suffix)
-    : suffix(suffix) {}
+  variable_extend(const std::string& prefix, const std::string& suffix)
+    : prefix(prefix)
+    , suffix(suffix) {}
 
+  std::string prefix;
   std::string suffix;
 
   inline op_ref walk_var(op_ref e) {
     auto& oldvar = e.get_mgr().vars().getobj(e->var.v);
-    auto newvar =
-      e.get_mgr().vars().get(expression::variable{ oldvar.name + suffix });
+    auto newvar = e.get_mgr().vars().get(
+      expression::variable{ prefix + oldvar.name + suffix });
     return e.get_mgr().get(
       expression::op(expression::op_type::Var, newvar.get_id(), 0));
   };

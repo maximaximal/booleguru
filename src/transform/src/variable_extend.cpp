@@ -8,7 +8,7 @@ using namespace expression;
 op_ref
 operator+(op_ref& e, const std::string& s) {
   if(e->type != op_type::Var) {
-    return variable_extend(s)(e);
+    return variable_extend("", s)(e);
   } else {
     auto v = e->var.v;
     auto var_name = e.get_mgr().vars()[v]->name;
