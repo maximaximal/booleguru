@@ -16,6 +16,7 @@ TEST_CASE("Parse example boole formulas and check the resulting expressions") {
                                     "(a | a | b | b)",
                                     "(a & (a -> b))",
                                     "(a & b & c)",
+                                    "(a & b ^ c)",
                                     "(!a & b & c)",
                                     "(!a & !b & c)",
                                     "(!a & !b & !c)",

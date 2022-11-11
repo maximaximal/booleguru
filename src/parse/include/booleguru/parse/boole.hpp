@@ -21,6 +21,7 @@ class boole : public base {
       Seilpmi,
       Or,
       And,
+      Xor,
       Not,
       Unknown,
       None
@@ -35,6 +36,7 @@ class boole : public base {
         case Seilpmi:
         case Or:
         case And:
+        case Xor:
         case Not:
           return true;
         default:
@@ -84,6 +86,7 @@ class boole : public base {
   result parse_seilpmi();
   result parse_or();
   result parse_and();
+  result parse_xor();
   result parse_not();
   result parse_basic();
   result parse_expr();

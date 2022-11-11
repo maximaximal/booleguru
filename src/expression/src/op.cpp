@@ -22,6 +22,8 @@ op_type_to_str(op_type t) {
       return "Not";
     case op_type::Or:
       return "Or";
+    case op_type::Xor:
+      return "Xor";
     case op_type::Var:
       return "Var";
     case op_type::None:
@@ -49,6 +51,8 @@ op_type_to_sym(op_type t) {
       return "!";
     case op_type::Or:
       return "|";
+    case op_type::Xor:
+      return "^";
     case op_type::None:
       return "(-)";
     default:

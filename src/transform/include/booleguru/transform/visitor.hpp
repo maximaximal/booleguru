@@ -36,6 +36,8 @@ struct visitor {
         return static_cast<Derived*>(this)->walk_impl(o);
       case op_type::Lpmi:
         return static_cast<Derived*>(this)->walk_lpmi(o);
+      case op_type::Xor:
+        return static_cast<Derived*>(this)->walk_xor(o);
       case op_type::Var:
         return static_cast<Derived*>(this)->walk_var(o);
       case op_type::None:
@@ -70,6 +72,9 @@ struct visitor {
   }
   inline ReturnType walk_lpmi(op_ref ex) {
     return ex.get_mgr().get(op(op_type::Lpmi, l(ex).get_id(), r(ex).get_id()));
+  }
+  inline ReturnType walk_xor(op_ref ex) {
+    return ex.get_mgr().get(op(op_type::Xor, l(ex).get_id(), r(ex).get_id()));
   }
   inline ReturnType walk_var(op_ref ex) { return ex; }
 

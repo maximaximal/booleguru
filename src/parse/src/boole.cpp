@@ -37,15 +37,13 @@ using namespace expression;
 boole::token::token() {}
 boole::token::~token() {}
 
-const char* token_type_str[] = { "Ident",       "SubstitutingLPar",
-                                 "LPar",        "RPar",
-                                 "Exists",      "Forall",
-                                 "Equivalence", "Implies",
-                                 "Seilpmi",     "Or",
-                                 "And",         "Not",
-                                 "Unknown",     "None" };
-const char* token_type_sym[] = { "_",  ":(", "(", ")", "?", "@", "<->",
-                                 "->", "<-", "|", "&", "!", ".", "." };
+const char* token_type_str[] = {
+  "Ident",       "SubstitutingLPar", "LPar",    "RPar", "Exists", "Forall",
+  "Equivalence", "Implies",          "Seilpmi", "Or",   "And",    "Xor",
+  "Not",         "Unknown",          "None"
+};
+const char* token_type_sym[] = { "_",  ":(", "(", ")", "?", "@", "<->", "->",
+                                 "<-", "|",  "&", "^", "!", ".", "." };
 
 boole::token&
 boole::token::operator=(token&& o) {
@@ -74,6 +72,8 @@ boole::token_type_from_op_type(expression::op_type t) {
       return token::Seilpmi;
     case op_type::Or:
       return token::Or;
+    case op_type::Xor:
+      return token::Xor;
     default:
       return token::None;
   }
@@ -317,6 +317,9 @@ boole::next(bool lispmode) {
           case '&':
             type = token::And;
             break;
+          case '^':
+            type = token::Xor;
+            break;
           case '?':
             type = token::Exists;
             break;
@@ -388,7 +391,11 @@ boole::parse_implies() {
 }
 result
 boole::parse_seilpmi() {
-  return parse_assoc_op<op_type::Lpmi>([this]() { return parse_or(); });
+  return parse_assoc_op<op_type::Lpmi>([this]() { return parse_xor(); });
+}
+result
+boole::parse_xor() {
+  return parse_assoc_op<op_type::Xor>([this]() { return parse_or(); });
 }
 result
 boole::parse_or() {

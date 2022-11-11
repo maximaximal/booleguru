@@ -18,6 +18,7 @@ enum class op_type {
   Lpmi,
   Or,
   And,
+  Xor,
   Not,
   Var,
 };
@@ -76,6 +77,7 @@ struct op {
       case op_type::Equi:
       case op_type::Impl:
       case op_type::Lpmi:
+      case op_type::Xor:
         bin.l = r1;
         bin.r = r2;
         break;
@@ -100,6 +102,7 @@ struct op {
       case op_type::Equi:
       case op_type::Impl:
       case op_type::Lpmi:
+      case op_type::Xor:
         return f(type, bin);
       case op_type::Var:
         return f(type, var);
@@ -135,6 +138,7 @@ struct op {
       case op_type::Equi:
       case op_type::Impl:
       case op_type::Lpmi:
+      case op_type::Xor:
         return bin == o.bin;
       case op_type::Var:
         return var == o.var;
