@@ -62,8 +62,8 @@ struct op {
     switch(type) {
       case op_type::Exists:
       case op_type::Forall:
-        quant.e = r1;
-        quant.v = r2;
+        quant.v = r1;
+        quant.e = r2;
         break;
       case op_type::Not:
         un.c = r1;

@@ -3,7 +3,6 @@
 
 #include <booleguru/expression/op.hpp>
 #include <booleguru/expression/op_manager.hpp>
-#include <booleguru/expression/script_manager.hpp>
 #include <booleguru/expression/var_manager.hpp>
 
 namespace booleguru::expression {
@@ -96,6 +95,16 @@ op_tostr_visit(std::ostream& o,
   return o;
 }
 
+op_ref
+op_ref::left() {
+  return get_mgr()[(*this)->left()];
+}
+
+op_ref
+op_ref::right() {
+  return get_mgr()[(*this)->right()];
+}
+
 template<>
 inline std::ostream&
 op_tostr_visit(std::ostream& o,
@@ -133,10 +142,8 @@ operator<<(std::ostream& o, const op_ref& e) {
   return o;
 }
 
-op_manager::op_manager(std::shared_ptr<var_manager> vars,
-                       std::shared_ptr<script_manager> scripts)
-  : vars_(vars)
-  , scripts_(scripts) {}
+op_manager::op_manager(std::shared_ptr<var_manager> vars)
+  : vars_(vars) {}
 
 op_manager::base::objref
 op_manager::insert(T&& obj, size_t obj_hash) {

@@ -4,7 +4,6 @@
 
 #include <booleguru/expression/op.hpp>
 #include <booleguru/expression/op_manager.hpp>
-#include <booleguru/expression/script_manager.hpp>
 #include <booleguru/expression/var_manager.hpp>
 
 namespace booleguru::transform {
@@ -14,7 +13,6 @@ struct visitor {
   using op_type = expression::op_type;
   using op = expression::op;
   using variable = expression::variable;
-  using script = expression::script;
 
   inline ReturnType operator()(op_ref o) {
     using namespace expression;

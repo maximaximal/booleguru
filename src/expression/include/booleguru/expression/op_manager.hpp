@@ -11,11 +11,13 @@ namespace booleguru::expression {
 struct op;
 class op_manager;
 class var_manager;
-class script_manager;
 
 class op_ref : public reference<op, op_manager> {
   public:
   using reference<op, op_manager>::reference;
+
+  op_ref left();
+  op_ref right();
 };
 
 class op_manager : public manager<op_ref, op_manager> {
@@ -24,18 +26,14 @@ class op_manager : public manager<op_ref, op_manager> {
 
   protected:
   std::shared_ptr<var_manager> vars_;
-  std::shared_ptr<script_manager> scripts_;
 
   public:
-  op_manager(std::shared_ptr<var_manager> vars,
-             std::shared_ptr<script_manager> scripts);
+  op_manager(std::shared_ptr<var_manager> vars);
 
   base::objref insert(T&& obj, size_t obj_hash);
 
   inline var_manager& vars() { return *vars_; }
   inline const var_manager& vars() const { return *vars_; }
-  inline script_manager& scripts() { return *scripts_; }
-  inline const script_manager& scripts() const { return *scripts_; }
 };
 
 op_ref inline
