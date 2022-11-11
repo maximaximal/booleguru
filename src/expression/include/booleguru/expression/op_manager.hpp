@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cassert>
+#include <functional>
 #include <memory>
 
 #include "manager.hpp"
@@ -34,6 +35,12 @@ class op_manager : public manager<op_ref, op_manager> {
 
   inline var_manager& vars() { return *vars_; }
   inline const var_manager& vars() const { return *vars_; }
+
+  using modifier = std::function<void(op&)>;
+  void modify_ops(modifier&& mod);
+  void unmark();
+  void mark_through_tree(uint32_t);
+  void reset_op_user_vars();
 };
 
 op_ref inline

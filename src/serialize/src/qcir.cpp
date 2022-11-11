@@ -1,12 +1,19 @@
 #include <booleguru/expression/op_manager.hpp>
 #include <booleguru/serialize/qcir.hpp>
 
+#include <booleguru/transform/eliminate_equivalence.hpp>
+#include <booleguru/transform/eliminate_implication.hpp>
+
 using namespace booleguru::expression;
 
 namespace booleguru::serialize {
 
 void
 qcir::walk_quant(op_ref o) {
+  if(o->mark)
+    return;
+  o->mark = true;
+
   std::string_view qtext = o->type == op_type::Forall ? "forall" : "exists";
   op_type t = o->type;
 
@@ -53,6 +60,9 @@ qcir::walk_quant(op_ref o) {
 
 std::vector<int32_t>
 qcir::walk_nargsop(std::string_view gatetype, op_ref o, bool last) {
+  if(o->mark)
+    return {};
+  o->mark = true;
   op_type t = o->type;
 
   std::vector<int32_t> ops;
@@ -105,23 +115,87 @@ qcir::walk_nargsop(std::string_view gatetype, op_ref o, bool last) {
 
 void
 qcir::walk_not(op_ref o) {
-  // Should never occur!
+  bool invert = false;
+  while(o->type == op_type::Not) {
+    o = o.left();
+    invert = !invert;
+  }
+
+  if(on_quant_prefix_) {
+    on_quant_prefix_ = false;
+    int32_t id = o.get_id();
+    if(invert)
+      id = -id;
+    o_ << "output(" << id << ")\n";
+  }
+
+  walk(o);
+}
+void
+qcir::walk_equi(op_ref o) {
+  // Never happens, is transformed out.
   assert(false);
 }
 void
-qcir::walk_equi(op_ref o) {}
+qcir::walk_impl(op_ref o) {
+  // Never happens, is transformed out.
+  assert(false);
+}
 void
-qcir::walk_impl(op_ref o) {}
+qcir::walk_lpmi(op_ref o) {
+  // Never happens, is transformed out.
+  assert(false);
+}
 void
-qcir::walk_lpmi(op_ref o) {}
+qcir::walk_and(op_ref o) {
+  if(on_quant_prefix_) {
+    on_quant_prefix_ = false;
+    o_ << "output(" << o.get_id() << ")\n";
+  }
+  walk_nargsop("and", o);
+}
 void
-qcir::walk_xor(op_ref o) {}
+qcir::walk_or(op_ref o) {
+  if(on_quant_prefix_) {
+    on_quant_prefix_ = false;
+    o_ << "output(" << o.get_id() << ")\n";
+  }
+  walk_nargsop("or", o);
+}
+void
+qcir::walk_xor(op_ref o) {
+  if(o->mark)
+    return;
+  o->mark = true;
+
+  auto w = [this](op_ref side) -> int32_t {
+    bool invert = false;
+    while(side->type == op_type::Not) {
+      side = side.left();
+      invert = !invert;
+    }
+    int32_t id = side.get_id();
+    if(invert)
+      id = -id;
+    walk(side);
+    return id;
+  };
+  int32_t left = w(o.left());
+  int32_t right = w(o.right());
+  o_ << o.get_id() << " = xor(" << left << ", " << right << ")\n";
+}
 void
 qcir::walk_var(op_ref o) {}
 
 void
 qcir::operator()(expression::op_ref op) {
   o_ << "#QCIR-G14\n";
-  walk(op);
+
+  auto op_ =
+    transform::eliminate_implication()(transform::eliminate_equivalence()(op));
+
+  // Using mark user flag for marking visited nodes.
+  op.get_mgr().unmark();
+  walk(op_);
 }
 }

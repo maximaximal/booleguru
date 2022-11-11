@@ -12,8 +12,8 @@ class qcir : public base<qcir> {
   inline void walk_exists(op_ref o) { walk_quant(o); }
   inline void walk_forall(op_ref o) { walk_quant(o); }
   void walk_not(op_ref o);
-  inline void walk_and(op_ref o) { walk_nargsop("and", o); }
-  inline void walk_or(op_ref o) { walk_nargsop("or", o); }
+  inline void walk_and(op_ref o);
+  inline void walk_or(op_ref o);
   void walk_equi(op_ref o);
   void walk_impl(op_ref o);
   void walk_lpmi(op_ref o);
