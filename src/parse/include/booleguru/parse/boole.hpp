@@ -1,6 +1,7 @@
 #pragma once
 
 #include <variant>
+#include <optional>
 
 #include "base.hpp"
 #include "sexpr-tracker.hpp"
