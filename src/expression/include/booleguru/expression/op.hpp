@@ -45,6 +45,8 @@ struct op {
     quantop quant;
   };
 
+  inline explicit constexpr op() {}
+
   inline explicit constexpr op(op_type type, uint32_t r1, uint32_t r2)
     : type(type)
     , mark(false)

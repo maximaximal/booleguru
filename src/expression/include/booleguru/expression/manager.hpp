@@ -24,6 +24,9 @@ class manager {
   manager(size_t size = 2048) {
     objects_.reserve(size);
     objects_map_.reserve(size);
+
+    // Id 0 breaks a lot of stuff, so don't allow id=0.
+    objects_.emplace_back();
   };
 
   constexpr inline R operator[](ref r) { return R(*static_cast<C*>(this), r); }

@@ -43,12 +43,12 @@ TEST_CASE("Serialize simple example QCIR formula") {
   CAPTURE(o.str());
 
   const char* expected = R"(#QCIR-G14 6
-free(2)
-forall(3)
-output(8)
-7 = exists(0, 1; 5)
-5 = and(0, 1, 2)
-8 = and(3, 7)
+free(3)
+forall(4)
+output(9)
+8 = exists(1, 2; 6)
+6 = and(1, 2, 3)
+9 = and(4, 8)
 )";
 
   REQUIRE(o.str() == expected);
@@ -87,12 +87,12 @@ TEST_CASE("Serialize simple example QCIR formula with some NOTs") {
   CAPTURE(o.str());
 
   const char* expected = R"(#QCIR-G14 6
-free(2)
-forall(3)
-output(-9)
-7 = exists(0, 1; 5)
-5 = and(0, 1, 2)
-9 = and(3, -7)
+free(3)
+forall(4)
+output(-10)
+8 = exists(1, 2; 6)
+6 = and(1, 2, 3)
+10 = and(4, -8)
 )";
 
   REQUIRE(o.str() == expected);
@@ -129,12 +129,12 @@ TEST_CASE("Serialize simple prenex example QCIR formula") {
   CAPTURE(o.str());
 
   const char* expected = R"(#QCIR-G14 6
-forall(0)
-exists(1, 2)
-output(8)
-3 = and(0, 1)
-7 = and(0, -1, 2)
-8 = or(3, 7)
+forall(1)
+exists(2, 3)
+output(9)
+4 = and(1, 2)
+8 = and(-1, -2, 3)
+9 = or(4, 8)
 )";
 
   REQUIRE(o.str() == expected);
