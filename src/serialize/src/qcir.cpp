@@ -217,7 +217,7 @@ qcir::walk_var(op_ref o) {
 
 void
 qcir::operator()(expression::op_ref op) {
-  auto op_ =
+  op =
     transform::eliminate_implication()(transform::eliminate_equivalence()(op));
 
   op.get_mgr().unmark();
@@ -262,7 +262,7 @@ qcir::operator()(expression::op_ref op) {
   dry_walk_ = true;
   number_of_variables_ = 0;
   on_quant_prefix_ = true;
-  walk(op_);
+  walk(op);
   dry_walk_ = false;
 
   op.get_mgr().unmark();
@@ -281,6 +281,6 @@ qcir::operator()(expression::op_ref op) {
     o_ << ")\n";
   }
 
-  walk(op_);
+  walk(op);
 }
 }
