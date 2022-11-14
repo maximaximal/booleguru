@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <variant>
+#include <optional>
 
 #include <booleguru/expression/op_manager.hpp>
 
