@@ -40,6 +40,12 @@ class op_manager : public manager<op_ref, op_manager> {
   void modify_ops(modifier&& mod);
   void unmark();
   void mark_through_tree(uint32_t);
+  void traverse_depth_first_through_tree(
+    uint32_t root,
+    std::function<void(uint32_t, op&)>& visit);
+  void traverse_unmarked_depth_first_through_tree(
+    uint32_t root,
+    std::function<void(uint32_t, op&)> visit);
   void reset_op_user_vars();
 };
 

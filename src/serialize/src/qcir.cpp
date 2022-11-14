@@ -4,6 +4,11 @@
 #include <booleguru/transform/eliminate_equivalence.hpp>
 #include <booleguru/transform/eliminate_implication.hpp>
 
+#include <algorithm>
+#include <vector>
+
+#include <iostream>
+
 using namespace booleguru::expression;
 
 namespace booleguru::serialize {
@@ -189,13 +194,60 @@ qcir::walk_var(op_ref o) {}
 
 void
 qcir::operator()(expression::op_ref op) {
-  o_ << "#QCIR-G14\n";
-
   auto op_ =
     transform::eliminate_implication()(transform::eliminate_equivalence()(op));
 
+  op.get_mgr().unmark();
+
+  std::vector<uint32_t> vars;
+  std::vector<uint32_t> quantified_vars;
+  auto visit = [&quantified_vars, &vars](uint32_t id,
+                                         expression::op& op) -> void {
+    op.mark = true;
+    switch(op.type) {
+      case expression::op_type::Var:
+        vars.push_back(op.var.v);
+        break;
+      case expression::op_type::Exists:
+      case expression::op_type::Forall:
+        quantified_vars.push_back(op.quant.v);
+        break;
+      default:
+        break;
+    }
+  };
+  op.get_mgr().traverse_unmarked_depth_first_through_tree(op.get_id(), visit);
+
+  std::sort(vars.begin(), vars.end());
+  std::sort(quantified_vars.begin(), quantified_vars.end());
+
+  std::vector<uint32_t> unquantified_vars;
+  std::set_difference(vars.begin(),
+                      vars.end(),
+                      quantified_vars.begin(),
+                      quantified_vars.end(),
+                      std::back_inserter(unquantified_vars));
+
+  auto var_to_op_id = [&op](uint32_t varid) -> uint32_t {
+    return op.get_mgr().get(expression::op(op_type::Var, varid, 0)).get_id();
+  };
+
   // Using mark user flag for marking visited nodes.
   op.get_mgr().unmark();
+
+  o_ << "#QCIR-G14\n";
+
+  if(!unquantified_vars.empty()) {
+    o_ << "free(";
+    auto v = unquantified_vars.begin();
+    o_ << var_to_op_id(*v);
+    ++v;
+    for(; v != unquantified_vars.end(); ++v) {
+      o_ << ", " << var_to_op_id(*v);
+    }
+    o_ << ")\n";
+  }
+
   walk(op_);
 }
 }

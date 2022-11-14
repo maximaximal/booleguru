@@ -235,4 +235,81 @@ op_manager::mark_through_tree(uint32_t root) {
     }
   }
 }
+void
+op_manager::traverse_depth_first_through_tree(
+  uint32_t root,
+  std::function<void(uint32_t, op&)>& visit) {
+  std::stack<uint32_t> unvisited;
+  unvisited.push(root);
+
+  while(!unvisited.empty()) {
+    uint32_t id = unvisited.top();
+    op& current = objects_[id];
+    unvisited.pop();
+
+    visit(id, current);
+
+    switch(current.type) {
+      case op_type::Exists:
+      case op_type::Forall:
+        unvisited.push(current.quant.e);
+        break;
+      case op_type::Not:
+        unvisited.push(current.un.c);
+        break;
+      case op_type::And:
+      case op_type::Or:
+      case op_type::Equi:
+      case op_type::Impl:
+      case op_type::Lpmi:
+      case op_type::Xor:
+        unvisited.push(current.bin.l);
+        unvisited.push(current.bin.r);
+        break;
+      case op_type::Var:
+      case op_type::None:
+        break;
+    }
+  }
+}
+void
+op_manager::traverse_unmarked_depth_first_through_tree(
+  uint32_t root,
+  std::function<void(uint32_t, op&)> visit) {
+  std::stack<uint32_t> unvisited;
+  unvisited.push(root);
+
+  while(!unvisited.empty()) {
+    uint32_t id = unvisited.top();
+    op& current = objects_[id];
+    unvisited.pop();
+
+    if(current.mark)
+      continue;
+
+    visit(id, current);
+
+    switch(current.type) {
+      case op_type::Exists:
+      case op_type::Forall:
+        unvisited.push(current.quant.e);
+        break;
+      case op_type::Not:
+        unvisited.push(current.un.c);
+        break;
+      case op_type::And:
+      case op_type::Or:
+      case op_type::Equi:
+      case op_type::Impl:
+      case op_type::Lpmi:
+      case op_type::Xor:
+        unvisited.push(current.bin.l);
+        unvisited.push(current.bin.r);
+        break;
+      case op_type::Var:
+      case op_type::None:
+        break;
+    }
+  }
+}
 }

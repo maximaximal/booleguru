@@ -43,6 +43,7 @@ TEST_CASE("Serialize simple example QCIR formula") {
   CAPTURE(o.str());
 
   const char* expected = R"(#QCIR-G14
+free(2)
 forall(3)
 output(8)
 7 = exists(0, 1; 5)
@@ -86,11 +87,54 @@ TEST_CASE("Serialize simple example QCIR formula with some NOTs") {
   CAPTURE(o.str());
 
   const char* expected = R"(#QCIR-G14
+free(2)
 forall(3)
 output(-9)
 7 = exists(0, 1; 5)
 5 = and(0, 1, 2)
 9 = and(3, -7)
+)";
+
+  REQUIRE(o.str() == expected);
+}
+
+TEST_CASE("Serialize simple prenex example QCIR formula") {
+  std::shared_ptr<op_manager> ops =
+    std::make_shared<op_manager>(std::make_shared<var_manager>());
+
+  auto var_v1 = ops->vars().get(variable{ "v1" });
+  auto var_v2 = ops->vars().get(variable{ "v2" });
+  auto var_v3 = ops->vars().get(variable{ "v3" });
+
+  auto op_v1 = ops->get(op(op_type::Var, var_v1.get_id(), 0));
+  auto op_v2 = ops->get(op(op_type::Var, var_v2.get_id(), 0));
+  auto op_v3 = ops->get(op(op_type::Var, var_v3.get_id(), 0));
+
+  auto op_g1 = op_v1 && op_v2;
+  auto op_g2 = !op_v1 && !op_v2 && op_v3;
+  auto op_ = op_g1 || op_g2;
+
+  auto ex_v3 =
+    ops->get(op(op_type::Exists, var_v3.get_id(), op_.get_id()));
+  auto ex_v2 =
+    ops->get(op(op_type::Exists, var_v2.get_id(), ex_v3.get_id()));
+  auto forall_v1 =
+    ops->get(op(op_type::Forall, var_v1.get_id(), ex_v2.get_id()));
+
+  std::stringstream o;
+  booleguru::serialize::qcir serializer(o);
+  serializer(forall_v1);
+
+  CAPTURE(forall_v1);
+  CAPTURE(o.str());
+
+  const char* expected = R"(#QCIR-G14
+forall(0)
+exists(1, 2)
+output(8)
+3 = and(0, 1)
+7 = and(0, -1, 2)
+8 = or(3, 7)
 )";
 
   REQUIRE(o.str() == expected);
