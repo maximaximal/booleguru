@@ -24,15 +24,24 @@ qcir::walk_quant(op_ref o) {
 
   bool first = true;
   if(!on_quant_prefix_) {
-    o_ << o.get_id() << " = ";
+    if(!dry_walk_)
+      o_ << o.get_id() << " = ";
+    else
+      ++number_of_variables_;
   }
   while(o->type == t) {
     auto v = o.get_mgr().get(op(op_type::Var, o->quant.v, 0)).get_id();
     if(first) {
-      o_ << qtext << "(" << v;
+      if(!dry_walk_)
+        o_ << qtext << "(" << v;
+      else
+        ++number_of_variables_;
       first = false;
     } else {
-      o_ << ", " << v;
+      if(!dry_walk_)
+        o_ << ", " << v;
+      else
+        ++number_of_variables_;
     }
     o = o.get_mgr()[o->quant.e];
   }
@@ -45,9 +54,11 @@ qcir::walk_quant(op_ref o) {
     had_invert = true;
   }
   if(!on_quant_prefix_) {
-    o_ << "; " << (invert ? "-" : "") << o.get_id();
+    if(!dry_walk_)
+      o_ << "; " << (invert ? "-" : "") << o.get_id();
   }
-  o_ << ")\n";
+  if(!dry_walk_)
+    o_ << ")\n";
 
   if(on_quant_prefix_) {
     if(o->type != op_type::Forall && o->type != op_type::Exists) {
@@ -56,7 +67,8 @@ qcir::walk_quant(op_ref o) {
       if(invert) {
         id = -id;
       }
-      o_ << "output(" << id << ")\n";
+      if(!dry_walk_)
+        o_ << "output(" << id << ")\n";
     }
   }
 
@@ -105,14 +117,19 @@ qcir::walk_nargsop(std::string_view gatetype, op_ref o, bool last) {
   }
 
   if(last) {
-    assert(ops.size() > 1);
-    o_ << o.get_id() << " = " << gatetype << "(" << ops.front();
-    for(size_t i = 1; i < ops.size(); ++i) {
-      o_ << ", " << ops[i];
-    }
-    o_ << ")\n";
+    if(dry_walk_) {
+      ++number_of_variables_;
+      return {};
+    } else {
+      assert(ops.size() > 1);
+      o_ << o.get_id() << " = " << gatetype << "(" << ops.front();
+      for(size_t i = 1; i < ops.size(); ++i) {
+        o_ << ", " << ops[i];
+      }
+      o_ << ")\n";
 
-    return {};
+      return {};
+    }
   } else {
     return ops;
   }
@@ -126,7 +143,7 @@ qcir::walk_not(op_ref o) {
     invert = !invert;
   }
 
-  if(on_quant_prefix_) {
+  if(on_quant_prefix_ && !dry_walk_) {
     on_quant_prefix_ = false;
     int32_t id = o.get_id();
     if(invert)
@@ -153,7 +170,7 @@ qcir::walk_lpmi(op_ref o) {
 }
 void
 qcir::walk_and(op_ref o) {
-  if(on_quant_prefix_) {
+  if(on_quant_prefix_ && !dry_walk_) {
     on_quant_prefix_ = false;
     o_ << "output(" << o.get_id() << ")\n";
   }
@@ -161,7 +178,7 @@ qcir::walk_and(op_ref o) {
 }
 void
 qcir::walk_or(op_ref o) {
-  if(on_quant_prefix_) {
+  if(on_quant_prefix_ && !dry_walk_) {
     on_quant_prefix_ = false;
     o_ << "output(" << o.get_id() << ")\n";
   }
@@ -187,7 +204,10 @@ qcir::walk_xor(op_ref o) {
   };
   int32_t left = w(o.left());
   int32_t right = w(o.right());
-  o_ << o.get_id() << " = xor(" << left << ", " << right << ")\n";
+  if(dry_walk_)
+    ++number_of_variables_;
+  else
+    o_ << o.get_id() << " = xor(" << left << ", " << right << ")\n";
 }
 void
 qcir::walk_var(op_ref o) {}
@@ -235,7 +255,16 @@ qcir::operator()(expression::op_ref op) {
   // Using mark user flag for marking visited nodes.
   op.get_mgr().unmark();
 
-  o_ << "#QCIR-G14\n";
+  dry_walk_ = true;
+  number_of_variables_ = 0;
+  on_quant_prefix_ = true;
+  walk(op_);
+  dry_walk_ = false;
+
+  op.get_mgr().unmark();
+  on_quant_prefix_ = true;
+
+  o_ << "#QCIR-G14 " << number_of_variables_ << "\n";
 
   if(!unquantified_vars.empty()) {
     o_ << "free(";

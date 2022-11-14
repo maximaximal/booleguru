@@ -42,7 +42,7 @@ TEST_CASE("Serialize simple example QCIR formula") {
   CAPTURE(op_complete);
   CAPTURE(o.str());
 
-  const char* expected = R"(#QCIR-G14
+  const char* expected = R"(#QCIR-G14 6
 free(2)
 forall(3)
 output(8)
@@ -86,7 +86,7 @@ TEST_CASE("Serialize simple example QCIR formula with some NOTs") {
   CAPTURE(op_complete);
   CAPTURE(o.str());
 
-  const char* expected = R"(#QCIR-G14
+  const char* expected = R"(#QCIR-G14 6
 free(2)
 forall(3)
 output(-9)
@@ -128,7 +128,7 @@ TEST_CASE("Serialize simple prenex example QCIR formula") {
   CAPTURE(forall_v1);
   CAPTURE(o.str());
 
-  const char* expected = R"(#QCIR-G14
+  const char* expected = R"(#QCIR-G14 6
 forall(0)
 exists(1, 2)
 output(8)
