@@ -11,7 +11,7 @@ class op_manager;
 }
 
 namespace booleguru::parse {
-class result;
+struct result;
 
 class base {
   protected:

@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <iomanip>
 
 #include <booleguru/parse/boole.hpp>
 #include <booleguru/parse/result.hpp>
@@ -31,6 +32,7 @@ main(int argc, char* argv[]) {
   }
 
   std::ifstream in_file(argv[1]);
+  in_file >> std::noskipws;
   booleguru::parse::boole boole_in(in_file);
   auto in_op = boole_in();
   if(!in_op) {

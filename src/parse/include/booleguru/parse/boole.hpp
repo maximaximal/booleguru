@@ -1,7 +1,7 @@
 #pragma once
 
-#include <variant>
 #include <optional>
+#include <variant>
 
 #include "base.hpp"
 #include "sexpr-tracker.hpp"
@@ -48,11 +48,12 @@ class boole : public base {
     token_type type = None;
 
     token();
+    token(const token& o) = default;
     ~token();
     token& operator=(token&& o);
 
     std::string ident;
-    uint64_t line = 0, col = 0;
+    uint64_t line = 1, col = 1;
   };
 
   token::token_type token_type_from_op_type(expression::op_type t);
@@ -66,6 +67,7 @@ class boole : public base {
   bool equivalent_ = false;
   bool middledash_ = false;
   bool colon_ = false;
+  bool eval_lisp_ = false;
 
   bool unicode_op_prefix1_ = false;
   bool unicode_op_prefix2_ = false;
@@ -98,6 +100,8 @@ class boole : public base {
 
   public:
   using base::base;
+
+  void eval(bool enable) { eval_lisp_ = enable; }
 
   virtual result operator()();
 };

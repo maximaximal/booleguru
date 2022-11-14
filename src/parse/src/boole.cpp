@@ -166,7 +166,7 @@ boole::next(bool lispmode) {
         return true;
       }
 
-      auto ident_end_detect = [this, &type, &ident]() -> bool {
+      auto ident_end_detect = [&type, &ident]() -> bool {
         // Unicode characters over and no ident was given!
         if(!ident.empty()) {
           type = token::Ident;
@@ -425,7 +425,7 @@ result
 boole::parse_basic() {
   if(cur_.type == token::LPar) {
     NEXT_OR_RETURN_;
-    if(next_.type == token::RPar) {
+    if(next_.type == token::RPar && eval_lisp_) {
       // This is a lisp expression, not a boolean expression! Does not matter
       // what cur_ is, as this is just (something). Also: We would not be here
       // if the expression before was invalid. This means, that this MUST be a
@@ -528,6 +528,10 @@ boole::parse_expr() {
   result iff = parse_iff();
 
   while(cur_.type == token::SubstitutingLPar) {
+    if(!eval_lisp_) {
+      return error(
+        "Lisp eval disabled! Cannot substitute by result of lisp expression.");
+    }
     std::optional<uint32_t> lastop = std::nullopt;
     if(iff)
       lastop = iff->get_id();

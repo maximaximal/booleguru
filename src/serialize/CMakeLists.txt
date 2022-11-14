@@ -11,3 +11,7 @@ target_link_libraries(booleguru-serialize PUBLIC booleguru-expression booleguru-
 if(TARGET Catch2::Catch2)
   add_subdirectory(test)
 endif()
+
+if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+  target_link_libraries(booleguru-serialize PRIVATE -fsanitize=address)
+endif()

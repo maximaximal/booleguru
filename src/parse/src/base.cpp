@@ -10,19 +10,19 @@ base::base(std::istream& in,
            std::shared_ptr<expression::var_manager> vars,
 
            std::shared_ptr<expression::op_manager> ops)
-  : in_(in)
-  , vars_(vars)
-  , ops_(ops) {}
+  : vars_(vars)
+  , ops_(ops)
+  , in_(in) {}
 
 base::base(std::istream& in, base& b)
-  : in_(in)
-  , vars_(b.vars_)
-  , ops_(b.ops_) {}
+  : vars_(b.vars_)
+  , ops_(b.ops_)
+  , in_(in) {}
 
 base::base(std::istream& in)
-  : in_(in)
-  , vars_(std::make_shared<expression::var_manager>())
-  , ops_(std::make_shared<expression::op_manager>(vars_)) {}
+  : vars_(std::make_shared<expression::var_manager>())
+  , ops_(std::make_shared<expression::op_manager>(vars_))
+  , in_(in) {}
 
 base::~base() {}
 

@@ -49,3 +49,7 @@ target_link_libraries(booleguru-cl PUBLIC booleguru-expression booleguru-util bo
 if(TARGET Catch2::Catch2)
   add_subdirectory(test)
 endif()
+
+if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+  target_link_libraries(booleguru-cl PRIVATE -fsanitize=address)
+endif()

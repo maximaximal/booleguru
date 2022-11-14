@@ -46,12 +46,10 @@ qcir::walk_quant(op_ref o) {
     o = o.get_mgr()[o->quant.e];
   }
 
-  bool had_invert = false;
   bool invert = false;
   while(o->type == op_type::Not) {
     o = o.get_mgr()[o->un.c];
     invert = !invert;
-    had_invert = true;
   }
   if(!on_quant_prefix_) {
     if(!dry_walk_)
@@ -155,16 +153,19 @@ qcir::walk_not(op_ref o) {
 }
 void
 qcir::walk_equi(op_ref o) {
+  (void)o;
   // Never happens, is transformed out.
   assert(false);
 }
 void
 qcir::walk_impl(op_ref o) {
+  (void)o;
   // Never happens, is transformed out.
   assert(false);
 }
 void
 qcir::walk_lpmi(op_ref o) {
+  (void)o;
   // Never happens, is transformed out.
   assert(false);
 }
@@ -210,7 +211,9 @@ qcir::walk_xor(op_ref o) {
     o_ << o.get_id() << " = xor(" << left << ", " << right << ")\n";
 }
 void
-qcir::walk_var(op_ref o) {}
+qcir::walk_var(op_ref o) {
+  (void)o;
+}
 
 void
 qcir::operator()(expression::op_ref op) {
@@ -223,6 +226,7 @@ qcir::operator()(expression::op_ref op) {
   std::vector<uint32_t> quantified_vars;
   auto visit = [&quantified_vars, &vars](uint32_t id,
                                          expression::op& op) -> void {
+    (void)id;
     op.mark = true;
     switch(op.type) {
       case expression::op_type::Var:

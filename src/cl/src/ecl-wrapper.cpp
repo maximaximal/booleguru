@@ -211,11 +211,6 @@ clfun_op_not(cl_object a) {
   return ecl_make_uint32_t(res.get_id());
 }
 
-static cl_object
-ecl_call(const char* call) {
-  return cl_safe_eval(c_string_to_object(call), Cnil, Cnil);
-}
-
 ecl_wrapper::ecl_wrapper() {
   char* argv[] = { NULL };
   cl_boot(0, argv);
