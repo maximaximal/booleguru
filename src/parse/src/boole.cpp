@@ -435,7 +435,7 @@ boole::parse_basic() {
       // Okay, this is not just some (variable), but actually more content.
       // Could be a logical expression.
       result child = parse_expr();
-      if(child.code == result::INCORRECT_IDENT_FOLLOWUP) {
+      if(eval_lisp_ && child.code == result::INCORRECT_IDENT_FOLLOWUP) {
         return parse_lisp(next_.type == token::LPar ? 2 : 1);
       }
       NEXT_OR_RETURN_;
@@ -462,6 +462,7 @@ boole::parse_basic() {
 
 result
 boole::parse_lisp(int paren_level, std::optional<uint32_t> last_op) {
+  assert(eval_lisp_);
   int p = paren_level;
   while(next_.type != token::None && p != 0) {
     NEXT_TRUE_OR_RETURN_;
