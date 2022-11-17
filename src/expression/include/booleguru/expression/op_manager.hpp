@@ -29,6 +29,7 @@ class op_manager : public manager<op_ref, op_manager> {
   std::shared_ptr<var_manager> vars_;
 
   public:
+  op_manager();
   op_manager(std::shared_ptr<var_manager> vars);
 
   base::objref insert(T&& obj, size_t obj_hash);

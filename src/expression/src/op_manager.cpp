@@ -143,6 +143,9 @@ operator<<(std::ostream& o, const op_ref& e) {
   return o;
 }
 
+op_manager::op_manager()
+  : vars_(std::make_shared<var_manager>()) {}
+
 op_manager::op_manager(std::shared_ptr<var_manager> vars)
   : vars_(vars) {}
 

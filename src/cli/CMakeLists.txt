@@ -1,5 +1,8 @@
 set(SRCS
   src/main.cpp
+  src/argument.cpp
+  src/input_file.cpp
+  src/cli-processor.cpp
 )
 
 add_executable(booleguru ${SRCS})
