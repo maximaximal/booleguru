@@ -144,6 +144,8 @@ cli_processor::process_args_to_inputs(arg_vec& args) const {
 
 expression::op_ref
 cli_processor::process_input_file(const arg_vec& v) {
+  assert(v.size() >= 1);
+
   std::vector<argument> arguments;
   for(auto it = v.begin(); it != v.begin() + v.size() - 1; ++it) {
     const auto& arg = *it;
