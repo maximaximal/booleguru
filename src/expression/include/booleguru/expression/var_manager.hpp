@@ -1,7 +1,9 @@
 #pragma once
 
 #include <memory>
+#include <numeric>
 #include <string>
+#include <vector>
 
 #include "manager.hpp"
 #include "reference.hpp"
@@ -25,9 +27,26 @@ class var_ref : public reference<variable, var_manager> {
 };
 
 class var_manager : public manager<var_ref, var_manager> {
+  private:
+  std::vector<std::string> namespace_;
+
+  protected:
+  inline variable transform_(variable obj) {
+    if(namespace_.empty())
+      return obj;
+    else
+      return variable{ std::accumulate(
+                         namespace_.begin(), namespace_.end(), std::string{}) +
+                       obj.name };
+  }
+
   public:
   using base = manager<var_ref, var_manager>;
   using base::base;
+  friend class manager;
+
+  void push_namespace(std::string ns) { namespace_.push_back(ns); }
+  void pop_namespace() { namespace_.pop_back(); }
 };
 
 std::ostream&

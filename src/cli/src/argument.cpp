@@ -16,6 +16,8 @@ keyword_from_string_view(std::string_view str, std::string_view& param) {
           str == "boole" || str == "limboole") {
     param = str;
     return argument::type;
+  } else if(str == "ns" || str == "namespace") {
+    return argument::variable_namespace;
   }
 
   throw unknown_argument(std::string("unknown argument: ") + std::string(str));
@@ -39,6 +41,8 @@ variant_from_param(argument::keywords k, std::string_view param) {
         return argument::qdimacs;
       if(param == "boole" || param == "limboole")
         return argument::boole;
+    case argument::variable_namespace:
+      return param;
     default:
       break;
   }
@@ -52,9 +56,9 @@ argument::argument(std::string_view arg, std::string_view param)
   assert(arg.find('=') == std::string_view::npos);
 }
 argument::argument(std::string_view arg)
-  : argument(arg.find('=') != std::string_view::npos
-               ? arg.substr(0, arg.find('='))
-               : arg,
-             arg.find('=') != std::string_view::npos ? arg.substr(arg.find('='))
-                                                     : "") {}
+  : argument(
+      arg.find('=') != std::string_view::npos ? arg.substr(0, arg.find('='))
+                                              : arg,
+      arg.find('=') != std::string_view::npos ? arg.substr(arg.find('=') + 1)
+                                              : "") {}
 }

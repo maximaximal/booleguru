@@ -18,6 +18,7 @@ struct argument {
   enum keywords {
     type,
     eval,
+    variable_namespace,
     count_,
   };
 

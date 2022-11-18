@@ -9,6 +9,7 @@
 
 #include <booleguru/cli/input_file.hpp>
 #include <booleguru/expression/op_manager.hpp>
+#include <booleguru/expression/var_manager.hpp>
 #include <booleguru/parse/base.hpp>
 #include <booleguru/parse/boole.hpp>
 #include <booleguru/parse/result.hpp>
@@ -82,8 +83,15 @@ input_file::process() {
   // expression.
 
   parser_ = produce_parser(produce_istream());
-
+  std::string_view variable_namespace =
+    std::get<std::string_view>(args_[argument::variable_namespace]);
+  if(variable_namespace.length() > 0) {
+    ops_->vars().push_namespace(std::string(variable_namespace));
+  }
   auto res = (*parser_)();
+  if(variable_namespace.length() > 0) {
+    ops_->vars().pop_namespace();
+  }
   if(!res) {
     std::stringstream s;
     s << res;

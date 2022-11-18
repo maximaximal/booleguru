@@ -3,12 +3,15 @@
 #include <cstddef>
 #include <cstdint>
 
+#include <stack>
 #include <unordered_map>
 #include <vector>
 
 #include "op.hpp"
 
 namespace booleguru::expression {
+struct variable;
+
 template<typename R, typename C>
 class manager {
   public:
@@ -59,6 +62,9 @@ class manager {
   }
 
   constexpr inline R get(const T& obj) {
+    if constexpr(std::is_same<T, variable>()) {
+      obj = static_cast<C*>(this)->transform_(obj);
+    }
     auto obj_hash = obj.hash();
     R ref = static_cast<C*>(this)->get_from_map(obj, obj_hash);
     if(ref.valid())
@@ -67,6 +73,9 @@ class manager {
     return static_cast<C*>(this)->insert(std::move(obj), obj_hash);
   }
   constexpr inline R get(T&& obj) {
+    if constexpr(std::is_same<T, variable>()) {
+      obj = static_cast<C*>(this)->transform_(obj);
+    }
     auto obj_hash = obj.hash();
     R ref = static_cast<C*>(this)->get_from_map(obj, obj_hash);
     if(ref.valid())

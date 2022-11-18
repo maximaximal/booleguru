@@ -197,7 +197,8 @@ cli_processor::process_input_file(const arg_vec& v) {
     if(arg.size() > 1 && arg.at(0) == '-' && arg.at(1) == '-') {
       std::string_view a1 = arg.substr(2);
       auto next = it + 1;
-      if(next != v.end() && next->size() > 0 && next->at(0) != '-') {
+      if(next != v.end() && next + 1 != v.end() && next->size() > 0 &&
+         next->at(0) != '-') {
         arguments.emplace_back(a1, *next);
       } else {
         arguments.emplace_back(a1);

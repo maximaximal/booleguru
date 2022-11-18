@@ -31,7 +31,8 @@ class input_file {
   // Default arguments for input files.
   argument::param_variant args_[argument::keywords::count_] = {
     argument::boole, /* type */
-    false            /* eval */
+    false,           /* eval */
+    ""               /* variable namespace */
   };
 
   struct internal;
