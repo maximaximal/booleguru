@@ -46,7 +46,7 @@ class cli_processor {
   using arg_stream = std::vector<arg_variant>;
 
   explicit cli_processor(arg_vec args);
-  explicit cli_processor(int argc, const char* argv[])
+  explicit cli_processor(int argc, char* argv[])
     : cli_processor(arg_vec(argv + 1, argv + argc)) {}
 
   expression::op_ref process();

@@ -35,6 +35,7 @@ class op_manager : public manager<op_ref, op_manager> {
   base::objref insert(T&& obj, size_t obj_hash);
 
   inline var_manager& vars() { return *vars_; }
+  inline std::shared_ptr<var_manager> vars_ptr() { return vars_; }
   inline const var_manager& vars() const { return *vars_; }
 
   using modifier = std::function<void(op&)>;

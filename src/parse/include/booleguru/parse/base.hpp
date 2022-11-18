@@ -29,6 +29,7 @@ class base {
   base(std::istream& in,
        std::shared_ptr<expression::var_manager> vars,
        std::shared_ptr<expression::op_manager> ops);
+  base(std::istream& in, std::shared_ptr<expression::op_manager> ops);
 
   base(std::istream& in, base& b);
 

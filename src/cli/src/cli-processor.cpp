@@ -7,10 +7,11 @@
 #include <cassert>
 #include <string>
 #include <unordered_map>
+#include <iostream>
 
 #define CUR_IS(OP)                              \
   arg_op* o = std::get_if<arg_op>(&cur_.get()); \
-  *o == OP
+  o && *o == OP
 
 namespace booleguru::cli {
 
@@ -160,7 +161,7 @@ cli_processor::process_input_file(const arg_vec& v) {
   for(auto it = v.begin(); it != v.begin() + v.size() - 1; ++it) {
     const auto& arg = *it;
     if(arg.size() > 1 && arg.at(0) == '-' && arg.at(1) == '-') {
-      std::string_view a1 = arg;
+      std::string_view a1 = arg.substr(2);
       auto next = it + 1;
       if(next != v.end() && next->size() > 0 && next->at(0) != '-') {
         arguments.emplace_back(a1, *next);
@@ -170,7 +171,7 @@ cli_processor::process_input_file(const arg_vec& v) {
     }
   }
   std::string_view path = v[v.size() - 1];
-  input_file f(path, std::move(arguments));
+  input_file f(path, std::move(arguments), ops_);
   return f.process();
 }
 

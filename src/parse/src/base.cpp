@@ -24,6 +24,11 @@ base::base(std::istream& in)
   , ops_(std::make_shared<expression::op_manager>(vars_))
   , in_(in) {}
 
+base::base(std::istream& in, std::shared_ptr<expression::op_manager> ops)
+  : vars_(ops->vars_ptr())
+  , ops_(ops)
+  , in_(in) {}
+
 base::~base() {}
 
 result

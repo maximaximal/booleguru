@@ -1,9 +1,14 @@
 #pragma once
 
+#include <stdexcept>
 #include <string_view>
 #include <variant>
 
 namespace booleguru::cli {
+struct unknown_argument : public std::invalid_argument {
+  using std::invalid_argument::invalid_argument;
+};
+
 struct argument {
   argument(std::string_view arg, std::string_view param);
   argument(std::string_view arg);
@@ -13,7 +18,7 @@ struct argument {
   enum keywords {
     type,
     eval,
-    unknown,
+    count_,
   };
 
   enum input_types { qcir, smtlib2, boole, qdimacs };

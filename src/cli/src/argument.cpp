@@ -18,7 +18,7 @@ keyword_from_string_view(std::string_view str, std::string_view& param) {
     return argument::type;
   }
 
-  return argument::unknown;
+  throw unknown_argument(std::string("unknown argument: ") + std::string(str));
 }
 
 static argument::param_variant

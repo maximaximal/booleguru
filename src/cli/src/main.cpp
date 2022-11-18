@@ -9,6 +9,8 @@
 #include <booleguru/parse/result.hpp>
 #include <booleguru/serialize/qcir.hpp>
 
+#include <booleguru/cli/cli-processor.hpp>
+
 /* The idea for the CLI of booleguru is a CLI expression parser. One should be
  * able to do similar things to the boole interface and just combine multiple
  * files, invert them, etc. So we have a collection of operations:
@@ -26,21 +28,12 @@ int
 main(int argc, char* argv[]) {
 
   // Preliminary stuff, just for testing!!
-  if(argc != 2) {
-    std::cerr << "REQUIRE FILE" << std::endl;
-    return EXIT_FAILURE;
-  }
+  booleguru::cli::cli_processor cli(argc, argv);
 
-  std::ifstream in_file(argv[1]);
-  in_file >> std::noskipws;
-  booleguru::parse::boole boole_in(in_file);
-  auto in_op = boole_in();
-  if(!in_op) {
-    std::cerr << "Could not parse in! Message: " << in_op.message << std::endl;
-    return EXIT_FAILURE;
-  }
+  auto result = cli.process();
+
   booleguru::serialize::qcir qcir_out(std::cout);
-  qcir_out(*in_op);
+  qcir_out(result);
 
   return EXIT_SUCCESS;
 }
