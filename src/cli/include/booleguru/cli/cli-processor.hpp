@@ -49,6 +49,8 @@ class cli_processor {
   explicit cli_processor(int argc, const char* argv[])
     : cli_processor(arg_vec(argv + 1, argv + argc)) {}
 
+  expression::op_ref process();
+
   private:
   arg_stream process_args_to_inputs(arg_vec& args) const;
 

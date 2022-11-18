@@ -36,6 +36,11 @@ cli_processor::cli_processor(arg_vec args)
   , next_(args_[1])
   , ops_(std::make_shared<expression::op_manager>()) {}
 
+expression::op_ref
+cli_processor::process() {
+  return process_expr();
+};
+
 template<cli_processor::arg_op type, typename Functor>
 expression::op_ref
 cli_processor::process_assoc_op(Functor next) {
@@ -139,6 +144,11 @@ cli_processor::process_args_to_inputs(arg_vec& args) const {
       inputs.emplace_back(curr);
     }
   }
+
+  // Margin at end to stop the parser.
+  inputs.emplace_back(None);
+  inputs.emplace_back(None);
+
   return inputs;
 }
 
