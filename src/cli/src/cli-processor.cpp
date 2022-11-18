@@ -117,7 +117,9 @@ cli_processor::process_basic() {
     throw no_input_file("Expected some input file");
   }
 
-  return process_input_file(std::get<arg_vec>(cur_.get()));
+  auto op = process_input_file(std::get<arg_vec>(cur_.get()));
+  next();
+  return op;
 }
 expression::op_ref
 cli_processor::process_expr() {
