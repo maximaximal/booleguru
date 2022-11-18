@@ -6,7 +6,7 @@
 using namespace booleguru::cli;
 
 TEST_CASE("Parse some CLI parameters and expect a missing input file") {
-  std::vector<std::string_view> args{ "--eval --not --smtlib2" };
+  std::vector<std::string_view> args{ "--eval", "--not", "--smtlib2" };
 
   {
     cli_processor cli_proc(args);

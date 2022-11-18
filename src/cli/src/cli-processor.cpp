@@ -5,13 +5,13 @@
 #include <booleguru/expression/op_manager.hpp>
 
 #include <cassert>
+#include <iostream>
 #include <string>
 #include <unordered_map>
-#include <iostream>
 
 #define CUR_IS(OP)                              \
   arg_op* o = std::get_if<arg_op>(&cur_.get()); \
-  o && *o == OP
+  o&&* o == OP
 
 namespace booleguru::cli {
 
@@ -41,6 +41,12 @@ expression::op_ref
 cli_processor::process() {
   return process_expr();
 };
+
+const argument::param_variant&
+cli_processor::output_arg(argument::keywords k) {
+  assert(k < argument::keywords::count_);
+  return output_args_[k];
+}
 
 template<cli_processor::arg_op type, typename Functor>
 expression::op_ref
@@ -118,7 +124,7 @@ cli_processor::process_expr() {
   return process_equivalence();
 }
 cli_processor::arg_stream
-cli_processor::process_args_to_inputs(arg_vec& args) const {
+cli_processor::process_args_to_inputs(arg_vec& args) {
   arg_stream inputs;
 
   arg_vec curr;
@@ -143,7 +149,33 @@ cli_processor::process_args_to_inputs(arg_vec& args) const {
     if(arg.at(0) != '-' || arg.length() == 1) {
       // This is a file! Ends curr.
       inputs.emplace_back(curr);
+      curr.clear();
     }
+  }
+
+  // Trailing arguments for outputs. Directly process into options array
+  // as-well.
+  if(!curr.empty()) {
+    for(auto it = curr.begin(); it != curr.end(); ++it) {
+      const auto& arg = *it;
+      auto to_arg = [&arg, &it, &curr]() -> std::optional<argument> {
+        if(arg.size() > 1 && arg.at(0) == '-' && arg.at(1) == '-') {
+          std::string_view a1 = arg.substr(2);
+          auto next = it + 1;
+          if(next != curr.end() && next->size() > 0 && next->at(0) != '-') {
+            return argument(a1, *next);
+          } else {
+            return argument(a1);
+          }
+        }
+        return std::nullopt;
+      };
+      auto a = to_arg();
+      if(a) {
+        output_args_[a->keyword] = a->param;
+      }
+    }
+    curr.clear();
   }
 
   // Margin at end to stop the parser.

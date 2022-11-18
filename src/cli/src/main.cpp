@@ -2,14 +2,16 @@
 #include <cstdint>
 #include <cstdlib>
 #include <fstream>
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 
 #include <booleguru/parse/boole.hpp>
 #include <booleguru/parse/result.hpp>
 #include <booleguru/serialize/qcir.hpp>
 
 #include <booleguru/cli/cli-processor.hpp>
+
+using namespace booleguru::cli;
 
 /* The idea for the CLI of booleguru is a CLI expression parser. One should be
  * able to do similar things to the boole interface and just combine multiple
@@ -32,8 +34,20 @@ main(int argc, char* argv[]) {
 
   auto result = cli.process();
 
-  booleguru::serialize::qcir qcir_out(std::cout);
-  qcir_out(result);
+  argument::input_types t =
+    std::get<argument::input_types>(cli.output_arg(argument::type));
+  switch(t) {
+    case booleguru::cli::argument::qcir: {
+      booleguru::serialize::qcir qcir_out(std::cout);
+      qcir_out(result);
+      return EXIT_SUCCESS;
+    }
+    case booleguru::cli::argument::boole:
+      std::cout << result << std::endl;
+      return EXIT_SUCCESS;
+    default:
+      std::cerr << "Unsupported output type." << std::endl;
+  }
 
   return EXIT_SUCCESS;
 }

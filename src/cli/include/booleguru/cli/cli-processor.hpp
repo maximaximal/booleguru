@@ -6,6 +6,8 @@
 #include <variant>
 #include <vector>
 
+#include "argument.hpp"
+
 namespace booleguru::expression {
 class op_ref;
 class op_manager;
@@ -51,8 +53,16 @@ class cli_processor {
 
   expression::op_ref process();
 
+  const argument::param_variant& output_arg(argument::keywords k);
+
   private:
-  arg_stream process_args_to_inputs(arg_vec& args) const;
+
+  argument::param_variant output_args_[argument::keywords::count_] = {
+    argument::boole, /* type */
+    false            /* eval */
+  };
+
+  arg_stream process_args_to_inputs(arg_vec& args);
 
   expression::op_ref process_input_file(const arg_vec& v);
 

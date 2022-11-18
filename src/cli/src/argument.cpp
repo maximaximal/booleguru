@@ -52,6 +52,9 @@ argument::argument(std::string_view arg, std::string_view param)
   assert(arg.find('=') == std::string_view::npos);
 }
 argument::argument(std::string_view arg)
-  : argument(arg.find('=') ? arg.substr(0, arg.find('=')) : arg,
-             arg.find('=') ? arg.substr(arg.find('=')) : "") {}
+  : argument(arg.find('=') != std::string_view::npos
+               ? arg.substr(0, arg.find('='))
+               : arg,
+             arg.find('=') != std::string_view::npos ? arg.substr(arg.find('='))
+                                                     : "") {}
 }
