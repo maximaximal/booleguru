@@ -12,6 +12,7 @@
 #include <booleguru/expression/var_manager.hpp>
 #include <booleguru/parse/base.hpp>
 #include <booleguru/parse/boole.hpp>
+#include <booleguru/parse/qdimacs.hpp>
 #include <booleguru/parse/result.hpp>
 
 namespace booleguru::cli {
@@ -177,7 +178,7 @@ input_file::produce_parser(std::istream& is) {
       return boole;
     }
     case argument::qdimacs:
-      throw std::runtime_error("QDimacs Not supported yet!");
+      return std::make_unique<parse::qdimacs>(is, ops_);
   }
 }
 

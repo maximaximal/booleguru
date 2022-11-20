@@ -103,6 +103,6 @@ class boole : public base {
 
   void eval(bool enable) { eval_lisp_ = enable; }
 
-  virtual result operator()();
+  virtual result operator()() override;
 };
 }

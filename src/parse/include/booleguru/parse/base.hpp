@@ -25,6 +25,10 @@ class base {
   result generate_result(expression::op_ref expr);
   result error(std::string_view error, int code = 0);
 
+  /** @brief Parse an integer (positive or negative) from the current position.
+   */
+  std::optional<int> parse_int();
+
   public:
   base(std::istream& in,
        std::shared_ptr<expression::var_manager> vars,

@@ -1,6 +1,7 @@
 set(SRCS
   src/base.cpp
   src/boole.cpp
+  src/qdimacs.cpp
 )
 
 add_library(booleguru-parse STATIC ${SRCS})
