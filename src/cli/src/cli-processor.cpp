@@ -125,9 +125,10 @@ cli_processor::process_basic() {
 expression::op_ref
 cli_processor::process_expr() {
   auto op = process_equivalence();
-  if(std::string_view* cmd_ptr = std::get_if<std::string_view>(&cur_.get());
-     cmd_ptr) {
+  while(std::string_view* cmd_ptr =
+          std::get_if<std::string_view>(&cur_.get())) {
     std::string cmd(*cmd_ptr);
+    next();
     cl::ecl_wrapper& ecl = cl::ecl_wrapper::get();
     if(cmd[0] == '(') {
       // Some real lisp expression! Evaluate the whole thing.
@@ -137,7 +138,7 @@ cli_processor::process_expr() {
     }
     auto ret = ecl.eval(cmd.c_str(), ops_, op.get_id());
     if(std::holds_alternative<expression::op_ref>(ret))
-      return std::get<expression::op_ref>(ret);
+      op = std::get<expression::op_ref>(ret);
     else if(std::holds_alternative<std::string>(ret)) {
       std::cerr << "Error from CLI-Lisp: " << std::get<std::string>(ret)
                 << std::endl;
