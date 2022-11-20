@@ -7,6 +7,7 @@
 #include <booleguru/expression/op_manager.hpp>
 #include <booleguru/expression/var_manager.hpp>
 
+#include <booleguru/transform/cnf.hpp>
 #include <booleguru/transform/variable_extend.hpp>
 #include <booleguru/transform/variable_rename.hpp>
 
@@ -199,6 +200,16 @@ static auto clfun_op_lpmi = makefun_binop<[](auto a, auto b) {
     expression::op(expression::op_type::Lpmi, a.get_id(), b.get_id()));
 }>();
 
+static cl_object
+clfun_distribute_to_cnf(cl_object o) {
+  expression::op_ref o_;
+  if(auto error = cl_object_conv(o, o_)) {
+    return *error;
+  }
+
+  return ecl_make_uint32_t(transform::distribute_to_cnf(o_).get_id());
+}
+
 cl_object
 clfun_op_not(cl_object a) {
   expression::op_ref a_;
@@ -232,6 +243,8 @@ ecl_wrapper::ecl_wrapper() {
   DEFUN("b-impl", +clfun_op_impl, 2);
   DEFUN("b-lpmi", +clfun_op_lpmi, 2);
   DEFUN("b-not", clfun_op_not, 1);
+
+  DEFUN("distribute-to-cnf", clfun_distribute_to_cnf, 1);
 
   DEFUN("b-vars-extend", clfun_varnames_extend, 2);
   DEFUN("b-var-rename", clfun_var_rename, 3);

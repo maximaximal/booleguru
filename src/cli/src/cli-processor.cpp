@@ -1,3 +1,4 @@
+#include <booleguru/cl/ecl-wrapper.hpp>
 #include <booleguru/cli/argument.hpp>
 #include <booleguru/cli/cli-processor.hpp>
 #include <booleguru/cli/input_file.hpp>
@@ -123,7 +124,26 @@ cli_processor::process_basic() {
 }
 expression::op_ref
 cli_processor::process_expr() {
-  return process_equivalence();
+  auto op = process_equivalence();
+  if(std::string_view* cmd_ptr = std::get_if<std::string_view>(&cur_.get());
+     cmd_ptr) {
+    std::string cmd(*cmd_ptr);
+    cl::ecl_wrapper& ecl = cl::ecl_wrapper::get();
+    if(cmd[0] == '(') {
+      // Some real lisp expression! Evaluate the whole thing.
+    } else {
+      // Just one thing, call that with *last-op* as parameter.
+      cmd = "(" + cmd + " *last-op*)";
+    }
+    auto ret = ecl.eval(cmd.c_str(), ops_, op.get_id());
+    if(std::holds_alternative<expression::op_ref>(ret))
+      return std::get<expression::op_ref>(ret);
+    else if(std::holds_alternative<std::string>(ret)) {
+      std::cerr << "Error from CLI-Lisp: " << std::get<std::string>(ret)
+                << std::endl;
+    }
+  }
+  return op;
 }
 cli_processor::arg_stream
 cli_processor::process_args_to_inputs(arg_vec& args) {
@@ -146,6 +166,11 @@ cli_processor::process_args_to_inputs(arg_vec& args) {
         curr.emplace_back(arg);
         continue;
       }
+    } else if(arg.size() > 1 && arg.at(0) == ':') {
+      // This is a transformation of the last expression through some lisp
+      // function!
+      inputs.emplace_back(arg.substr(1));
+      continue;
     }
     curr.emplace_back(arg);
     if(arg.at(0) != '-' || arg.length() == 1) {

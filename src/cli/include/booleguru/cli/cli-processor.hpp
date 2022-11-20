@@ -44,7 +44,7 @@ class cli_processor {
     None,
   };
 
-  using arg_variant = std::variant<arg_op, arg_vec>;
+  using arg_variant = std::variant<arg_op, arg_vec, std::string_view>;
   using arg_stream = std::vector<arg_variant>;
 
   explicit cli_processor(arg_vec args);
