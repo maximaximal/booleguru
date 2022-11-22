@@ -94,8 +94,9 @@ cli_processor::process_not() {
   if(CUR_IS(Not)) {
     next();
     auto child = process_not();
-    return ops_->get(
-      expression::op(expression::op_type::Not, child.get_id(), 0));
+    auto op =
+      ops_->get(expression::op(expression::op_type::Not, child.get_id(), 0));
+    return consume_eventual_lisp_arguments(op);
   } else {
     return process_basic();
   }
@@ -106,7 +107,8 @@ cli_processor::process_basic() {
     next();
     auto child = process_expr();
     if(CUR_IS(RPar)) {
-      return child;
+      next();
+      return consume_eventual_lisp_arguments(child);
     } else {
       throw std::invalid_argument("No --rpar after an initiating --lpar.");
     }
@@ -122,11 +124,12 @@ cli_processor::process_basic() {
   next();
   return op;
 }
+
 expression::op_ref
-cli_processor::process_expr() {
-  auto op = process_equivalence();
+cli_processor::consume_eventual_lisp_arguments(expression::op_ref last_op) {
   while(std::string_view* cmd_ptr =
           std::get_if<std::string_view>(&cur_.get())) {
+    assert(cmd_ptr);
     std::string cmd(*cmd_ptr);
     next();
     cl::ecl_wrapper& ecl = cl::ecl_wrapper::get();
@@ -136,15 +139,21 @@ cli_processor::process_expr() {
       // Just one thing, call that with *last-op* as parameter.
       cmd = "(" + cmd + " *last-op*)";
     }
-    auto ret = ecl.eval(cmd.c_str(), ops_, op.get_id());
+    auto ret = ecl.eval(cmd.c_str(), ops_, last_op.get_id());
     if(std::holds_alternative<expression::op_ref>(ret))
-      op = std::get<expression::op_ref>(ret);
+      last_op = std::get<expression::op_ref>(ret);
     else if(std::holds_alternative<std::string>(ret)) {
       std::cerr << "Error from CLI-Lisp: " << std::get<std::string>(ret)
                 << std::endl;
     }
   }
-  return op;
+  return last_op;
+}
+
+expression::op_ref
+cli_processor::process_expr() {
+  auto op = process_equivalence();
+  return consume_eventual_lisp_arguments(op);
 }
 cli_processor::arg_stream
 cli_processor::process_args_to_inputs(arg_vec& args) {

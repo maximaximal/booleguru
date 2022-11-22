@@ -55,8 +55,10 @@ class cli_processor {
 
   const argument::param_variant& output_arg(argument::keywords k);
 
-  private:
+  expression::op_ref consume_eventual_lisp_arguments(
+    expression::op_ref last_op);
 
+  private:
   argument::param_variant output_args_[argument::keywords::count_] = {
     argument::boole, /* type */
     false            /* eval */
