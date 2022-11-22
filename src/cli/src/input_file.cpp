@@ -34,7 +34,10 @@ struct input_file::internal {
       , popen_stdio_filebuf(
           __gnu_cxx::stdio_filebuf<char>(popen_handle, std::ios::in))
       , istream(&popen_stdio_filebuf) {}
-    ~popen_variant() { pclose(popen_handle); }
+    ~popen_variant() {
+      if(popen_handle)
+        pclose(popen_handle);
+    }
   };
 
   std::variant<popen_variant, std::ifstream> variants;
@@ -69,7 +72,7 @@ bool
 input_file::file_matches_signature(std::string path, int* sig) {
   std::ifstream in(path, std::ios::binary);
   for(int* c = sig; *c != EOF; ++c) {
-    char r;
+    unsigned char r;
     in >> r;
     if(*c != r)
       return false;
@@ -96,7 +99,8 @@ input_file::process() {
   if(!res) {
     std::stringstream s;
     s << res;
-    throw parse_error("Parse error! Result: " + s.str());
+    throw parse_error("Parse error! Result: " + s.str() +
+                      ", message: " + res.message);
   }
   return *res;
 }
@@ -144,9 +148,9 @@ input_file::produce_istream_from_popen(std::string command, std::string args) {
 
   std::string abs_command = find_in_path(command);
   std::string cmd = abs_command + " " + args + " " + path_ + " 2>/dev/null";
-  FILE* handle = popen(cmd.c_str(), "rb");
+  FILE* handle = popen(cmd.c_str(), "r");
   if(!handle) {
-    std::runtime_error("Coult not popen()! Error: "s + strerror(errno));
+    throw std::runtime_error("Coult not popen()! Error: "s + strerror(errno));
   }
   internal_ = std::make_unique<internal>(handle);
   return internal_->popen_istream();
@@ -173,11 +177,13 @@ input_file::produce_parser(std::istream& is) {
     case argument::qcir:
       throw std::runtime_error("QCIR Not supported yet!");
     case argument::boole: {
+      is >> std::noskipws;
       auto boole = std::make_unique<parse::boole>(is, ops_);
       boole->eval(std::get<bool>(args_[argument::eval]));
       return boole;
     }
     case argument::qdimacs:
+      is >> std::noskipws;
       return std::make_unique<parse::qdimacs>(is, ops_);
   }
 }
