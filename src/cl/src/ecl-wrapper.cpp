@@ -8,6 +8,8 @@
 #include <booleguru/expression/var_manager.hpp>
 
 #include <booleguru/transform/cnf.hpp>
+#include <booleguru/transform/distribute_nots.hpp>
+#include <booleguru/transform/distribute_ors.hpp>
 #include <booleguru/transform/variable_extend.hpp>
 #include <booleguru/transform/variable_rename.hpp>
 
@@ -200,27 +202,26 @@ static auto clfun_op_lpmi = makefun_binop<[](auto a, auto b) {
     expression::op(expression::op_type::Lpmi, a.get_id(), b.get_id()));
 }>();
 
-static cl_object
-clfun_distribute_to_cnf(cl_object o) {
-  expression::op_ref o_;
-  if(auto error = cl_object_conv(o, o_)) {
-    return *error;
-  }
+template<expression::op_ref (*B)(expression::op_ref)>
+consteval static auto
+makefun_unop() {
+  return [](cl_object o) -> cl_object {
+    expression::op_ref o_;
+    if(auto error = cl_object_conv(o, o_)) {
+      return *error;
+    }
 
-  return ecl_make_uint32_t(transform::distribute_to_cnf(o_).get_id());
+    return ecl_make_uint32_t(B(o_).get_id());
+  };
 }
 
-cl_object
-clfun_op_not(cl_object a) {
-  expression::op_ref a_;
-  if(auto error = cl_object_conv(a, a_)) {
-    return *error;
-  }
-
-  expression::op_ref res = !a_;
-
-  return ecl_make_uint32_t(res.get_id());
-}
+static auto clfun_op_not = makefun_unop<[](auto o) { return !o; }>();
+static auto clfun_distribute_to_cnf =
+  makefun_unop<[](auto o) { return transform::distribute_to_cnf(o); }>();
+static auto clfun_distribute_ors =
+  makefun_unop<[](auto o) { return transform::distribute_ors()(o); }>();
+static auto clfun_distribute_nots =
+  makefun_unop<[](auto o) { return transform::distribute_nots()(o); }>();
 
 ecl_wrapper::ecl_wrapper() {
   char* argv[] = { NULL };
@@ -242,9 +243,11 @@ ecl_wrapper::ecl_wrapper() {
   DEFUN("b-equi", +clfun_op_equi, 2);
   DEFUN("b-impl", +clfun_op_impl, 2);
   DEFUN("b-lpmi", +clfun_op_lpmi, 2);
-  DEFUN("b-not", clfun_op_not, 1);
+  DEFUN("b-not", +clfun_op_not, 1);
 
-  DEFUN("distribute-to-cnf", clfun_distribute_to_cnf, 1);
+  DEFUN("distribute-to-cnf", +clfun_distribute_to_cnf, 1);
+  DEFUN("distribute-ors", +clfun_distribute_ors, 1);
+  DEFUN("distribute-nots", +clfun_distribute_nots, 1);
 
   DEFUN("b-vars-extend", clfun_varnames_extend, 2);
   DEFUN("b-var-rename", clfun_var_rename, 3);

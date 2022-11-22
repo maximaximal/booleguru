@@ -153,19 +153,21 @@ op_manager::base::objref
 op_manager::insert(T&& obj, size_t obj_hash) {
   switch(obj.type) {
     case op_type::And:
+      // And And should just keep the and it already has.
+      break;
     case op_type::Or:
     case op_type::Lpmi:
     case op_type::Impl:
     case op_type::Equi:
       obj.and_inside =
-        (*this)[obj.left()]->and_inside || (*this)[obj.right()]->and_inside;
+        objects_[obj.left()].and_inside || objects_[obj.right()].and_inside;
       break;
     case op_type::Not:
-      obj.and_inside = (*this)[obj.left()]->and_inside;
+      obj.and_inside = objects_[obj.left()].and_inside;
       break;
     case op_type::Exists:
     case op_type::Forall:
-      obj.and_inside = (*this)[obj.left()]->and_inside;
+      obj.and_inside = objects_[obj.left()].and_inside;
       break;
     default:
       break;

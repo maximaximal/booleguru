@@ -96,5 +96,6 @@ TEST_CASE("Parse formula containing lisp code") {
     f << *res;
     REQUIRE(f.str() == "a & b");
   }
+  REQUIRE((*res)->and_inside);
   REQUIRE(res);
 }
