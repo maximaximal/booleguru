@@ -41,7 +41,8 @@ struct visitor {
       case op_type::None:
         return o;
     }
-    // Should never occur, but silences compiler warnings.
+    // Must never occur, but silences compiler warnings.
+    assert(false);
     return ReturnType();
   }
 
