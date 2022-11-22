@@ -26,22 +26,16 @@ qcir::walk_quant(op_ref o) {
   if(!on_quant_prefix_) {
     if(!dry_walk_)
       o_ << o.get_id() << " = ";
-    else
-      ++number_of_variables_;
   }
   while(o->type == t) {
     auto v = o.get_mgr().get(op(op_type::Var, o->quant.v, 0)).get_id();
     if(first) {
       if(!dry_walk_)
         o_ << qtext << "(" << v;
-      else
-        ++number_of_variables_;
       first = false;
     } else {
       if(!dry_walk_)
         o_ << ", " << v;
-      else
-        ++number_of_variables_;
     }
     o = o.get_mgr()[o->quant.e];
   }
@@ -213,6 +207,10 @@ qcir::walk_xor(op_ref o) {
 void
 qcir::walk_var(op_ref o) {
   (void)o;
+  if(dry_walk_ && !o->mark) {
+    o->mark = true;
+    ++number_of_variables_;
+  }
 }
 
 void
