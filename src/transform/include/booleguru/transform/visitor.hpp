@@ -9,35 +9,71 @@
 namespace booleguru::transform {
 template<typename Derived, typename ReturnType = expression::op_ref>
 struct visitor {
-  using op_ref = expression::op_ref;
-  using op_type = expression::op_type;
-  using op = expression::op;
-  using variable = expression::variable;
+  private:
+  struct dummy_op_ref {
+    constexpr inline dummy_op_ref operator&&(dummy_op_ref o) noexcept {
+      (void)o;
+      return dummy_op_ref();
+    }
+    constexpr inline dummy_op_ref operator||(dummy_op_ref o) noexcept {
+      (void)o;
+      return dummy_op_ref();
+    }
+    constexpr inline dummy_op_ref operator!() const noexcept {
+      return dummy_op_ref();
+    }
+  };
 
-  inline ReturnType operator()(op_ref o) {
+  using op_stack = std::stack<uint32_t>;
+
+  struct collect_tree {
+    using ret = dummy_op_ref;
+    op_stack& stack;
+
+    collect_tree(op_stack& stack)
+      : stack(stack) {}
+
+    inline ret l(expression::op o) { stack.push(o.bin.l); }
+    inline ret r(expression::op o) { stack.push(o.bin.r); }
+  };
+
+  struct traverse_stack {
+    using ret = ReturnType;
+    using op_ref = expression::op_ref;
+  };
+
+  using collect_tree_actor = typename Derived::template actor<collect_tree>;
+  using traverse_stack_actor = typename Derived::template actor<traverse_stack>;
+
+  op_stack stack;
+
+  collect_tree_actor collect_{ stack };
+  collect_tree_actor traverse_;
+
+  inline constexpr ReturnType traverse(expression::op_ref o) {
     using namespace expression;
     assert(o.valid());
     switch(o->type) {
       case op_type::Exists:
-        return static_cast<Derived*>(this)->walk_exists(o);
+        return traverse_.walk_exists(o);
       case op_type::Forall:
-        return static_cast<Derived*>(this)->walk_forall(o);
+        return traverse_.walk_forall(o);
       case op_type::Not:
-        return static_cast<Derived*>(this)->walk_not(o);
+        return traverse_.walk_not(o);
       case op_type::And:
-        return static_cast<Derived*>(this)->walk_and(o);
+        return traverse_.walk_and(o);
       case op_type::Or:
-        return static_cast<Derived*>(this)->walk_or(o);
+        return traverse_.walk_or(o);
       case op_type::Equi:
-        return static_cast<Derived*>(this)->walk_equi(o);
+        return traverse_.walk_equi(o);
       case op_type::Impl:
-        return static_cast<Derived*>(this)->walk_impl(o);
+        return traverse_.walk_impl(o);
       case op_type::Lpmi:
-        return static_cast<Derived*>(this)->walk_lpmi(o);
+        return traverse_.walk_lpmi(o);
       case op_type::Xor:
-        return static_cast<Derived*>(this)->walk_xor(o);
+        return traverse_.walk_xor(o);
       case op_type::Var:
-        return static_cast<Derived*>(this)->walk_var(o);
+        return traverse_.walk_var(o);
       case op_type::None:
         return o;
     }
@@ -45,6 +81,14 @@ struct visitor {
     assert(false);
     return ReturnType();
   }
+
+  public:
+  using op_ref = expression::op_ref;
+  using op_type = expression::op_type;
+  using op = expression::op;
+  using variable = expression::variable;
+
+  inline ReturnType operator()(op_ref o) {}
 
   inline ReturnType walk_exists(op_ref ex) {
     return ex.get_mgr().get(
