@@ -11,7 +11,7 @@ struct distribute_nots : public I {
   using I::I;
 
   inline ret walk_not(expression::op_ref e) {
-    auto child = I::cd(e);
+    auto child = e.left();
     if(child->type == op_type::And) {
       I::repeat_inner_lr = true;
       return !I::l(child) || !I::r(child);

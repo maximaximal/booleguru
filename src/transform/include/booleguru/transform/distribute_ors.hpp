@@ -11,8 +11,8 @@ struct distribute_ors : public I {
   using I::I;
 
   inline ret walk_or(expression::op_ref e) {
-    auto left = I::ld(e);
-    auto right = I::rd(e);
+    auto left = e.left();
+    auto right = e.right();
     if(left->type == op_type::And) {
       auto re = I::rd(e);
       I::repeat_inner_lr = true;

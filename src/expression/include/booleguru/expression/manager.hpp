@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <cstddef>
 #include <cstdint>
 
@@ -32,13 +33,23 @@ class manager {
     objects_.emplace_back();
   };
 
-  constexpr inline R operator[](ref r) { return R(*static_cast<C*>(this), r); }
+  constexpr inline R operator[](ref r) {
+    assert(r < objects_.size());
+    return R(*static_cast<C*>(this), r);
+  }
   constexpr inline R operator[](ref r) const {
+    assert(r < objects_.size());
     const C* child = static_cast<const C*>(this);
     return R(*child, r);
   }
-  constexpr inline T& getobj(ref r) { return objects_[r]; }
-  constexpr inline const T& getobj(ref r) const { return objects_[r]; }
+  constexpr inline T& getobj(ref r) {
+    assert(r < objects_.size());
+    return objects_[r];
+  }
+  constexpr inline const T& getobj(ref r) const {
+    assert(r < objects_.size());
+    return objects_[r];
+  }
 
   constexpr inline R get_from_map(const T& obj, size_t hash) {
     auto r = objects_map_.equal_range(hash);
@@ -53,6 +64,8 @@ class manager {
     }
     return R();
   }
+
+  constexpr inline size_t size() const { return objects_.size(); }
 
   constexpr inline R insert(T&& obj, size_t obj_hash) {
     size_t idx = objects_.size();

@@ -6,6 +6,9 @@ namespace booleguru::transform {
 variable_rename::variable_rename(
   expression::var_manager& varmgr,
   const std::unordered_map<std::string, std::string>& map) {
+  collect_.vars = &vars;
+  traverse_.vars = &vars;
+
   vars.reserve(map.size());
 
   std::transform(

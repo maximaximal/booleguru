@@ -43,6 +43,9 @@ struct variable_rename
                   const std::string& oldname,
                   const std::string& newname,
                   Rest&&... rest) {
+    collect_.vars = &vars;
+    traverse_.vars = &vars;
+
     vars.insert({ varmgr.get(expression::variable{ oldname }).get_id(),
                   varmgr.get(expression::variable{ newname }).get_id() });
     if constexpr(sizeof...(Rest) > 0) {
@@ -52,7 +55,5 @@ struct variable_rename
 
   variable_rename(expression::var_manager& varmgr,
                   const std::unordered_map<std::string, std::string>& map);
-
-  op_ref walk_var(op_ref e);
 };
 }

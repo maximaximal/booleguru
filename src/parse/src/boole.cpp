@@ -515,13 +515,14 @@ boole::parse_expr() {
       return error("Expected ident");
     }
     auto varref = vars_->get(variable{ std::move(cur_.ident) });
+    auto varop = ops_->get(op(op_type::Var, varref.get_id(), 0));
     NEXT_OR_RETURN(next_bool_res);
     if(!next_bool_res)
       return error("Expected sub-expression, got no new token");
     auto child = parse_expr();
     if(child)
       return generate_result(
-        ops_->get(op(quanttype, child->get_id(), varref.get_id())));
+        ops_->get(op(quanttype, varop.get_id(), child->get_id())));
     else
       return error("Expected some sub-expression");
   }

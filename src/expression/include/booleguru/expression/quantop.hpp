@@ -1,12 +1,12 @@
 #pragma once
 
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 
 namespace booleguru::expression {
 struct quantop {
-  uint32_t v; /// a reference to some varop
-  uint32_t e; /// a reference to the nested expression
+  uint32_t v = 0;/// a reference to some varop
+  uint32_t e = 0;/// a reference to the nested expression
 
   inline constexpr size_t hash() const {
     return 4017271 * static_cast<size_t>(v) + 70200511 * static_cast<size_t>(e);

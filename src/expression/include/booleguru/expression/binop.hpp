@@ -5,8 +5,8 @@
 
 namespace booleguru::expression {
 struct binop {
-  uint32_t l;
-  uint32_t r;
+  uint32_t l = 0;
+  uint32_t r = 0;
 
   inline constexpr binop(uint32_t l, uint32_t r) : l(l), r(r) {}
 

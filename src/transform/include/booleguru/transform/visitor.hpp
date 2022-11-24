@@ -29,6 +29,9 @@ struct visitor_descent_query {
                                                   bool right = false)
     : descent((left ? 1u << 1 : 0) | (right ? 1u : 0)) {}
 
+  inline constexpr bool left() const { return descent & (1u << 1); }
+  inline constexpr bool right() const { return descent & (1u << 0); }
+
   int descent = 0;
 };
 
@@ -45,6 +48,7 @@ struct visitor {
 
     // Unused, but included for API-compatibility with traverse_stack.
     bool repeat_inner_lr = false;
+    bool repeat = false;
 
     inline constexpr descent_query l(expression::op_ref o) {
       (void)o;
@@ -132,9 +136,6 @@ struct visitor {
     inline constexpr ret c(expression::op_ref o) { return o.left(); }
     inline constexpr ret cd(expression::op_ref o) { return o.left(); }
 
-    inline constexpr ret v(expression::op_ref o) { return o.left(); }
-    inline constexpr ret vd(expression::op_ref o) { return o.left(); }
-
     inline constexpr ret ev(expression::op_ref o) { return o.left(); }
     inline constexpr ret evd(expression::op_ref o) { return o.left(); };
 
@@ -142,11 +143,10 @@ struct visitor {
     inline constexpr ret ed(expression::op_ref o) { return o.right(); };
 
     inline constexpr ret walk_exists(op_ref ex) {
-      return ex.get_mgr().get(
-        op(op_type::Exists, v(ex).get_id(), e(ex).get_id()));
+      return ex.get_mgr().get(op(op_type::Exists, ex->quant.v, e(ex).get_id()));
     }
     inline constexpr ret walk_forall(op_ref ex) {
-      return ex.get_mgr().get(op(op_type::Forall, ex.get_id(), e(ex).get_id()));
+      return ex.get_mgr().get(op(op_type::Forall, ex->quant.v, e(ex).get_id()));
     }
     inline constexpr ret walk_not(op_ref ex) {
       return ex.get_mgr().get(op(op_type::Not, c(ex).get_id(), 0));
@@ -180,6 +180,7 @@ struct visitor {
 
   using collect_tree_actor = Actor<collect_tree>;
   using traverse_stack_actor = Actor<traverse_stack>;
+
   using op_stack = std::stack<uint32_t>;
 
   op_stack stack;
@@ -187,36 +188,121 @@ struct visitor {
   collect_tree_actor collect_;
   traverse_stack_actor traverse_;
 
-  inline constexpr ReturnType traverse(expression::op_ref o) {
-    using namespace expression;
+  template<class Walker>
+  inline constexpr auto walk(Walker& w, expression::op_ref o) noexcept {
+    using expression::op_type;
+
     assert(o.valid());
     switch(o->type) {
       case op_type::Exists:
-        return traverse_.walk_exists(o);
+        return w.walk_exists(o);
       case op_type::Forall:
-        return traverse_.walk_forall(o);
+        return w.walk_forall(o);
       case op_type::Not:
-        return traverse_.walk_not(o);
+        return w.walk_not(o);
       case op_type::And:
-        return traverse_.walk_and(o);
+        return w.walk_and(o);
       case op_type::Or:
-        return traverse_.walk_or(o);
+        return w.walk_or(o);
       case op_type::Equi:
-        return traverse_.walk_equi(o);
+        return w.walk_equi(o);
       case op_type::Impl:
-        return traverse_.walk_impl(o);
+        return w.walk_impl(o);
       case op_type::Lpmi:
-        return traverse_.walk_lpmi(o);
+        return w.walk_lpmi(o);
       case op_type::Xor:
-        return traverse_.walk_xor(o);
+        return w.walk_xor(o);
       case op_type::Var:
-        return traverse_.walk_var(o);
+        return w.walk_var(o);
       case op_type::None:
-        return o;
+        assert(false);
+        throw std::runtime_error("MUST visit some op!");
     }
     // Must never occur, but silences compiler warnings.
     assert(false);
-    return ReturnType();
+    throw std::runtime_error("MUST visit some op!");
+  }
+
+  inline constexpr bool should_walk_left(expression::op_ref o) {
+    if(!o.valid())
+      return false;
+    auto left = o.left();
+    if(!left.valid() || left->mark)
+      return false;
+    return walk(collect_, o).left();
+  }
+  inline constexpr bool should_walk_right(expression::op_ref o) {
+    if(!o.valid())
+      return false;
+    auto right = o.right();
+    if(!right.valid() || right->mark)
+      return false;
+    return walk(collect_, o).right();
+  }
+
+  inline constexpr ReturnType traverse(expression::op_ref root) {
+    using expression::op_ref;
+
+    assert(root.valid());
+    if(!root.valid())
+      throw std::runtime_error("Invalid root supplied!");
+
+    if(!stack.empty())
+      stack = op_stack();
+
+    expression::op_manager* mgr = &root.get_mgr();
+
+    op_ref pre = op_ref(), last = root;
+    bool left = true;
+    while(root.valid() || !stack.empty()) {
+      if(root.valid()) {
+        stack.push(root.get_id());
+        root = should_walk_left(root) ? root.left() : op_ref();
+        left = root.valid();
+      } else {
+        root.set_id(stack.top());
+        root.set_mgr(mgr);
+        auto root_r = should_walk_right(root) ? root.right() : op_ref();
+        if(!root_r.valid() || root_r == pre) {
+          pre = root;
+          do {
+            traverse_.repeat = false;
+            traverse_.repeat_inner_lr = false;
+            assert(root.valid());
+            if constexpr(std::same_as<ReturnType, op_ref>) {
+              root = walk(traverse_, root);
+              root->mark = true;
+            } else {
+              walk(traverse_, root);
+            }
+            assert(root.valid());
+          } while(traverse_.repeat);
+          last = root;
+          stack.pop();
+          if(root != pre /* there actually is a difference to apply */ &&
+             !stack.empty() /* require some parent */) {
+            // Have to replace this op also in the parent op! Do this via a
+            // different entry on the stack.
+            op_ref parent = op_ref(*mgr, stack.top());
+            stack.pop();
+            if(left) {
+              expression::op new_parent(
+                parent->type, root.get_id(), parent->right());
+              stack.push(mgr->get(std::move(new_parent)).get_id());
+            } else {
+              expression::op new_parent(
+                parent->type, parent->left(), root.get_id());
+              stack.push(mgr->get(std::move(new_parent)).get_id());
+            }
+          }
+          root.set_id(0);
+        } else {
+          root = root_r;
+          left = false;
+        }
+      }
+    }
+    return last;
   }
 
   public:
