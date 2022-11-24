@@ -181,7 +181,7 @@ struct visitor {
   using collect_tree_actor = Actor<collect_tree>;
   using traverse_stack_actor = Actor<traverse_stack>;
 
-  using op_stack = std::stack<uint32_t>;
+  using op_stack = std::stack<int32_t>;
 
   op_stack stack;
 
@@ -251,19 +251,22 @@ struct visitor {
       stack = op_stack();
 
     expression::op_manager* mgr = &root.get_mgr();
+    mgr->unmark();
 
-    op_ref pre = op_ref(), last = root;
-    bool left = true;
+    op_ref pre = op_ref(), last = root, last_pre = op_ref();
+    bool came_from_left = true;
     while(root.valid() || !stack.empty()) {
       if(root.valid()) {
-        stack.push(root.get_id());
+        stack.push(came_from_left ? -root.get_id() : root.get_id());
         root = should_walk_left(root) ? root.left() : op_ref();
-        left = root.valid();
+        came_from_left = true;
       } else {
-        root.set_id(stack.top());
+        int32_t top = stack.top();
+        root.set_id(std::abs(top));
         root.set_mgr(mgr);
         auto root_r = should_walk_right(root) ? root.right() : op_ref();
         if(!root_r.valid() || root_r == pre) {
+          last_pre = pre;
           pre = root;
           do {
             traverse_.repeat = false;
@@ -279,26 +282,33 @@ struct visitor {
           } while(traverse_.repeat);
           last = root;
           stack.pop();
-          if(root != pre /* there actually is a difference to apply */ &&
-             !stack.empty() /* require some parent */) {
+          if(!stack.empty() /* require some parent */) {
             // Have to replace this op also in the parent op! Do this via a
             // different entry on the stack.
-            op_ref parent = op_ref(*mgr, stack.top());
-            stack.pop();
-            if(left) {
-              expression::op new_parent(
-                parent->type, root.get_id(), parent->right());
-              stack.push(mgr->get(std::move(new_parent)).get_id());
+            op_ref parent = op_ref(*mgr, std::abs(stack.top()));
+            bool left = stack.top() < 0;
+            if(top < 0) {
+              if(parent->left() != root.get_id()) {
+                expression::op new_parent(
+                  parent->type, root.get_id(), parent->right());
+                stack.pop();
+                auto id = mgr->get(std::move(new_parent)).get_id();
+                stack.push(left ? -id : id);
+              }
             } else {
-              expression::op new_parent(
-                parent->type, parent->left(), root.get_id());
-              stack.push(mgr->get(std::move(new_parent)).get_id());
+              if(parent->right() != root.get_id()) {
+                expression::op new_parent(
+                  parent->type, parent->left(), root.get_id());
+                stack.pop();
+                auto id = mgr->get(std::move(new_parent)).get_id();
+                stack.push(left ? -id : id);
+              }
             }
           }
           root.set_id(0);
         } else {
           root = root_r;
-          left = false;
+          came_from_left = false;
         }
       }
     }
