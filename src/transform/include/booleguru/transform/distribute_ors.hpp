@@ -3,21 +3,34 @@
 #include "visitor.hpp"
 
 namespace booleguru::transform {
-struct distribute_ors : public visitor<distribute_ors> {
-  inline op_ref walk_or(op_ref e) {
-    auto left = ld(e);
-    auto right = rd(e);
+namespace actors {
+template<class I>
+struct distribute_ors : public I {
+  using ret = typename I::ret;
+  using op_type = expression::op_type;
+  using I::I;
+
+  inline ret walk_or(expression::op_ref e) {
+    auto left = I::ld(e);
+    auto right = I::rd(e);
     if(left->type == op_type::And) {
-      auto re = rd(e);
-      return (*this)(ld(left) || re) && (*this)(rd(left) || re);
+      auto re = I::rd(e);
+      I::repeat_inner_lr = true;
+      return (I::ld(left) || re) && (I::rd(left) || re);
     } else if(right->type == op_type::And) {
-      auto le = ld(e);
-      return (*this)(le || ld(right)) && (*this)(le || rd(right));
+      auto le = I::ld(e);
+      I::repeat_inner_lr = true;
+      return (le || I::ld(right)) && (le || I::rd(right));
     } else if(e->and_inside) {
-      return (*this)(l(e) || r(e));
+      I::repeat = true;
+      return I::l(e) || I::r(e);
     } else {
-      return l(e) || r(e);
+      return I::l(e) || I::r(e);
     }
   }
 };
+}
+
+struct distribute_ors
+  : public visitor<distribute_ors, actors::distribute_ors> {};
 }

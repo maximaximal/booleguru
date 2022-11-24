@@ -3,18 +3,29 @@
 #include "visitor.hpp"
 
 namespace booleguru::transform {
-struct distribute_nots : public visitor<distribute_nots> {
-  inline op_ref walk_not(op_ref e) {
-    auto child = cd(e);
+namespace actors {
+template<class I>
+struct distribute_nots : public I {
+  using ret = typename I::ret;
+  using op_type = expression::op_type;
+  using I::I;
+
+  inline ret walk_not(expression::op_ref e) {
+    auto child = I::cd(e);
     if(child->type == op_type::And) {
-      return (*this)(!l(child)) || (*this)(!r(child));
+      I::repeat_inner_lr = true;
+      return !I::l(child) || !I::r(child);
     } else if(child->type == op_type::Or) {
-      return (*this)(!l(child)) && (*this)(!r(child));
+      I::repeat_inner_lr = true;
+      return !I::l(child) && !I::r(child);
     } else if(child->type == op_type::Not) {
-      return c(child);
+      return I::c(child);
     } else {
-      return e.get_mgr().get(op(op_type::Not, e->un.c, 0));
+      return I::ld(e);
     }
   }
 };
+}
+struct distribute_nots
+  : public visitor<distribute_nots, actors::distribute_nots> {};
 }

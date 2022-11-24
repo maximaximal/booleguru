@@ -18,12 +18,4 @@ variable_rename::variable_rename(
     });
 }
 
-expression::op_ref
-variable_rename::walk_var(op_ref e) {
-  auto it = vars.find(e->var.v);
-  if(it != vars.end())
-    return e.get_mgr().get(op(op_type::Var, it->second, 0));
-  else
-    return e;
-}
 }
