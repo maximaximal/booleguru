@@ -69,6 +69,7 @@ class manager {
 
   constexpr inline R insert(T&& obj, size_t obj_hash) {
     size_t idx = objects_.size();
+    assert(static_cast<int32_t>(idx) < std::numeric_limits<int32_t>::max());
     objects_.emplace_back(std::move(obj));
     objects_map_.insert({ obj_hash, idx });
     return (*this)[idx];

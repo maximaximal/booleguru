@@ -305,6 +305,12 @@ struct visitor {
               }
             }
           }
+          if(traverse_.repeat_inner_lr) {
+            // Must repeat traversal with left and right of this node again! As
+            // if left and right were never visited before.
+            stack.push(-root->left());
+            stack.push(root->right());
+          }
           root.set_id(0);
         } else {
           root = root_r;

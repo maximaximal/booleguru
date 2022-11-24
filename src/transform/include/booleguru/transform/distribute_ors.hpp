@@ -2,6 +2,8 @@
 
 #include "visitor.hpp"
 
+#include <iostream>
+
 namespace booleguru::transform {
 namespace actors {
 template<class I>
@@ -14,13 +16,14 @@ struct distribute_ors : public I {
     auto left = e.left();
     auto right = e.right();
     if(left->type == op_type::And) {
+      std::cout << "Left was and! " << left << std::endl;
       auto re = I::rd(e);
       I::repeat_inner_lr = true;
-      return (I::ld(left) || re) && (I::rd(left) || re);
+      return (I::l(left) || re) && (I::r(left) || re);
     } else if(right->type == op_type::And) {
       auto le = I::ld(e);
       I::repeat_inner_lr = true;
-      return (le || I::ld(right)) && (le || I::rd(right));
+      return (le || I::l(right)) && (le || I::r(right));
     } else if(e->and_inside) {
       I::repeat = true;
       return I::l(e) || I::r(e);
