@@ -11,6 +11,9 @@
 (defmacro smtlib2-exit ()
   nil)
 
+;; These bitvectors must somehow store how big they are and then handle type
+;; conversions and everything here inside of lisp.
+
 (defclass bitvector ()
   ((symb :accessor symb)
    (width :accessor width)))
