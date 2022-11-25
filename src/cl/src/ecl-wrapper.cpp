@@ -12,6 +12,8 @@
 #include <booleguru/transform/distribute_ors.hpp>
 #include <booleguru/transform/variable_extend.hpp>
 #include <booleguru/transform/variable_rename.hpp>
+#include <booleguru/transform/eliminate_equivalence.hpp>
+#include <booleguru/transform/eliminate_implication.hpp>
 
 #include <iostream>
 
@@ -222,6 +224,10 @@ static auto clfun_distribute_ors =
   makefun_unop<[](auto o) { return transform::distribute_ors()(o); }>();
 static auto clfun_distribute_nots =
   makefun_unop<[](auto o) { return transform::distribute_nots()(o); }>();
+static auto clfun_eliminate_equivalence =
+  makefun_unop<[](auto o) { return transform::eliminate_equivalence()(o); }>();
+static auto clfun_eliminate_implication =
+  makefun_unop<[](auto o) { return transform::eliminate_implication()(o); }>();
 
 ecl_wrapper::ecl_wrapper() {
   char* argv[] = { NULL };
@@ -246,8 +252,10 @@ ecl_wrapper::ecl_wrapper() {
   DEFUN("b-not", +clfun_op_not, 1);
 
   DEFUN("distribute-to-cnf", +clfun_distribute_to_cnf, 1);
-  DEFUN("distribute-ors", +clfun_distribute_ors, 1);
-  DEFUN("distribute-nots", +clfun_distribute_nots, 1);
+  DEFUN("distribute-or", +clfun_distribute_ors, 1);
+  DEFUN("distribute-not", +clfun_distribute_nots, 1);
+  DEFUN("eliminate-implication", +clfun_eliminate_implication, 1);
+  DEFUN("eliminate-equivalence", +clfun_eliminate_equivalence, 1);
 
   DEFUN("b-vars-extend", clfun_varnames_extend, 2);
   DEFUN("b-var-rename", clfun_var_rename, 3);

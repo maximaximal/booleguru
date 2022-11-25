@@ -28,7 +28,7 @@ qcir::walk_quant(op_ref o) {
       o_ << o.get_id() << " = ";
   }
   while(o->type == t) {
-    auto v = o.get_mgr().get(op(op_type::Var, o->quant.v, 0)).get_id();
+    auto v = o->quant.v;
     if(first) {
       if(!dry_walk_)
         o_ << qtext << "(" << v;
@@ -224,11 +224,10 @@ qcir::operator()(expression::op_ref op) {
   std::vector<uint32_t> quantified_vars;
   auto visit = [&quantified_vars, &vars](uint32_t id,
                                          expression::op& op) -> void {
-    (void)id;
     op.mark = true;
     switch(op.type) {
       case expression::op_type::Var:
-        vars.push_back(op.var.v);
+        vars.push_back(id);
         break;
       case expression::op_type::Exists:
       case expression::op_type::Forall:
@@ -250,10 +249,6 @@ qcir::operator()(expression::op_ref op) {
                       quantified_vars.end(),
                       std::back_inserter(unquantified_vars));
 
-  auto var_to_op_id = [&op](uint32_t varid) -> uint32_t {
-    return op.get_mgr().get(expression::op(op_type::Var, varid, 0)).get_id();
-  };
-
   // Using mark user flag for marking visited nodes.
   op.get_mgr().unmark();
 
@@ -271,10 +266,10 @@ qcir::operator()(expression::op_ref op) {
   if(!unquantified_vars.empty()) {
     o_ << "free(";
     auto v = unquantified_vars.begin();
-    o_ << var_to_op_id(*v);
+    o_ << *v;
     ++v;
     for(; v != unquantified_vars.end(); ++v) {
-      o_ << ", " << var_to_op_id(*v);
+      o_ << ", " << *v;
     }
     o_ << ")\n";
   }

@@ -89,7 +89,10 @@ op_tostr_visit(std::ostream& o,
                const decltype(op::quant)& expr,
                op_type parent_type) {
   (void)parent_type;
-  o << op_type_to_sym(t) << exprs.vars()[expr.v]->name << " ";
+  auto varop = exprs[expr.v];
+  assert(expr.v > 0);
+
+  o << op_type_to_sym(t) << exprs.vars()[varop->var.v]->name << " ";
   exprs[expr.e]->visit([&o, &exprs, t](op_type ct, auto& e) {
     op_tostr_visit(o, exprs, ct, e, t);
   });
@@ -98,11 +101,15 @@ op_tostr_visit(std::ostream& o,
 
 op_ref
 op_ref::left() {
+  if(!valid())
+    return op_ref();
   return get_mgr()[(*this)->left()];
 }
 
 op_ref
 op_ref::right() {
+  if(!valid())
+    return op_ref();
   return get_mgr()[(*this)->right()];
 }
 
@@ -168,6 +175,9 @@ op_manager::insert(T&& obj, size_t obj_hash) {
     case op_type::Exists:
     case op_type::Forall:
       obj.and_inside = objects_[obj.left()].and_inside;
+      break;
+    case op_type::Var:
+      assert(obj.var.v < vars().size());
       break;
     default:
       break;
