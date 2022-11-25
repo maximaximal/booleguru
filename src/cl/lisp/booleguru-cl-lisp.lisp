@@ -21,4 +21,4 @@
   (make-op :id id))
 
 (defun var (name)
-  (make-op :id (booleguru-get-varop-id name)))
+  (booleguru-get-varop-id name))
