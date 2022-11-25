@@ -3,37 +3,21 @@
 #include "visitor.hpp"
 
 namespace booleguru::transform {
-namespace actors {
-template<class I>
-struct distribute_ors : public I {
-  using ret = typename I::ret;
-  using op_type = expression::op_type;
-  using I::I;
-
-  inline ret walk_or(expression::op_ref e) {
-    auto left = e.left();
-    auto right = e.right();
+struct distribute_ors : public visitor<distribute_ors> {
+  inline op_ref walk_or(op_ref e) {
+    auto left = ld(e);
+    auto right = rd(e);
     if(left->type == op_type::And) {
-      auto re = I::rd(e);
-      I::repeat_inner_lr = true;
-      return (I::ld(left) || re) && (I::rd(left) || re);
+      auto re = rd(e);
+      return (*this)(ld(left) || re) && (*this)(rd(left) || re);
     } else if(right->type == op_type::And) {
-      auto le = I::ld(e);
-      I::repeat_inner_lr = true;
-      return (le || I::ld(right)) && (le || I::rd(right));
+      auto le = ld(e);
+      return (*this)(le || ld(right)) && (*this)(le || rd(right));
     } else if(e->and_inside) {
-      if constexpr(std::is_same<ret, visitor_descent_query>()) {
-        return I::l(e) || I::r(e);
-      } else {
-        return walk(I::l(e)) || walk(I::r(e));
-      }
+      return (*this)(l(e) || r(e));
     } else {
-      return I::l(e) || I::r(e);
+      return l(e) || r(e);
     }
   }
 };
-}
-
-struct distribute_ors
-  : public visitor<distribute_ors, actors::distribute_ors> {};
 }
