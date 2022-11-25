@@ -21,7 +21,11 @@ struct distribute_nots : public I {
     } else if(child->type == op_type::Not) {
       return I::c(child);
     } else {
-      return I::ld(e);
+      if constexpr(std::is_same<ret, visitor_descent_query>()) {
+        return I::c(e);
+      } else {
+        return e.get_mgr().get(expression::op(op_type::Not, e->un.c, 0));
+      }
     }
   }
 };

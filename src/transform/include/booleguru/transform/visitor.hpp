@@ -2,6 +2,8 @@
 
 #include <cassert>
 
+#include <iostream>
+
 #include <booleguru/expression/op.hpp>
 #include <booleguru/expression/op_manager.hpp>
 #include <booleguru/expression/var_manager.hpp>
@@ -181,7 +183,17 @@ struct visitor {
   using collect_tree_actor = Actor<collect_tree>;
   using traverse_stack_actor = Actor<traverse_stack>;
 
-  using op_stack = std::stack<int32_t>;
+  struct op_stack_entry {
+    bool left : 1;
+    bool ignore : 1;
+    uint32_t id;
+
+    explicit op_stack_entry(uint32_t id, bool left = false, bool ignore = false)
+      : left(left)
+      , ignore(ignore)
+      , id(id) {}
+  };
+  using op_stack = std::stack<op_stack_entry>;
 
   op_stack stack;
 
@@ -257,43 +269,50 @@ struct visitor {
     bool came_from_left = true;
     while(root.valid() || !stack.empty()) {
       if(root.valid()) {
-        stack.push(came_from_left ? -root.get_id() : root.get_id());
+        stack.push(op_stack_entry(root.get_id(), came_from_left));
         root = should_walk_left(root) ? root.left() : op_ref();
         came_from_left = true;
       } else {
-        int32_t top = stack.top();
-        root.set_id(std::abs(top));
+        auto top = stack.top();
+        root.set_id(top.id);
         root.set_mgr(mgr);
         auto root_r = should_walk_right(root) ? root.right() : op_ref();
         if(!root_r.valid() || root_r == pre) {
           last_pre = pre;
           pre = root;
-          do {
-            traverse_.repeat = false;
-            traverse_.repeat_inner_lr = false;
-            assert(root.valid());
-            if constexpr(std::same_as<ReturnType, op_ref>) {
-              root = walk(traverse_, root);
-              root->mark = true;
-            } else {
-              walk(traverse_, root);
-            }
-            assert(root.valid());
-          } while(traverse_.repeat);
+          if(!top.ignore) {
+            do {
+              traverse_.repeat = false;
+              traverse_.repeat_inner_lr = false;
+              assert(root.valid());
+              if constexpr(std::same_as<ReturnType, op_ref>) {
+                auto res = walk(traverse_, root);
+                std::cout << "Left: " << root.left() << std::endl;
+                std::cout << "Right: " << root.right() << std::endl;
+                std::cout << "From " << root << " became " << res << std::endl;
+                root = res;
+                root->mark = true;
+              } else {
+                walk(traverse_, root);
+              }
+              assert(root.valid());
+            } while(traverse_.repeat);
+          }
           last = root;
           stack.pop();
           if(!stack.empty() /* require some parent */) {
             // Have to replace this op also in the parent op! Do this via a
             // different entry on the stack.
-            op_ref parent = op_ref(*mgr, std::abs(stack.top()));
-            bool left = stack.top() < 0;
-            if(top < 0) {
+            op_ref parent = op_ref(*mgr, stack.top().id);
+            bool left = stack.top().left;
+            bool ignore = stack.top().ignore;
+            if(top.left) {
               if(parent->left() != root.get_id()) {
                 expression::op new_parent(
                   parent->type, root.get_id(), parent->right());
                 stack.pop();
                 auto id = mgr->get(std::move(new_parent)).get_id();
-                stack.push(left ? -id : id);
+                stack.push(op_stack_entry(id, left, ignore));
               }
             } else {
               if(parent->right() != root.get_id()) {
@@ -301,15 +320,18 @@ struct visitor {
                   parent->type, parent->left(), root.get_id());
                 stack.pop();
                 auto id = mgr->get(std::move(new_parent)).get_id();
-                stack.push(left ? -id : id);
+                stack.push(op_stack_entry(id, left, ignore));
               }
             }
           }
           if(traverse_.repeat_inner_lr) {
+            std::cout << root << " traverse lr : " << root.left() << ", "
+                      << root.right() << std::endl;
             // Must repeat traversal with left and right of this node again! As
             // if left and right were never visited before.
-            stack.push(-root->left());
-            stack.push(root->right());
+            root->mark = false;
+            stack.push(op_stack_entry(root.get_id(), top.left, true));
+            stack.push(op_stack_entry(root->left(), true));
           }
           root.set_id(0);
         } else {
