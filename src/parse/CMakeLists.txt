@@ -2,6 +2,7 @@ set(SRCS
   src/base.cpp
   src/boole.cpp
   src/qdimacs.cpp
+  src/smtlib2.cpp
 )
 
 add_library(booleguru-parse STATIC ${SRCS})

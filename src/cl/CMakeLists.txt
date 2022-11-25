@@ -7,6 +7,7 @@ set(SRCS
 set(LISP_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/lisp/booleguru-cl-lisp.asd
   ${CMAKE_CURRENT_SOURCE_DIR}/lisp/booleguru-cl-lisp.lisp
+  ${CMAKE_CURRENT_SOURCE_DIR}/lisp/booleguru-smtlib-parser.lisp
 )
 
 # This is a rather big issue: :init-name does not work with ASDF and we only get

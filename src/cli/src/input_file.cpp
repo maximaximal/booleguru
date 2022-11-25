@@ -13,6 +13,7 @@
 #include <booleguru/parse/base.hpp>
 #include <booleguru/parse/boole.hpp>
 #include <booleguru/parse/qdimacs.hpp>
+#include <booleguru/parse/smtlib2.hpp>
 #include <booleguru/parse/result.hpp>
 
 namespace booleguru::cli {
@@ -28,15 +29,21 @@ struct input_file::internal {
     FILE* popen_handle = nullptr;
     __gnu_cxx::stdio_filebuf<char> popen_stdio_filebuf;
     std::istream istream;
+    bool use_pclose;
 
-    popen_variant(FILE* popen_handle)
+    popen_variant(FILE* popen_handle, bool use_pclose = true)
       : popen_handle(popen_handle)
       , popen_stdio_filebuf(
           __gnu_cxx::stdio_filebuf<char>(popen_handle, std::ios::in))
-      , istream(&popen_stdio_filebuf) {}
+      , istream(&popen_stdio_filebuf)
+      , use_pclose(use_pclose) {}
     ~popen_variant() {
-      if(popen_handle)
-        pclose(popen_handle);
+      if(popen_handle) {
+        if(use_pclose)
+          pclose(popen_handle);
+        else
+          fclose(popen_handle);
+      }
     }
   };
 
@@ -47,10 +54,12 @@ struct input_file::internal {
   }
   std::ifstream& ifstream() { return std::get<std::ifstream>(variants); }
 
-  internal(FILE* popen_handle)
+  int fd() { return fileno(std::get<popen_variant>(variants).popen_handle); }
+
+  internal(FILE* popen_handle, bool pclose = true)
     : variants(std::in_place_type<popen_variant>, popen_handle) {}
   internal(std::string path)
-    : variants(std::ifstream(path, std::ios::binary)) {}
+    : internal(fopen(path.c_str(), "r"), false) {}
 };
 
 input_file::input_file(std::string_view path,
@@ -139,7 +148,7 @@ input_file::produce_istream() {
   }
   name_ = path_;
   internal_ = std::make_unique<internal>(path_);
-  return internal_->ifstream();
+  return internal_->popen_istream();
 }
 
 std::istream&
@@ -173,7 +182,7 @@ input_file::produce_parser(std::istream& is) {
 
   switch(std::get<argument::input_types>(args_[argument::type])) {
     case argument::smtlib2:
-      throw std::runtime_error("SMTLIB2 Not supported yet!");
+      return std::make_unique<parse::smtlib2>(internal_->fd(), ops_);
     case argument::qcir:
       throw std::runtime_error("QCIR Not supported yet!");
     case argument::boole: {
