@@ -33,12 +33,6 @@ Optimized expression management. This is the very core of booleguru.
 
 Optimized expression transformations, optimizations, etc..
 
-The trick is to re-bind each visitor, so that a visitor can be implemented
-recursively, but executed in a loop using a stack. It first detects if the
-visitor requires decent to left and right, and if it does, it continues
-downwards, otherwise it directly uses the node id that is already on the tree.
-This should be doable with nice use of templates and dependant types.
-
 ### Parsing input files `booleguru::parse`
 
 Parses inputs (qcir, qdimacs, smtlib, etc). Produces expressions and/or output.
