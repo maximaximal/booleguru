@@ -34,13 +34,13 @@
   (cond
    ((not (first r)) a)
    ((and (first r) (not (second r))) (b-and a (first r)))
-   (t (b-and a (smtlib2-and (first r) (second r))))))
+   (t (b-and a (smtlib2-and (first r) (rest r))))))
 
 (defun smtlib2-or (a &rest r)
   (cond
    ((not (first r)) a)
    ((and (first r) (not (second r))) (b-or a (first r)))
-   (t (b-or a (smtlib2-or (first r) (second r))))))
+   (t (b-or a (smtlib2-or (first r) (rest r))))))
 
 (defun smtlib2-assert (expr)
   expr)

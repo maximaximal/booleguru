@@ -28,7 +28,7 @@ message(STATUS ${ECL_INCLUDES})
 add_custom_command(
   DEPENDS ${LISP_SRCS}
   OUTPUT booleguru-cl-lisp--all-systems.a init-wrapper.h
-  COMMAND ${ECL_BIN_PATH} --norc --eval "(require :asdf)" --eval "(setq compiler:*cc* \"${CMAKE_C_COMPILER} ${ECL_INCLUDES}\")" --eval "(push \"${CMAKE_CURRENT_SOURCE_DIR}/lisp/\" asdf:*central-registry*)" --eval "(asdf:make-build :booleguru-cl-lisp :type :static-library :move-here \"${CMAKE_CURRENT_BINARY_DIR}\" :init-name \"init_lib__BOOLEGURU_CL\" :monolithic t)" --eval "(quit)"
+  COMMAND ${ECL_BIN_PATH} --eval "(require :asdf)" --eval "(setq compiler:*cc* \"${CMAKE_C_COMPILER} ${ECL_INCLUDES}\")" --eval "(push \"${CMAKE_CURRENT_SOURCE_DIR}/lisp/\" asdf:*central-registry*)" --eval "(asdf:make-build :booleguru-cl-lisp :type :static-library :move-here \"${CMAKE_CURRENT_BINARY_DIR}\" :init-name \"init_lib__BOOLEGURU_CL\" :monolithic t)" --eval "(quit)"
   COMMAND bash -c "printf \"#pragma once\\n #define ECL_INIT_LIB_FUNC $(strings booleguru-cl-lisp--all-systems.a | grep --max-count=1 \"^init_lib\")\\n\" > init-wrapper.h"
   VERBATIM
   COMMENT "Run ECL (Embeddable Common Lisp) to compile lispy dependencies")
