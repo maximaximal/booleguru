@@ -19,8 +19,5 @@
 (defun b-define-global-last-op (last-op)
   (setq *last-op* last-op))
 
-(defun b-make-op (id)
-  (make-op :id id))
-
 (defun var (name)
   (booleguru-get-varop-id name))

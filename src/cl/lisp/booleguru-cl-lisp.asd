@@ -1,4 +1,6 @@
 (defsystem "booleguru-cl-lisp"
-           :depends-on (:swank)
-           :components ((:file "booleguru-cl-lisp")
-                        (:file "booleguru-smtlib-parser" :depends-on ("booleguru-cl-lisp"))))
+           :serial t
+           :depends-on (#:asdf)
+           :components ((:file "booleguru-wrapper")
+                        (:file "booleguru-cl-lisp")
+                        (:file "booleguru-smtlib-parser")))

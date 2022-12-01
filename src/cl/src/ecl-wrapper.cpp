@@ -261,8 +261,6 @@ ecl_wrapper::ecl_wrapper() {
 
   DEFUN("b-vars-extend", clfun_varnames_extend, 2);
   DEFUN("b-var-rename", clfun_var_rename, 3);
-
-  DEFUN("booleguru-", clfun_get_varop_id, 1);
 }
 ecl_wrapper::~ecl_wrapper() {
   cl_shutdown();
@@ -279,15 +277,15 @@ ecl_wrapper::supported_return_types
 ecl_wrapper::eval(const char* code,
                   std::shared_ptr<expression::op_manager> ops,
                   std::optional<uint32_t> last_op) {
+  if(ops)
+    op_manager = ops;
+
   cl_object form = c_string_to_object(code);
 
   if(last_op)
     cl_funcall(2, clfun_b_define_global_last_op, ecl_make_uint32_t(*last_op));
 
   cl_object ret;
-
-  if(ops)
-    op_manager = ops.get();
 
   cl_env_ptr env = ecl_process_env();
   ECL_CATCH_ALL_BEGIN(env) {

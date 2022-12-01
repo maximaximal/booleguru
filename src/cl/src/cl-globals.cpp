@@ -6,5 +6,4 @@ cl_object clfun_b_make_op;
 cl_object clfun_b_define_global_last_op;
 cl_object cltype_variable;
 cl_object cltype_op;
-booleguru::expression::op_manager* op_manager = nullptr;
 }
