@@ -1,3 +1,5 @@
+(in-package cl-user)
+
 (defun smtlib2-set-option (&key print-success)
   (declare (ignore print-success)))
 

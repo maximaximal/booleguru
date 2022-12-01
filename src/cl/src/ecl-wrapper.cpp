@@ -235,6 +235,8 @@ ecl_wrapper::ecl_wrapper() {
 
   ecl_init_module(NULL, ECL_INIT_LIB_FUNC);
 
+  cl_eval(c_string_to_object("(in-package cl-user)"));
+
   clfun_eval = cl_eval(c_string_to_object("#'eval-sexp-and-catch-errors"));
   clfun_b_make_op = cl_eval(c_string_to_object("#'b-make-op"));
   clfun_b_define_global_last_op =

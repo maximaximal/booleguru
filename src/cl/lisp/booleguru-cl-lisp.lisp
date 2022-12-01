@@ -1,3 +1,5 @@
+(in-package cl-user)
+
 (defvar *last-op*)
 
 (defun test-func-arg-incr (n) (+ n 1))
