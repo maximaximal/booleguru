@@ -1,6 +1,8 @@
 (in-package cl-user)
 
-(ffi:load-foreign-library #p "-lbooleguru-lisp-dependencies")
+(ffi:load-foreign-library #p "-lbooleguru-expression")
+(ffi:load-foreign-library #p "-lbooleguru-transform")
+(ffi:load-foreign-library #p "-lbooleguru-cl-wrapper")
 (ffi:load-foreign-library #p "-lstdc++")
 
 (ffi:clines "#include <booleguru/cl/cl-function-c-wrappers.h>")

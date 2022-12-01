@@ -10,4 +10,5 @@ target_link_libraries(booleguru-expression-test PRIVATE booleguru-expression)
 catch_discover_tests(booleguru-expression-test)
 
 if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+  target_link_libraries(booleguru-expression-test PRIVATE -fsanitize=address)
 endif()
