@@ -5,7 +5,9 @@ set(SRCS
   src/script_manager.cpp
 )
 
-add_library(booleguru-expression STATIC ${SRCS})
+add_library(booleguru-expression OBJECT ${SRCS})
+
+set_property(TARGET booleguru-expression PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 target_include_directories(booleguru-expression PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
