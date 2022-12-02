@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include <booleguru/cl/cl-function-c-wrappers.h>
 #include <booleguru/cl/cl-globals.hpp>
 #include <booleguru/expression/op_manager.hpp>
@@ -156,4 +158,13 @@ booleguru_cl_distribute_implication(uint32_t l) {
 extern "C" uint32_t
 booleguru_cl_distribute_equivalence(uint32_t l) {
   return transformer(transform::eliminate_equivalence(), l);
+}
+
+extern "C" void
+booleguru_cl_print(uint32_t op) {
+  ensure_op();
+  if(op >= op_manager->size()) {
+    return;
+  }
+  std::cout << (*op_manager)[op] << std::endl;
 }

@@ -44,8 +44,10 @@ add_custom_command(
     --eval "(setq compiler:*cc* \"${CMAKE_C_COMPILER} -fsanitize=address -fsanitize=undefined ${ECL_INCLUDES}\")"
     --eval "(push \"${CMAKE_CURRENT_SOURCE_DIR}/lisp/\" asdf:*central-registry*)"
     --eval "(asdf:make-build :booleguru-cl-lisp :prologue-code '(require :asdf) :type :static-library :monolithic t :init-name \"init_lib__BOOLEGURU_CL\" :move-here \"${CMAKE_CURRENT_BINARY_DIR}\")"
+    --eval "(asdf:make-build :booleguru-cl-lisp :prologue-code '(require :asdf) :type :fasb :monolithic t :init-name \"init_lib__BOOLEGURU_CL\" :move-here \"${CMAKE_CURRENT_BINARY_DIR}\")"
     --eval "(quit)"
   COMMAND bash -c "printf \"#pragma once\\n #define ECL_INIT_LIB_FUNC $(strings booleguru-cl-lisp--all-systems.a | grep --max-count=1 \"^init_lib\")\\n\" > init-wrapper.h"
+  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/booleguru-cl-lisp--all-systems.fasb ${CMAKE_BINARY_DIR}/booleguru-cl.fasb
   VERBATIM
   COMMENT "Run ECL (Embeddable Common Lisp) to compile lispy dependencies")
 # This goes in pair with `add_custom_command` above.

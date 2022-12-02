@@ -71,6 +71,9 @@ booleguru_cl_distribute_implication(uint32_t l);
 uint32_t
 booleguru_cl_distribute_equivalence(uint32_t l);
 
+void
+booleguru_cl_print(uint32_t op);
+
 #ifdef __cplusplus
 }
 #endif

@@ -32,11 +32,14 @@ w
 (defun distribute-to-cnf (a)
   (ffi:c-inline (a) (:uint32-t) :uint32-t "booleguru_cl_distribute_to_cnf(#0)" :one-liner t))
 
-(defun distribute-or(a)
+(defun distribute-or (a)
   (ffi:c-inline (a) (:uint32-t) :uint32-t "booleguru_cl_distribute_or(#0)" :one-liner t))
 
-(defun distribute-not(a)
+(defun distribute-not (a)
   (ffi:c-inline (a) (:uint32-t) :uint32-t "booleguru_cl_distribute_not(#0)" :one-liner t))
 
-(defun distribute-implication(a)
+(defun distribute-implication (a)
   (ffi:c-inline (a) (:uint32-t) :uint32-t "booleguru_cl_distribute_implication(#0)" :one-liner t))
+
+(defun b-print (op)
+  (ffi:c-inline (op) (:uint32-t) :void "booleguru_cl_print(#0)" :one-liner t))

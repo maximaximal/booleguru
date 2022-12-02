@@ -18,7 +18,7 @@ smtlib2::smtlib2(std::string_view str,
 result
 smtlib2::operator()() {
   if(str_.empty()) {
-    str_ = "(parse-smtlib2-from-file " + std::to_string(fileno_) + ")";
+    str_ = "(parse-smtlib2-from-fileno " + std::to_string(fileno_) + ")";
   } else {
     str_ = "(parse-smtlib2-from-str '" + str_ + "')";
   }

@@ -79,3 +79,17 @@ to use it then: https://old.reddit.com/r/lisp/comments/xx92w8/ecl_running_in_a_b
 
 Used to bind multiple languages into booleguru. Uses stuff from everywhere.
 Also used to bind runtime common lisp and to provide the API for use with JS.
+
+# Live Lisp Development
+
+The common lisp part is also compiled info a `fasb` file that can be loaded from
+ECL. To use it, run the following expression in a running ECL REPL with the
+corrected path:
+
+```
+(load #p "~/sai/booleguru/build-clang/booleguru-cl.fasb")
+```
+
+To then enable live editing of the environment, load all functions into the ECL
+REPL and override at will. Non-overridden functions stay implemented inside the
+`fasb` file.

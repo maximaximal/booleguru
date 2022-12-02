@@ -24,7 +24,7 @@
 
 (defun declare-const (name type)
   (if (gethash name *consts*) (error "Cannot declare same const twice!")
-    (setf (gethash name *consts*) (var (format nil "~a" name)))))
+    (setf (gethash name *consts*) (b-var (format nil "~a" name)))))
 
 (defmacro smtlib2-declare-const (name type)
   (declare-const name type)
@@ -36,13 +36,13 @@
   (cond
    ((not (first r)) a)
    ((and (first r) (not (second r))) (b-and a (first r)))
-   (t (b-and a (smtlib2-and (first r) (rest r))))))
+   (t (b-and a (apply #'smtlib2-and (cons (first r) (rest r)))))))
 
 (defun smtlib2-or (a &rest r)
   (cond
    ((not (first r)) a)
    ((and (first r) (not (second r))) (b-or a (first r)))
-   (t (b-or a (smtlib2-or (first r) (rest r))))))
+   (t (b-or a (apply #'smtlib2-or (cons (first r) (rest r)))))))
 
 (defun smtlib2-assert (expr)
   expr)
@@ -72,6 +72,7 @@
 
 (defun parse-smtlib2-from-stream (stream)
   "Read stream into a list of expressions."
+  (setq *consts* (make-hash-table))
   (let ((sexps (loop for sexp = (read stream nil 'eof)
                while (not (equal sexp 'eof))
                for parsed = (parse-smtlib2-toplevel sexp)
@@ -79,8 +80,11 @@
                collect parsed)))
     (apply #'smtlib2-and sexps)))
 
-(defun parse-smtlib2-from-file (fileno)
+(defun parse-smtlib2-from-fileno (fileno)
   (parse-smtlib2-from-stream (ext:make-stream-from-fd fileno :input :element-type 'character)))
+
+(defun parse-smtlib2-from-file (file)
+  (parse-smtlib2-from-stream (open file)))
 
 (defun parse-smtlib2-from-str (str)
   (parse-smtlib2-from-stream (make-string-input-stream str)))
