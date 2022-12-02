@@ -18,6 +18,3 @@
 
 (defun b-define-global-last-op (last-op)
   (setq *last-op* last-op))
-
-(defun var (name)
-  (booleguru-get-varop-id name))

@@ -33,13 +33,15 @@ foreach(dir ${BOOLEGURU_EXPRESSION_INCLUDES})
   string(APPEND ECL_INCLUDES "-I${dir} ")
 endforeach()
 
-# The cut removes the mangled C++ name.
+# The cut removes the mangled C++ name. The ASAN-verification modidifer is to
+# ease the use of ASAN. Not perfect, should be changed to a preload, but is
+# enough for this third party library stuff.
 add_custom_command(
   DEPENDS ${LISP_SRCS} booleguru-cl-wrapper
   OUTPUT booleguru-cl-lisp--all-systems.a init-wrapper.h
-  COMMAND ${ECL_BIN_PATH} --eval "(require 'asdf)"
-    --eval "(setq compiler:*user-ld-flags* \"-lstdc++ -L${CMAKE_BINARY_DIR}/lib/\")"
-    --eval "(setq compiler:*cc* \"${CMAKE_C_COMPILER} ${ECL_INCLUDES}\")"
+  COMMAND ${CMAKE_COMMAND} -E env ASAN_OPTIONS=verify_asan_link_order=0 ${ECL_BIN_PATH} --eval "(require 'asdf)"
+    --eval "(setq compiler:*user-ld-flags* \"-fsanitize=address -fsanitize=undefined -lstdc++ -L${CMAKE_BINARY_DIR}/lib/ -lbooleguru-cl-wrapper -lbooleguru-transform -lbooleguru-expression\")"
+    --eval "(setq compiler:*cc* \"${CMAKE_C_COMPILER} -fsanitize=address -fsanitize=undefined ${ECL_INCLUDES}\")"
     --eval "(push \"${CMAKE_CURRENT_SOURCE_DIR}/lisp/\" asdf:*central-registry*)"
     --eval "(asdf:make-build :booleguru-cl-lisp :prologue-code '(require :asdf) :type :static-library :monolithic t :init-name \"init_lib__BOOLEGURU_CL\" :move-here \"${CMAKE_CURRENT_BINARY_DIR}\")"
     --eval "(quit)"

@@ -84,9 +84,9 @@ booleguru_cl_vars_wrap(uint32_t opid, const char* prefix, const char* postfix) {
 }
 
 extern "C" uint32_t
-booleguru_cl_vars_rename(uint32_t opid,
-                         const char* oldname,
-                         const char* newname) {
+booleguru_cl_var_rename(uint32_t opid,
+                        const char* oldname,
+                        const char* newname) {
   ensure_op();
   if(opid >= op_manager->size() || !oldname || !newname)
     return 0;

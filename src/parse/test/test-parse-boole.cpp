@@ -72,16 +72,16 @@ TEST_CASE("Parse invalid boolean formulas") {
 
 TEST_CASE("Parse formula containing lisp code") {
   std::string_view input = GENERATE(
-    "a & (var \"b\")",
-    "(var \"a\") & b",
-    "(a & (var \"b\"))",
-    "(a & (var 'b)) :(b-var-rename *last-op* 'b \"b\")",
-    "(var \"a\") & (var \"b\")",
-    "(b-and (var \"a\") (var \"b\"))",
-    "(b-and (var \"a\") (var \"b\")) :(b-and (var \"a\") (var \"b\"))",
-    "(b-and (var \"a\") (var \"b\")) :(b-and (var \"aa\") (var "
-    "\"bb\")) :(b-and (var \"a\") (var \"b\"))",
-    "(b-and (var \"a\") (var \"b_\")) :(b-var-rename *last-op* \"b_\" \"b\")");
+    "a & (b-var \"b\")",
+    "(b-var \"a\") & b",
+    "(a & (b-var \"b\"))",
+    "(a & (b-var 'b)) :(b-var-rename *last-op* 'b \"b\")",
+    "(b-var \"a\") & (b-var \"b\")",
+    "(b-and (b-var \"a\") (b-var \"b\"))",
+    "(b-and (b-var \"a\") (b-var \"b\")) :(b-and (b-var \"a\") (b-var \"b\"))",
+    "(b-and (b-var \"a\") (b-var \"b\")) :(b-and (b-var \"aa\") (b-var "
+    "\"bb\")) :(b-and (b-var \"a\") (b-var \"b\"))",
+    "(b-and (b-var \"a\") (b-var \"b_\")) :(b-var-rename *last-op* \"b_\" \"b\")");
   auto is = isviewstream(input);
   boole parser(is);
   parser.eval(true);

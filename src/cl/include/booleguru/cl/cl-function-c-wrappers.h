@@ -28,9 +28,9 @@ uint32_t
 booleguru_cl_vars_wrap(uint32_t opid, const char* prefix, const char* postfix);
 
 uint32_t
-booleguru_cl_vars_rename(uint32_t opid,
-                         const char* oldname,
-                         const char* newname);
+booleguru_cl_var_rename(uint32_t opid,
+                        const char* oldname,
+                        const char* newname);
 
 uint32_t
 booleguru_cl_optype(uint32_t opid);
