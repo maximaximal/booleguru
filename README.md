@@ -77,8 +77,11 @@ to use it then: https://old.reddit.com/r/lisp/comments/xx92w8/ecl_running_in_a_b
 
 ### Internal API `booleguru::api`
 
-Used to bind multiple languages into booleguru. Uses stuff from everywhere.
-Also used to bind runtime common lisp and to provide the API for use with JS.
+Used to bind multiple languages into booleguru. Uses stuff from everywhere. Also
+used to bind runtime common lisp and to provide the API for use with JS. I want
+to do this with SWIG again, as I could then quickly add more languages that can
+be called. I need to do this in this direction, as I want to call languages
+outwards from the logical formula.
 
 # Live Lisp Development
 
