@@ -3,15 +3,19 @@ cmake_minimum_required(VERSION 3.2)
 
 set(CMAKE_CXX_STANDARD 23)
 
+option(TESTS "Enable Test-Target (requires Catch2)" ON)
+
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 find_package(ECL REQUIRED)
 
-find_package(Catch2)
-if(TARGET Catch2::Catch2)
-  message(STATUS "Catch2 version " ${Catch2_VERSION} " was found! Activating tests.")
-  include(CTest)
-  include(Catch)
+if(TESTS)
+    find_package(Catch2)
+    if(TARGET Catch2::Catch2)
+        message(STATUS "Catch2 version " ${Catch2_VERSION} " was found! Activating tests.")
+        include(CTest)
+        include(Catch)
+    endif()
 endif()
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
