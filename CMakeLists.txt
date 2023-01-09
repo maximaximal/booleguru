@@ -20,6 +20,10 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR})
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 set(CMAKE_C_FLAGS_RELEASE "-O3")
 
+if(EMSCRIPTEN)
+  add_link_options("-s ALLOW_MEMORY_GROWTH=1 -s TOTAL_MEMORY=2000MB")
+endif()
+
 add_subdirectory(src)
 
 if(${CMAKE_BUILD_TYPE} MATCHES "Debug")

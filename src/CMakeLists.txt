@@ -6,4 +6,10 @@ add_subdirectory(cl)
 add_subdirectory(parse)
 add_subdirectory(serialize)
 
-add_subdirectory(cli)
+if(NOT EMSCRIPTEN)
+  add_subdirectory(cli)
+endif()
+
+if(EMSCRIPTEN)
+  add_subdirectory(js-api)
+endif()

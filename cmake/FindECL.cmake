@@ -73,6 +73,9 @@ FIND_PACKAGE_HANDLE_STANDARD_ARGS(ECL
                                   VERSION_VAR ECL_VERSION_STRING)
 
 if(ECL_FOUND)
+  if(ECL_INCLUDE_DIR)
+    set(ECL_INCLUDE_DIRS ${ECL_INCLUDE_DIR})
+  endif()
   set(ECL_LIBRARIES ${ECL_LIBRARY})
   if(ECL_BIN_DIR)
     set(ECL_BIN_DIR "${ECL_BIN_DIR}/bin")
@@ -80,4 +83,3 @@ if(ECL_FOUND)
     set(ECL_CONFIG_BIN_PATH "${ECL_BIN_DIR}/ecl-config")
   endif()
 endif()
-
