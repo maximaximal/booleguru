@@ -35,7 +35,7 @@ foreach(dir ${BOOLEGURU_EXPRESSION_INCLUDES})
   string(APPEND ECL_INCLUDES "-I${dir} ")
 endforeach()
 
-set(FAS_COMMAND1 --eval "(asdf:make-build :booleguru-cl-lisp :prologue-code '(require :asdf) :type :fasb :monolithic t :init-name \"init_lib__BOOLEGURU_CL\" :move-here \"${CMAKE_CURRENT_BINARY_DIR}\")")
+set(FAS_COMMAND1 --eval "(asdf:make-build :booleguru-cl-lisp :prologue-code '(require :asdf) :type :fasl :monolithic t :init-name \"init_lib__BOOLEGURU_CL\" :move-here \"${CMAKE_CURRENT_BINARY_DIR}\")")
 set(FAS_COMMAND2 ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/booleguru-cl-lisp--all-systems.fasb ${CMAKE_BINARY_DIR}/booleguru-cl.fasb)
 set(LD_COMMAND
   --eval "(setq compiler:*user-ld-flags* \"${SANITIZER_FLAGS} -lstdc++ -L${CMAKE_BINARY_DIR}/lib/ -lbooleguru-cl-wrapper -lbooleguru-transform -lbooleguru-expression\")")
