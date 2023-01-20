@@ -109,6 +109,9 @@
    ((and (first r) (not (second r))) (b-or a (first r)))
    (t (b-or a (apply #'smtlib2-or (cons (first r) (rest r)))))))
 
+(defun smtlib2-not (a)
+  (b-not a))
+
 (defun smtlib2-assert (expr)
   expr)
 
