@@ -1,11 +1,12 @@
 #include <cerrno>
+#include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <string>
-
-#include <ext/stdio_filebuf.h>
 
 #include <booleguru/cli/input_file.hpp>
 #include <booleguru/expression/op_manager.hpp>
@@ -13,8 +14,8 @@
 #include <booleguru/parse/base.hpp>
 #include <booleguru/parse/boole.hpp>
 #include <booleguru/parse/qdimacs.hpp>
-#include <booleguru/parse/smtlib2.hpp>
 #include <booleguru/parse/result.hpp>
+#include <booleguru/parse/smtlib2.hpp>
 
 namespace booleguru::cli {
 static int xzsig[] = { 0xFD, 0x37, 0x7A, 0x58, 0x5A, 0x00, 0x00, EOF };
@@ -24,17 +25,36 @@ static int sig7z[] = { 0x37, 0x7A, 0xBC, 0xAF, 0x27, 0x1C, EOF };
 static int lzmasig[] = { 0x5D, 0x00, 0x00, 0x80, 0x00, EOF };
 static int zstdsig[] = { 0xFD, 0x2F, 0xB5, 0x28, EOF };
 
+// Taken from https://stackoverflow.com/a/12342830
+class stdiobuf : public std::streambuf {
+  private:
+  FILE* d_file;
+  char d_buffer[8192];
+
+  public:
+  stdiobuf(FILE* file)
+    : d_file(file) {}
+  int underflow() {
+    if(this->gptr() == this->egptr() && this->d_file) {
+      size_t size = fread(this->d_buffer, 1, 8192, this->d_file);
+      this->setg(this->d_buffer, this->d_buffer, this->d_buffer + size);
+    }
+    return this->gptr() == this->egptr()
+             ? traits_type::eof()
+             : traits_type::to_int_type(*this->gptr());
+  }
+};
+
 struct input_file::internal {
   struct popen_variant {
     FILE* popen_handle = nullptr;
-    __gnu_cxx::stdio_filebuf<char> popen_stdio_filebuf;
+    stdiobuf popen_stdio_filebuf;
     std::istream istream;
     bool use_pclose;
 
     popen_variant(FILE* popen_handle, bool use_pclose = true)
       : popen_handle(popen_handle)
-      , popen_stdio_filebuf(
-          __gnu_cxx::stdio_filebuf<char>(popen_handle, std::ios::in))
+      , popen_stdio_filebuf(stdiobuf(popen_handle))
       , istream(&popen_stdio_filebuf)
       , use_pclose(use_pclose) {}
     ~popen_variant() {
@@ -59,7 +79,8 @@ struct input_file::internal {
   internal(FILE* popen_handle, bool pclose = true)
     : variants(std::in_place_type<popen_variant>, popen_handle) {}
   internal(std::string path)
-    : internal(fopen(path.c_str(), "r"), false) {}
+    : internal(fopen(path.c_str(), "r"), false) {
+  }
 };
 
 input_file::input_file(std::string_view path,

@@ -1,4 +1,14 @@
+// Required because of linking issues with ECL transitively including GMP
+#include <gmp.h>
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-register"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wregister"
+extern "C" {
 #include <ecl/ecl.h>
+}
+#pragma clang diagnostic pop
+#pragma GCC diagnostic pop
 
 #include <booleguru/cl/cl-function.hpp>
 #include <booleguru/cl/cl-globals.hpp>
