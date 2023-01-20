@@ -69,7 +69,7 @@ qcir::walk_quant(op_ref o) {
 
 std::vector<int32_t>
 qcir::walk_nargsop(std::string_view gatetype, op_ref o, bool last) {
-  if(o->mark)
+  if(o->mark && last)
     return {};
   o->mark = true;
   op_type t = o->type;
