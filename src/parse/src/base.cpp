@@ -33,12 +33,13 @@ base::~base() {}
 
 result
 base::generate_result(expression::op_ref expr) {
-  return result{ .expr = expr, .line = line_, .column = column_ };
+  return result{ .expr = expr, .line = line_, .column = column_, .message = "", .code = result::error_code::OTHER };
 }
 
 result
 base::error(std::string_view error, int code) {
-  return result{ .line = line_,
+  return result{ .expr = expression::op_ref(),
+                 .line = line_,
                  .column = column_,
                  .message{
                    std::string(error),

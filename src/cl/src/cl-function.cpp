@@ -1,14 +1,20 @@
 // Required because of linking issues with ECL transitively including GMP
 #include <gmp.h>
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-register"
+#ifdef __GNUC__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wregister"
+#else
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-register"
+#endif
 extern "C" {
 #include <ecl/ecl.h>
 }
-#pragma clang diagnostic pop
+#ifdef __GNUC__
 #pragma GCC diagnostic pop
+#else
+#pragma clang diagnostic pop
+#endif
 
 
 #include <booleguru/expression/op_manager.hpp>

@@ -347,6 +347,7 @@ boole::next(bool lispmode) {
 
   auto scan_res = scanner();
   if(result* res = std::get_if<result>(&scan_res)) {
+    (void)res;
     scanner_in_error_state_ = true;
     cur_.type = token::None;
     return scan_res;
