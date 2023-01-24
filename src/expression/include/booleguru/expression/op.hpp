@@ -85,6 +85,7 @@ struct op {
         break;
       case op_type::Var:
         var.v = r1;
+        var.q = r2;
         break;
       case op_type::None:
         break;

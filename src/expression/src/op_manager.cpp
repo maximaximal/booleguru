@@ -89,10 +89,11 @@ op_tostr_visit(std::ostream& o,
                const decltype(op::quant)& expr,
                op_type parent_type) {
   (void)parent_type;
-  auto varop = exprs[expr.v];
   assert(expr.v > 0);
 
-  o << op_type_to_sym(t) << exprs.vars()[varop->var.v]->name << " ";
+  o << op_type_to_sym(t);
+  op_tostr_visit(o, exprs, op_type::Var, exprs[expr.v]->var, t);
+  o << " ";
   exprs[expr.e]->visit([&o, &exprs, t](op_type ct, auto& e) {
     op_tostr_visit(o, exprs, ct, e, t);
   });
@@ -137,7 +138,11 @@ op_tostr_visit(std::ostream& o,
                op_type parent_type) {
   (void)t;
   (void)parent_type;
-  return o << exprs.vars()[expr.v]->name;
+  o << exprs.vars()[expr.v]->name;
+  if(expr.q) {
+    o << "[" << expr.q << "]";
+  }
+  return o;
 }
 
 std::ostream&
