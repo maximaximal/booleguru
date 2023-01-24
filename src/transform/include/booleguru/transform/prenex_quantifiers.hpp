@@ -7,19 +7,31 @@
 namespace booleguru::transform {
 struct prenex_quantifier : public visitor<prenex_quantifier> {
     std::unordered_map<uint32_t, uint32_t> bounds_map;
+    std::stack<std::pair<op_type, uint32_t>> quant_stack;
+
+    inline op_ref post_action(op_ref o) {
+        while(!quant_stack.empty()) {
+            auto [t, v] = quant_stack.top();
+            o = o.get_mgr().get(op(t, v, o.get_id()));
+            quant_stack.pop();
+        }
+        return o;
+    }
 
     inline op_ref walk_quant(op_ref o) {
-        const auto &old_v = o.get_mgr()[o->quant.v];
-        op_ref bound_v = o.get_mgr().get(op(op_type::Var, old_v->var.v, o.get_id()));
+        const auto old_v = o.get_mgr()[o->quant.v]->var;
 
-        uint32_t outer_bound = bounds_map[old_v->var.v];
-        bounds_map[old_v->var.v] = o.get_id();
+        uint32_t outer_bound = bounds_map[old_v.v];
+        bounds_map[old_v.v] = o.get_id();
 
-        auto e = (*this)(o.get_mgr()[o->quant.e]);
+        auto bound_v = o.get_mgr().get(op(op_type::Var, old_v.v, o.get_id()));
+        quant_stack.push(std::make_pair((op_type)o->type, bound_v.get_id()));
 
-        bounds_map[old_v->var.v] = outer_bound;
+        auto e = visit(o.get_mgr()[o->quant.e]);
 
-        return o.get_mgr().get(op(o->type, bound_v.get_id(), e.get_id()));
+        bounds_map[old_v.v] = outer_bound;
+
+        return e;
     }
 
     inline op_ref walk_exists(op_ref o) {

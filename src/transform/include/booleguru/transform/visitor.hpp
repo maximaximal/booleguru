@@ -15,6 +15,15 @@ struct visitor {
   using variable = expression::variable;
 
   inline ReturnType operator()(op_ref o) {
+    auto out = visit(o);
+    return static_cast<Derived*>(this)->post_action(out);
+  }
+
+  inline ReturnType post_action(op_ref o) {
+    return o;
+  }
+
+  inline ReturnType visit(op_ref o) {
     using namespace expression;
     assert(o.valid());
     switch(o->type) {
@@ -78,21 +87,21 @@ struct visitor {
   inline ReturnType walk_var(op_ref ex) { return ex; }
 
   inline constexpr ReturnType l(op_ref e) {
-    return (*static_cast<Derived*>(this))(e.get_mgr()[e->bin.l]);
+    return (*static_cast<Derived*>(this)).visit(e.get_mgr()[e->bin.l]);
   }
   inline constexpr ReturnType ld(op_ref e) { return e.get_mgr()[e->bin.l]; }
   inline constexpr ReturnType r(op_ref e) {
-    return (*static_cast<Derived*>(this))(e.get_mgr()[e->bin.r]);
+    return (*static_cast<Derived*>(this)).visit(e.get_mgr()[e->bin.r]);
   }
   inline constexpr ReturnType rd(op_ref e) { return e.get_mgr()[e->bin.r]; }
 
   inline constexpr ReturnType c(op_ref e) {
-    return (*static_cast<Derived*>(this))(e.get_mgr()[e->un.c]);
+    return (*static_cast<Derived*>(this)).visit(e.get_mgr()[e->un.c]);
   }
   inline constexpr ReturnType cd(op_ref e) { return e.get_mgr()[e->un.c]; }
 
   inline constexpr ReturnType v(op_ref e) {
-    return (*static_cast<Derived*>(this))(e.get_mgr()[e->quant.v]);
+    return (*static_cast<Derived*>(this)).visit(e.get_mgr()[e->quant.v]);
   }
   inline constexpr ReturnType vd(op_ref e) { return e.get_mgr()[e->quant.v]; }
   inline constexpr const std::string& name(op_ref e) {
@@ -100,7 +109,7 @@ struct visitor {
   }
 
   inline constexpr ReturnType e(op_ref e) {
-    return (*static_cast<Derived*>(this))(e.get_mgr()[e->quant.e]);
+    return (*static_cast<Derived*>(this)).visit(e.get_mgr()[e->quant.e]);
   }
   inline constexpr ReturnType ed(op_ref e) { return e.get_mgr()[e->quant.e]; }
 };
