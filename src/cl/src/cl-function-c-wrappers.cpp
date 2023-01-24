@@ -11,6 +11,7 @@
 #include <booleguru/transform/eliminate_implication.hpp>
 #include <booleguru/transform/variable_extend.hpp>
 #include <booleguru/transform/variable_rename.hpp>
+#include <booleguru/transform/prenex_quantifiers.hpp>
 
 namespace booleguru::cl {
 std::shared_ptr<booleguru::expression::op_manager> op_manager;
@@ -158,6 +159,11 @@ booleguru_cl_distribute_implication(uint32_t l) {
 extern "C" uint32_t
 booleguru_cl_distribute_equivalence(uint32_t l) {
   return transformer(transform::eliminate_equivalence(), l);
+}
+
+extern "C" uint32_t
+booleguru_cl_prenex_quantifier(uint32_t l) {
+  return transformer(transform::prenex_quantifier(), l);
 }
 
 extern "C" void

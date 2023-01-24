@@ -6,6 +6,7 @@ set(SRCS
   src/hash_variables.cpp
   src/distribute_nots.cpp
   src/distribute_ors.cpp
+  src/prenex_quantifiers.cpp
   src/cnf.cpp
 )
 
