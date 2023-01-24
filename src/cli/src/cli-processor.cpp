@@ -33,7 +33,8 @@ static expression::op_type arg_op_to_op[] = {
 };
 
 cli_processor::cli_processor(arg_vec args)
-  : args_(process_args_to_inputs(args))
+  : input_args_(std::move(args))
+  , args_(process_args_to_inputs(input_args_))
   , cur_(args_[0])
   , next_(args_[1])
   , ops_(std::make_shared<expression::op_manager>()) {}
@@ -158,6 +159,7 @@ cli_processor::process_expr() {
 cli_processor::arg_stream
 cli_processor::process_args_to_inputs(arg_vec& args) {
   arg_stream inputs;
+  inputs.reserve(args.size() + 2);
 
   arg_vec curr;
   for(auto it = args.begin(); it != args.end(); ++it) {
@@ -216,8 +218,8 @@ cli_processor::process_args_to_inputs(arg_vec& args) {
   }
 
   // Margin at end to stop the parser.
-  inputs.emplace_back(None);
-  inputs.emplace_back(None);
+  inputs.push_back(None);
+  inputs.push_back(None);
 
   return inputs;
 }

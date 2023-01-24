@@ -71,6 +71,7 @@ class cli_processor {
   template<cli_processor::arg_op type, typename Functor>
   expression::op_ref process_assoc_op(Functor next);
 
+  arg_vec input_args_;
   size_t cur_idx_ = 0;
   arg_stream args_;
   std::reference_wrapper<arg_variant> cur_;
