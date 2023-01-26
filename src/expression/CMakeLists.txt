@@ -3,6 +3,7 @@ set(SRCS
   src/op_manager.cpp
   src/var_manager.cpp
   src/script_manager.cpp
+  src/literals.cpp
 )
 
 add_library(booleguru-expression STATIC ${SRCS})

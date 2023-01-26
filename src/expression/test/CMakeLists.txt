@@ -1,5 +1,6 @@
 set(TEST_SRCS
   test-expression-and-inside.cpp
+  test-user-defined-literals.cpp
 )
 
 add_executable(booleguru-expression-test ${TEST_SRCS})
