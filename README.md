@@ -1,24 +1,10 @@
 # Booleguru
 
-## Relation between Common Lisp and C++
+A symbolic logical calculator that can not only give results, but also transform
+what it reads. Supports multiple input- and output formats.
 
-C++ is used to build core structures and mechanisms, while Common Lisp is used
-to enhance C++ and provide better structural capabilities than easily
-describable using C++. Implementation is therefore split between C++ and Common
-Lisp, compile-time compiled to C.
-
-### Why Even Include Common Lisp
-
-  1. Nice matching against structures (high level formula optimizing)
-  2. Easy and efficient parser for SMT-LIB
-  3. Native scripting language, making some features easier to implement
-     (mainly complex formula traversal)
-  4. Provide a socket to connect to to debug traversal things. This should be
-     the debugging mode default.
-
-Common Lisp should be both embeddable and run `.cl` files. This would make the
-internals scriptable by common lisp and then compilable into a static binary
-for release. During debugging, one could start a swank server at any point.
+This is still very early in development and everything may change. We are very
+open for inputs and requests!
 
 ## Structure
 
@@ -63,26 +49,6 @@ clearly mark lispy code. If performance of some transformation becomes a
 problem, one can move implementations. Stuff is imported into other namespaces
 with `using` or by importing namespaces (e.g. `booleguru::cl::transform`).
 
-To integrate C++ and Lisp, one could look at this project:
-https://github.com/Islam0mar/CLCXX-ECL
-
-Generally, one could think about using something besides ECL, but ECL is a good
-idea for portability, which stays a high priority for this project.
-
-ECL also is the gateway to other languages. It provides functions to execute
-code.
-
-ECL is currently being ported to the web, it should actually be somehow possible
-to use it then: https://old.reddit.com/r/lisp/comments/xx92w8/ecl_running_in_a_browser_poc/
-
-### Internal API `booleguru::api`
-
-Used to bind multiple languages into booleguru. Uses stuff from everywhere. Also
-used to bind runtime common lisp and to provide the API for use with JS. I want
-to do this with SWIG again, as I could then quickly add more languages that can
-be called. I need to do this in this direction, as I want to call languages
-outwards from the logical formula.
-
 # Live Lisp Development
 
 The common lisp part is also compiled info a `fasb` file that can be loaded from
@@ -96,3 +62,7 @@ corrected path:
 To then enable live editing of the environment, load all functions into the ECL
 REPL and override at will. Non-overridden functions stay implemented inside the
 `fasb` file.
+
+## License
+
+MIT-License
