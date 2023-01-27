@@ -71,16 +71,20 @@ constexpr inline proxy<op_manager> operator"" _var(const char* name,
 
 constexpr inline op_ref
 exists(op_ref variable, op_ref sub_tree) {
-  assert(variable.valid());
-  assert(sub_tree.valid());
-  assert(&variable.get_mgr() == &sub_tree.get_mgr());
+  if(!std::is_constant_evaluated()) {
+    assert(variable.valid());
+    assert(sub_tree.valid());
+    assert(&variable.get_mgr() == &sub_tree.get_mgr());
+  }
   return sub_tree.get_mgr().get(
     op(op_type::Exists, variable.get_id(), sub_tree.get_id()));
 }
 
 constexpr inline op_ref
 exists(var_ref variable, op_ref sub_tree) {
-  assert(&variable.get_mgr() == &sub_tree.get_mgr().vars());
+  if(!std::is_constant_evaluated()) {
+    assert(&variable.get_mgr() == &sub_tree.get_mgr().vars());
+  }
   op_ref var_op =
     sub_tree.get_mgr().get(op(op_type::Var, variable.get_id(), 0));
   return exists(var_op, sub_tree);
@@ -88,16 +92,20 @@ exists(var_ref variable, op_ref sub_tree) {
 
 constexpr inline op_ref
 forall(op_ref variable, op_ref sub_tree) {
-  assert(variable.valid());
-  assert(sub_tree.valid());
-  assert(&variable.get_mgr() == &sub_tree.get_mgr());
+  if(!std::is_constant_evaluated()) {
+    assert(variable.valid());
+    assert(sub_tree.valid());
+    assert(&variable.get_mgr() == &sub_tree.get_mgr());
+  }
   return sub_tree.get_mgr().get(
     op(op_type::Forall, variable.get_id(), sub_tree.get_id()));
 }
 
 constexpr inline op_ref
 forall(var_ref variable, op_ref sub_tree) {
-  assert(&variable.get_mgr() == &sub_tree.get_mgr().vars());
+  if(!std::is_constant_evaluated()) {
+    assert(&variable.get_mgr() == &sub_tree.get_mgr().vars());
+  }
   op_ref var_op =
     sub_tree.get_mgr().get(op(op_type::Var, variable.get_id(), 0));
   return forall(var_op, sub_tree);
