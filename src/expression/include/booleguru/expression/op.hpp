@@ -178,6 +178,8 @@ std::ostream&
 operator<<(std::ostream& o, op_type t);
 }
 
+// This was tested against fully hashing with the hash provided by Ankerl, but
+// the results were worse compared to Limboole's hash values.
 namespace std {
 template<>
 struct hash<booleguru::expression::op> {
