@@ -88,15 +88,39 @@ op_tostr_visit(std::ostream& o,
                op_type t,
                const decltype(op::quant)& expr,
                op_type parent_type) {
-  (void)parent_type;
   assert(expr.v > 0);
+
+  op_type inner_type = exprs.getobj(expr.e).type;
+
+  const bool outer_parens = [parent_type]() {
+    if(parent_type == op_type::Exists || parent_type == op_type::Forall ||
+       parent_type == op_type::None)
+      return false;
+    return true;
+  }();
+  const bool inner_parens = [inner_type]() {
+    if(inner_type == op_type::Exists || inner_type == op_type::Forall ||
+       inner_type == op_type::None)
+      return false;
+    return true;
+  }();
+
+  if(outer_parens)
+    o << "(";
 
   o << op_type_to_sym(t);
   op_tostr_visit(o, exprs, op_type::Var, exprs[expr.v]->var, t);
   o << " ";
-  exprs[expr.e]->visit([&o, &exprs, t](op_type ct, auto& e) {
+  exprs[expr.e]->visit([&o, &exprs, t, inner_parens](op_type ct, auto& e) {
+    if(inner_parens)
+      o << "(";
     op_tostr_visit(o, exprs, ct, e, t);
+    if(inner_parens)
+      o << ")";
   });
+
+  if(outer_parens)
+    o << ")";
   return o;
 }
 
