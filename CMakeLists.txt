@@ -1,9 +1,40 @@
 project(booleguru)
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 3.9)
 
 set(CMAKE_CXX_STANDARD 23)
 
 option(TESTS "Enable Test-Target (requires Catch2)" ON)
+
+get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+
+if(isMultiConfig)
+    if(NOT "Sanitize" IN_LIST CMAKE_CONFIGURATION_TYPES)
+        list(APPEND CMAKE_CONFIGURATION_TYPES Sanitize)
+    endif()
+else()
+    set(allowedBuildTypes Sanitize Debug Release RelWithDebInfo MinSizeRel)
+    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "${allowedBuildTypes}")
+
+    if(CMAKE_BUILD_TYPE AND NOT CMAKE_BUILD_TYPE IN_LIST allowedBuildTypes)
+        message(FATAL_ERROR "Invalid build type: ${CMAKE_BUILD_TYPE}")
+    endif()
+endif()
+
+set(CMAKE_C_FLAGS_SANITIZE
+    "${CMAKE_C_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer -fsanitize=undefined" CACHE STRING
+    "Flags used by the C compiler for Sanitize build type or configuration." FORCE)
+
+set(CMAKE_CXX_FLAGS_SANITIZE
+    "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer -fsanitize=undefined" CACHE STRING
+    "Flags used by the C++ compiler for Sanitize build type or configuration." FORCE)
+
+set(CMAKE_EXE_LINKER_FLAGS_SANITIZE
+    "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -fsanitize=address -fsanitize=undefined" CACHE STRING
+    "Linker flags to be used to create executables for Sanitize build type." FORCE)
+
+set(CMAKE_SHARED_LINKER_FLAGS_SANITIZE
+    "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -fsanitize=address -fsanitize=undefined" CACHE STRING
+    "Linker lags to be used to create shared libraries for Sanitize build type." FORCE)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
@@ -34,13 +65,16 @@ if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
   if(MSVC)
 	target_compile_options(booleguru-expression PRIVATE /W4 /WX)
 	target_compile_options(booleguru-transform PRIVATE /W4 /WX)
+	target_compile_options(booleguru-parse PRIVATE /W4 /WX)
+	target_compile_options(booleguru-cl PRIVATE /W4 /WX)
+	target_compile_options(booleguru-serialize PRIVATE /W4 /WX)
+	target_compile_options(booleguru PRIVATE /W4 /WX)
   else()
-	target_compile_options(booleguru-expression PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-omit-frame-pointer -fsanitize=address -fsanitize=undefined)
-	target_compile_options(booleguru-transform PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-omit-frame-pointer -fsanitize=address -fsanitize=undefined)
-	target_compile_options(booleguru-parse PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-omit-frame-pointer -fsanitize=address -fsanitize=undefined)
-	target_compile_options(booleguru-cl PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-omit-frame-pointer -fsanitize=address -fsanitize=undefined)
-	target_compile_options(booleguru-serialize PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-omit-frame-pointer -fsanitize=address -fsanitize=undefined)
-	target_compile_options(booleguru PRIVATE -Wall -Wextra -Wpedantic -Werror -fno-omit-frame-pointer -fsanitize=address -fsanitize=undefined)
-	target_link_options(booleguru PRIVATE -fsanitize=address -fsanitize=undefined)
+	target_compile_options(booleguru-expression PRIVATE -Wall -Wextra -Wpedantic -Werror)
+	target_compile_options(booleguru-transform PRIVATE -Wall -Wextra -Wpedantic -Werror)
+	target_compile_options(booleguru-parse PRIVATE -Wall -Wextra -Wpedantic -Werror)
+	target_compile_options(booleguru-cl PRIVATE -Wall -Wextra -Wpedantic -Werror)
+	target_compile_options(booleguru-serialize PRIVATE -Wall -Wextra -Wpedantic -Werror)
+	target_compile_options(booleguru PRIVATE -Wall -Wextra -Wpedantic -Werror)
   endif()
 endif()
