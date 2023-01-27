@@ -23,7 +23,7 @@ target_include_directories(booleguru-cl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/inclu
 # query the symbols and are done with it. This way seems to work well. We have
 # to report this upstream though.
 
-if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+if(${CMAKE_BUILD_TYPE} MATCHES "Sanitize")
   set(SANITIZER_FLAGS "-fsanitize=address -fsanitize=undefined")
 endif()
 
@@ -86,6 +86,6 @@ if(TARGET Catch2::Catch2)
   add_subdirectory(test)
 endif()
 
-if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+if(${CMAKE_BUILD_TYPE} MATCHES "Sanitize")
   target_link_libraries(booleguru-cl PRIVATE -fsanitize=address)
 endif()
