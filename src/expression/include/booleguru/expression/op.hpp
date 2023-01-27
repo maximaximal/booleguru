@@ -24,18 +24,19 @@ enum class op_type {
 };
 
 struct op {
-  // 64 bit (8 byte) user flags for ops.
   op_type type : 8;
-  bool mark : 1;
-  bool and_inside : 1;
-  bool user_flag3 : 1;
-  bool user_flag4 : 1;
-  bool user_flag5 : 1;
-  bool user_flag6 : 1;
-  bool user_flag7 : 1;
-  bool user_flag8 : 1;
-  int16_t user_int16 : 16;
-  int32_t user_int32 : 32;
+  // 56 bit (fill up type to 8 byte) user flags for ops. These are not included
+  // in the hashing of ops and are therefore left to be mutable.
+  mutable bool mark : 1;
+  mutable bool and_inside : 1;
+  mutable bool user_flag3 : 1;
+  mutable bool user_flag4 : 1;
+  mutable bool user_flag5 : 1;
+  mutable bool user_flag6 : 1;
+  mutable bool user_flag7 : 1;
+  mutable bool user_flag8 : 1;
+  mutable int16_t user_int16 : 16;
+  mutable int32_t user_int32 : 32;
 
   // Inline ops. The type is given above.
   union {
@@ -117,7 +118,7 @@ struct op {
     return f(type, un);
   }
 
-  inline constexpr size_t hash() const {
+  inline constexpr size_t hash() const noexcept {
     return static_cast<size_t>(type) + visit([](op_type t, const auto& e) {
              (void)t;
              return e.hash();
@@ -175,4 +176,13 @@ class op_ref;
 
 std::ostream&
 operator<<(std::ostream& o, op_type t);
+}
+
+namespace std {
+template<>
+struct hash<booleguru::expression::op> {
+  size_t operator()(const booleguru::expression::op& x) const noexcept {
+    return x.hash();
+  }
+};
 }

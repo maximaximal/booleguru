@@ -40,7 +40,7 @@ class reference {
   inline constexpr const T* operator->() const {
     return &get_mgr().getobj(id_);
   }
-  inline constexpr T* operator->() { return &get_mgr().getobj(id_); }
+  inline constexpr const T* operator->() { return &get_mgr().getobj(id_); }
 
   inline constexpr T& get_obj() { return *this; }
   inline constexpr const T& get_obj() const { return *this; }

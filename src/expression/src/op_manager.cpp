@@ -194,7 +194,7 @@ op_manager::op_manager(std::shared_ptr<var_manager> vars)
   : vars_(vars) {}
 
 op_manager::base::objref
-op_manager::insert(T&& obj, size_t obj_hash) {
+op_manager::insert(T&& obj) {
   switch(obj.type) {
     case op_type::And:
       // And And should just keep the and it already has.
@@ -204,49 +204,49 @@ op_manager::insert(T&& obj, size_t obj_hash) {
     case op_type::Impl:
     case op_type::Equi:
       obj.and_inside =
-        objects_[obj.left()].and_inside || objects_[obj.right()].and_inside;
+        getobj(obj.left()).and_inside || getobj(obj.right()).and_inside;
       break;
     case op_type::Not:
-      obj.and_inside = objects_[obj.left()].and_inside;
+      obj.and_inside = getobj(obj.left()).and_inside;
       break;
     case op_type::Exists:
     case op_type::Forall:
-      obj.and_inside = objects_[obj.left()].and_inside;
+      obj.and_inside = getobj(obj.left()).and_inside;
       break;
     case op_type::Var:
-      assert(obj.var.v < vars().size());
+      assert(obj.var.v - 1 < vars().size());
       break;
     default:
       break;
   }
 
-  return base::insert(std::move(obj), obj_hash);
+  return base::insert(std::move(obj));
 }
 void
 op_manager::modify_ops(modifier&& mod) {
-  for(auto& op : objects_) {
-    mod(op);
+  for(auto& op : objects()) {
+    mod(op.first);
   }
 }
 
 void
 op_manager::unmark() {
-  for(auto& op : objects_) {
-    op.mark = false;
+  for(auto& op : objects()) {
+    op.first.mark = false;
   }
 }
 
 void
 op_manager::reset_op_user_vars() {
-  for(auto& op : objects_) {
-    op.user_flag3 = false;
-    op.user_flag4 = false;
-    op.user_flag5 = false;
-    op.user_flag6 = false;
-    op.user_flag7 = false;
-    op.user_flag8 = false;
-    op.user_int16 = 0;
-    op.user_int32 = 0;
+  for(auto& op : objects()) {
+    op.first.user_flag3 = false;
+    op.first.user_flag4 = false;
+    op.first.user_flag5 = false;
+    op.first.user_flag6 = false;
+    op.first.user_flag7 = false;
+    op.first.user_flag8 = false;
+    op.first.user_int16 = 0;
+    op.first.user_int32 = 0;
   }
 }
 
@@ -256,7 +256,7 @@ op_manager::mark_through_tree(uint32_t root) {
   unvisited.push(root);
 
   while(!unvisited.empty()) {
-    op& current = objects_[unvisited.top()];
+    const op& current = getobj(unvisited.top());
     unvisited.pop();
 
     if(current.mark)
@@ -290,13 +290,13 @@ op_manager::mark_through_tree(uint32_t root) {
 void
 op_manager::traverse_depth_first_through_tree(
   uint32_t root,
-  std::function<void(uint32_t, op&)>& visit) {
+  std::function<void(uint32_t, const op&)>& visit) {
   std::stack<uint32_t> unvisited;
   unvisited.push(root);
 
   while(!unvisited.empty()) {
     uint32_t id = unvisited.top();
-    op& current = objects_[id];
+    const op& current = getobj(id);
     unvisited.pop();
 
     visit(id, current);
@@ -327,13 +327,13 @@ op_manager::traverse_depth_first_through_tree(
 void
 op_manager::traverse_unmarked_depth_first_through_tree(
   uint32_t root,
-  std::function<void(uint32_t, op&)> visit) {
+  std::function<void(uint32_t, const op&)> visit) {
   std::stack<uint32_t> unvisited;
   unvisited.push(root);
 
   while(!unvisited.empty()) {
     uint32_t id = unvisited.top();
-    op& current = objects_[id];
+    const op& current = getobj(id);
     unvisited.pop();
 
     if(current.mark)

@@ -223,7 +223,7 @@ qcir::operator()(expression::op_ref op) {
   std::vector<uint32_t> vars;
   std::vector<uint32_t> quantified_vars;
   auto visit = [&quantified_vars, &vars](uint32_t id,
-                                         expression::op& op) -> void {
+                                         const expression::op& op) -> void {
     op.mark = true;
     switch(op.type) {
       case expression::op_type::Var:

@@ -34,22 +34,22 @@ class op_manager : public manager<op_ref, op_manager> {
   op_manager();
   op_manager(std::shared_ptr<var_manager> vars);
 
-  base::objref insert(T&& obj, size_t obj_hash);
+  base::objref insert(T&& obj);
 
   inline var_manager& vars() { return *vars_; }
   inline std::shared_ptr<var_manager> vars_ptr() { return vars_; }
   inline const var_manager& vars() const { return *vars_; }
 
-  using modifier = std::function<void(op&)>;
+  using modifier = std::function<void(const op&)>;
   void modify_ops(modifier&& mod);
   void unmark();
   void mark_through_tree(uint32_t);
   void traverse_depth_first_through_tree(
     uint32_t root,
-    std::function<void(uint32_t, op&)>& visit);
+    std::function<void(uint32_t, const op&)>& visit);
   void traverse_unmarked_depth_first_through_tree(
     uint32_t root,
-    std::function<void(uint32_t, op&)> visit);
+    std::function<void(uint32_t, const op&)> visit);
   void reset_op_user_vars();
 };
 

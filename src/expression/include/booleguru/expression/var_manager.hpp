@@ -16,9 +16,13 @@ class script_manager;
 struct variable {
   std::string name;
 
-  inline size_t hash() const { return std::hash<decltype(name)>{}(name); }
+  inline size_t hash() const noexcept {
+    return std::hash<decltype(name)>{}(name);
+  }
 
-  inline bool operator==(const variable& o) { return name == o.name; }
+  inline bool operator==(const variable& o) const noexcept {
+    return name == o.name;
+  }
 };
 
 class var_ref : public reference<variable, var_manager> {
@@ -54,4 +58,13 @@ operator<<(std::ostream& o, const variable& v);
 
 std::ostream&
 operator<<(std::ostream& o, const var_ref& v);
+}
+
+namespace std {
+template<>
+struct hash<booleguru::expression::variable> {
+  size_t operator()(const booleguru::expression::variable& x) const noexcept {
+    return x.hash();
+  }
+};
 }
