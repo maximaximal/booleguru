@@ -19,6 +19,8 @@ class op_ref : public reference<op, op_manager> {
 
   op_ref left();
   op_ref right();
+
+  std::string to_string() const;
 };
 
 class op_manager : public manager<op_ref, op_manager> {

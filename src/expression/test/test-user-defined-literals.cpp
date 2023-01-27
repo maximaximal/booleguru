@@ -22,7 +22,24 @@ TEST_CASE("Create a variable OP using a literal without a handle") {
 }
 
 TEST_CASE("Create a variable OP using a literal with a handle") {
-  op_manager vars;
-  op_ref v = "test2"_var(vars);
+  op_manager ops;
+  op_ref v = "test2"_var(ops);
   REQUIRE(v.valid());
+}
+
+TEST_CASE("Create quantifier using short-hand syntax") {
+  op_manager ops;
+  op_ref x = "x"_var(ops);
+  op_ref y = "y"_var(ops);
+
+  REQUIRE(x.get_id() == 1);
+  REQUIRE(x->var.v == 1);
+  REQUIRE(y.get_id() == 2);
+  REQUIRE(y->var.v == 2);
+
+  auto formula = forall(x, exists(y, x && y));
+
+  CAPTURE(formula);
+
+  REQUIRE(formula.to_string() == "#x ?y (x & y)");
 }

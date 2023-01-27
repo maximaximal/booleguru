@@ -1,5 +1,6 @@
 #include <cassert>
 #include <ostream>
+#include <sstream>
 #include <stack>
 
 #include <booleguru/expression/op.hpp>
@@ -7,6 +8,13 @@
 #include <booleguru/expression/var_manager.hpp>
 
 namespace booleguru::expression {
+std::string
+op_ref::to_string() const {
+  std::stringstream s;
+  s << (*this);
+  return s.str();
+}
+
 inline constexpr static bool
 parens_required(op_type p, op_type c) {
   return static_cast<size_t>(p) > static_cast<size_t>(c);
