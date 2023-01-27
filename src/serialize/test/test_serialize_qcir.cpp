@@ -84,6 +84,7 @@ TEST_CASE("Serialize simple example QCIR formula with some NOTs") {
   serializer(op_complete);
 
   CAPTURE(op_complete);
+  //REQUIRE(false);
   CAPTURE(o.str());
 
   const char* expected = R"(#QCIR-G14 6
@@ -138,4 +139,47 @@ output(9)
 )";
 
   REQUIRE(o.str() == expected);
+}
+
+TEST_CASE("Serialize simple non prenex CNF example to QCIR formula cleansed") {
+std::shared_ptr<op_manager> ops =
+    std::make_shared<op_manager>(std::make_shared<var_manager>());
+
+auto var_1 = ops->vars().get(variable{ "x" });
+auto var_2 = ops->vars().get(variable{ "y" });
+auto var_3 = ops->vars().get(variable{ "z" });
+
+auto op_1 = ops->get(op(op_type::Var, var_1.get_id(), 0));
+auto op_2 = ops->get(op(op_type::Var, var_2.get_id(), 0));
+auto op_3 = ops->get(op(op_type::Var, var_3.get_id(), 0));
+
+auto op_g1_ = ops->get(op(op_type::And, op_1.get_id(), op_2.get_id()));
+auto op_g1 = ops->get(op(op_type::And, op_g1_.get_id(), op_3.get_id()));
+auto op_g2_ = ops->get(op(op_type::Exists, op_2.get_id(), op_g1.get_id()));
+auto op_g2 = ops->get(op(op_type::Exists, op_1.get_id(), op_g2_.get_id()));
+auto op_g3 = ops->get(op(op_type::Or, op_3.get_id(), op_g2.get_id()));
+
+
+auto op_complete =
+    ops->get(op(op_type::Forall, var_3.get_id(), op_g3.get_id()));  
+
+
+std::stringstream o;
+  booleguru::serialize::qcir serializer(o);
+  serializer(op_complete);
+
+  CAPTURE(op_complete);
+  //REQUIRE(false);
+  CAPTURE(o.str());
+
+  const char* expected = R"(#QCIR-14 6
+forall(3)
+output(4)
+5 = and(1, 2, 3)
+6 = exists(1, 2; 5)
+4 = or(3, 6)
+)";
+
+  REQUIRE(o.str() == expected);
+
 }
