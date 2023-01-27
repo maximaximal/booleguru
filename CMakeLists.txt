@@ -1,7 +1,7 @@
 project(booleguru)
 cmake_minimum_required(VERSION 3.9)
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 20)
 
 option(TESTS "Enable Test-Target (requires Catch2)" ON)
 
