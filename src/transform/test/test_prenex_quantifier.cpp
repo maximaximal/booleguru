@@ -34,7 +34,6 @@ TEST_CASE("Transform a simple Non-Prenex formula into prenex formula") {
   auto op_g7 = op_g4 && op_g6;
   auto op_g8 = ops->get(op(op_type::Exists, op_v1.get_id(), op_g7.get_id()));
 
-
   std::stringstream serialized;
   serialized << op_g8;
 
@@ -54,7 +53,8 @@ TEST_CASE("Transform a simple Non-Prenex formula into prenex formula") {
   REQUIRE(transformed.str() == expected);
 }
 
-TEST_CASE("Transform a simple Non-Prenex cleansed formula into prenex formula (check negation of quantifiers") {
+TEST_CASE("Transform a simple Non-Prenex cleansed formula into prenex formula "
+          "(check negation of quantifiers") {
   std::shared_ptr<op_manager> ops =
     std::make_shared<op_manager>(std::make_shared<var_manager>());
 
@@ -86,7 +86,7 @@ TEST_CASE("Transform a simple Non-Prenex cleansed formula into prenex formula (c
   auto op_g5 = ops->get(op(op_type::Forall, op_v4.get_id(), op_g4.get_id()));
   auto op_g6 = ops->get(op(op_type::Exists, op_v3.get_id(), op_g5.get_id()));
   auto op_g7 = ops->get(op(op_type::Forall, op_v2.get_id(), op_g6.get_id()));
-  
+
   auto op_g8 = ops->get(op(op_type::Exists, op_v7.get_id(), op_g2.get_id()));
   auto op_g9 = ops->get(op(op_type::Forall, op_v6.get_id(), op_g8.get_id()));
 
@@ -95,10 +95,8 @@ TEST_CASE("Transform a simple Non-Prenex cleansed formula into prenex formula (c
   auto op_g12 = ops->get(op(op_type::Not, op_g11.get_id(), 0));
 
   auto op_g13 = op_g7 && op_g9 && op_g12;
-  
+
   auto op_g14 = ops->get(op(op_type::Exists, op_v1.get_id(), op_g13.get_id()));
-
-
 
   std::stringstream serialized;
   serialized << op_g14;
