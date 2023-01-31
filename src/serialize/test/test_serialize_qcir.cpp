@@ -188,14 +188,14 @@ TEST_CASE("Non prenex non CNF to QCIR") {
   // REQUIRE(false);
   CAPTURE(o.str());
 
-   const char* expected = R"(#QCIR-14
-  output(7)
-  3 = xor(1, 2)
-  4 = exists(1; 3)
-  5 = xor(2, 4)
-  6 = and(4, 5)
-  7 = forall(2; 6)
-  )";
+   const char* expected = R"(#QCIR-G14 6
+forall(2)
+output(6)
+3 = xor(1, 2)
+4 = exists(1; 3)
+5 = xor(2, 4)
+6 = and(4, 5)
+)";
 
   REQUIRE(o.str() == expected);
 
