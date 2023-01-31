@@ -24,8 +24,17 @@ qcir::walk_quant(op_ref o) {
 
   bool first = true;
   if(!on_quant_prefix_) {
-    if(!dry_walk_)
+    op_ref after_this_quant = o;
+    do {
+      after_this_quant = o.get_mgr()[after_this_quant->quant.e];
+    } while(after_this_quant->type == o->type);
+    walk(after_this_quant);
+
+    if(!dry_walk_) {
       o_ << o.get_id() << " = ";
+    } else {
+      ++number_of_variables_;
+    }
   }
   while(o->type == t) {
     auto v = o->quant.v;
@@ -52,6 +61,7 @@ qcir::walk_quant(op_ref o) {
   if(!dry_walk_)
     o_ << ")\n";
 
+  bool was_quant_prefix = on_quant_prefix_;
   if(on_quant_prefix_) {
     if(o->type != op_type::Forall && o->type != op_type::Exists) {
       on_quant_prefix_ = false;
@@ -64,7 +74,8 @@ qcir::walk_quant(op_ref o) {
     }
   }
 
-  walk(o);
+  if(was_quant_prefix)
+    walk(o);
 }
 
 std::vector<int32_t>
