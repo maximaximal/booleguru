@@ -4,11 +4,13 @@
 #include <catch2/generators/catch_generators.hpp>
 
 #include <booleguru/expression/var_manager.hpp>
+#include <booleguru/expression/literals.hpp>
 
 #include <booleguru/transform/prenex_quantifiers.hpp>
 
 using namespace booleguru::expression;
 using namespace booleguru::transform;
+using namespace booleguru::expression::literals;
 
 TEST_CASE("Transform a simple Non-Prenex formula into prenex formula") {
   std::shared_ptr<op_manager> ops =
@@ -58,7 +60,6 @@ TEST_CASE("Transform a simple Non-Prenex cleansed formula into prenex formula "
   std::shared_ptr<op_manager> ops =
     std::make_shared<op_manager>(std::make_shared<var_manager>());
 
-  auto var_v1 = ops->vars().get(variable{ "p" });
   auto var_v2 = ops->vars().get(variable{ "q" });
   auto var_v3 = ops->vars().get(variable{ "r" });
   auto var_v4 = ops->vars().get(variable{ "s" });
@@ -68,7 +69,7 @@ TEST_CASE("Transform a simple Non-Prenex cleansed formula into prenex formula "
   auto var_v8 = ops->vars().get(variable{ "q''" });
   auto var_v9 = ops->vars().get(variable{ "r''" });
 
-  auto op_v1 = ops->get(op(op_type::Var, var_v1.get_id(), 0));
+  auto op_v1 = "p"_var(ops);
   auto op_v2 = ops->get(op(op_type::Var, var_v2.get_id(), 0));
   auto op_v3 = ops->get(op(op_type::Var, var_v3.get_id(), 0));
   auto op_v4 = ops->get(op(op_type::Var, var_v4.get_id(), 0));
@@ -117,4 +118,25 @@ TEST_CASE("Transform a simple Non-Prenex cleansed formula into prenex formula "
 )";
 
   REQUIRE(transformed.str() == expected);
+}
+TEST_CASE("Transform a Non-Prenex formula into prenex") {
+  op_manager ops;
+
+  op_ref p = "p"_var(ops);
+  op_ref q = "q"_var(ops);
+  op_ref r = "r"_var(ops);
+  op_ref s = "s"_var(ops);
+  op_ref t = "t"_var(ops);
+
+  auto formula_1 = forall(q, exists(r, forall(s, exists(t, p || q || r || s || t))));
+  auto formula_2 = forall(q, exists(r, (q || q || r)));
+  auto formula_3 = forall(q, exists(r, (q || q || r)));
+
+  auto formula = exists(p, formula_1 && formula_2 && !(formula_3));
+
+   prenex_quantifier pren;
+   auto prenexed = pren(formula);
+
+  REQUIRE(prenexed.to_string() == "?p #q ?r #s ?t ?p #q' ?r' ?p ?q'' #r'' ((p | q | r | s | t) & (p | q' | r') & !(p | q'' | r''))");
+
 }
