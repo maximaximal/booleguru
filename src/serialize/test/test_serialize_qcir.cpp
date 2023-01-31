@@ -44,12 +44,12 @@ TEST_CASE("Serialize simple example QCIR formula") {
   CAPTURE(op_complete);
   CAPTURE(o.str());
 
-  const char* expected = R"(#QCIR-G14 6
+  const char* expected = R"(#QCIR-G14 7
 free(3)
 forall(4)
 output(9)
-8 = exists(1, 2; 6)
 6 = and(1, 2, 3)
+8 = exists(1, 2; 6)
 9 = and(4, 8)
 )";
 
@@ -89,12 +89,12 @@ TEST_CASE("Serialize simple example QCIR formula with some NOTs") {
   // REQUIRE(false);
   CAPTURE(o.str());
 
-  const char* expected = R"(#QCIR-G14 6
+  const char* expected = R"(#QCIR-G14 7
 free(3)
 forall(4)
 output(-10)
-8 = exists(1, 2; 6)
 6 = and(1, 2, 3)
+8 = exists(1, 2; 6)
 10 = and(4, -8)
 )";
 
@@ -160,10 +160,10 @@ TEST_CASE("Serialize simple non prenex CNF example to QCIR formula cleansed") {
 
   const char* expected = R"(#QCIR-G14 6
 forall(3)
-output(4)
+output(8)
 5 = and(1, 2, 3)
-6 = exists(1, 2; 5)
-4 = or(3, 6)
+7 = exists(1, 2; 5)
+8 = or(3, 7)
 )";
 
   REQUIRE(o.str() == expected);
@@ -174,10 +174,10 @@ TEST_CASE("Non prenex non CNF to QCIR") {
 
   op_ref x = "x"_var(ops);
   op_ref z = "z"_var(ops);
-  
-  auto formula_1 = exists(x, x ^ z); 
-  auto formula_2 = z ^ exists(x, x ^ z); 
-  
+
+  auto formula_1 = exists(x, x ^ z);
+  auto formula_2 = z ^ exists(x, x ^ z);
+
   auto formula = forall(z, formula_1 && formula_2);
 
     std::stringstream o;
