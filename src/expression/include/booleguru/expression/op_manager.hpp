@@ -73,6 +73,13 @@ operator||(op_ref l, op_ref r) {
   return l.get_mgr().get(op(op_type::Or, l.get_id(), r.get_id()));
 }
 
+op_ref inline constexpr
+operator^(op_ref l, op_ref r) {
+  assert(l.valid());
+  assert(r.valid());
+  return l.get_mgr().get(op(op_type::Xor, l.get_id(), r.get_id()));
+}
+
 std::ostream&
 operator<<(std::ostream& o, const op_ref& e);
 }

@@ -42,4 +42,8 @@ TEST_CASE("Create quantifier using short-hand syntax") {
   CAPTURE(formula);
 
   REQUIRE(formula.to_string() == "#x ?y (x & y)");
+
+  auto formula2 = x ^ y;
+
+  REQUIRE(formula2.to_string() == "x ^ y");
 }
