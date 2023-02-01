@@ -59,17 +59,19 @@ class proxy {
   }
 };
 
-constexpr inline proxy<var_manager> operator"" _varref(const char* name,
-                                                       std::size_t l) {
+[[nodiscard]] constexpr inline proxy<var_manager> operator"" _varref(
+  const char* name,
+  std::size_t l) {
   return proxy<var_manager>(std::string_view(name, l));
 }
 
-constexpr inline proxy<op_manager> operator"" _var(const char* name,
-                                                   std::size_t l) {
+[[nodiscard]] constexpr inline proxy<op_manager> operator"" _var(
+  const char* name,
+  std::size_t l) {
   return proxy<op_manager>(std::string_view(name, l));
 }
 
-constexpr inline op_ref
+[[nodiscard]] constexpr inline op_ref
 exists(op_ref variable, op_ref sub_tree) {
   if(!std::is_constant_evaluated()) {
     assert(variable.valid());
@@ -80,7 +82,7 @@ exists(op_ref variable, op_ref sub_tree) {
     op(op_type::Exists, variable.get_id(), sub_tree.get_id()));
 }
 
-constexpr inline op_ref
+[[nodiscard]] constexpr inline op_ref
 exists(var_ref variable, op_ref sub_tree) {
   if(!std::is_constant_evaluated()) {
     assert(&variable.get_mgr() == &sub_tree.get_mgr().vars());
@@ -90,7 +92,7 @@ exists(var_ref variable, op_ref sub_tree) {
   return exists(var_op, sub_tree);
 }
 
-constexpr inline op_ref
+[[nodiscard]] constexpr inline op_ref
 forall(op_ref variable, op_ref sub_tree) {
   if(!std::is_constant_evaluated()) {
     assert(variable.valid());
@@ -101,7 +103,7 @@ forall(op_ref variable, op_ref sub_tree) {
     op(op_type::Forall, variable.get_id(), sub_tree.get_id()));
 }
 
-constexpr inline op_ref
+[[nodiscard]] constexpr inline op_ref
 forall(var_ref variable, op_ref sub_tree) {
   if(!std::is_constant_evaluated()) {
     assert(&variable.get_mgr() == &sub_tree.get_mgr().vars());
@@ -111,4 +113,27 @@ forall(var_ref variable, op_ref sub_tree) {
   return forall(var_op, sub_tree);
 }
 
+[[nodiscard]] constexpr inline op_ref
+lpmi(op_ref left, op_ref right) {
+  if(!std::is_constant_evaluated()) {
+    assert(&left.get_mgr() == &left.get_mgr());
+  }
+  return left.get_mgr().get(op(op_type::Lpmi, left.get_id(), right.get_id()));
+}
+
+[[nodiscard]] constexpr inline op_ref
+impl(op_ref left, op_ref right) {
+  if(!std::is_constant_evaluated()) {
+    assert(&left.get_mgr() == &left.get_mgr());
+  }
+  return left.get_mgr().get(op(op_type::Impl, left.get_id(), right.get_id()));
+}
+
+[[nodiscard]] constexpr inline op_ref
+equi(op_ref left, op_ref right) {
+  if(!std::is_constant_evaluated()) {
+    assert(&left.get_mgr() == &left.get_mgr());
+  }
+  return left.get_mgr().get(op(op_type::Equi, left.get_id(), right.get_id()));
+}
 }
