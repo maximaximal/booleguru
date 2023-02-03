@@ -50,7 +50,7 @@ TEST_CASE("Transform a simple Non-Prenex formula into prenex formula") {
   CAPTURE(transformed.str());
 
   const char* expected =
-    R"(?p[14] ?r[12] #q[11] #q[10] ?r[9] ((p[14] | q[10] | r[9]) & (!p[14] | q[11] | r[12])))";
+    R"(?p[14] ?r[12] #q[10] #q[11] ?r[9] ((p[14] | q[10] | r[9]) & (!p[14] | q[11] | r[12])))";
 
   REQUIRE(transformed.str() == expected);
 }
@@ -104,8 +104,7 @@ TEST_CASE("Transform a simple Non-Prenex cleansed formula into prenex formula "
 
   CAPTURE(serialized.str());
 
-  prenex_quantifier p;
-  p(op_g14);
+  prenex_quantifier<prenex_quantifier_Edown_Aup> p;
 
   std::stringstream transformed;
   transformed << p(op_g14);
