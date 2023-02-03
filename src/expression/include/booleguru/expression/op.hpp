@@ -23,6 +23,18 @@ enum class op_type {
   Var,
 };
 
+[[nodiscard]] inline op_type
+op_type_flip_quantifier(op_type in) noexcept {
+  switch(in) {
+    case op_type::Exists:
+      return op_type::Forall;
+    case op_type::Forall:
+      return op_type::Exists;
+    default:
+      return op_type::None;
+  }
+}
+
 struct op {
   op_type type : 8;
   // 56 bit (fill up type to 8 byte) user flags for ops. These are not included
