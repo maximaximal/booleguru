@@ -186,3 +186,4 @@ tags
 build/
 build-*
 /.ccls-cache/
+/.cache

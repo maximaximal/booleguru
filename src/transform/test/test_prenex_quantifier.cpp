@@ -3,8 +3,8 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
 
-#include <booleguru/expression/var_manager.hpp>
 #include <booleguru/expression/literals.hpp>
+#include <booleguru/expression/var_manager.hpp>
 
 #include <booleguru/transform/prenex_quantifiers.hpp>
 
@@ -49,7 +49,8 @@ TEST_CASE("Transform a simple Non-Prenex formula into prenex formula") {
 
   CAPTURE(transformed.str());
 
-  const char* expected = R"(?p[14] ?r[12] #q[11] #q[10] ?r[9] ((p[14] | q[10] | r[9]) & (!p[14] | q[11] | r[12])))";
+  const char* expected =
+    R"(?p[14] ?r[12] #q[11] #q[10] ?r[9] ((p[14] | q[10] | r[9]) & (!p[14] | q[11] | r[12])))";
 
   REQUIRE(transformed.str() == expected);
 }
@@ -127,15 +128,17 @@ TEST_CASE("Transform a Non-Prenex formula into prenex") {
   op_ref s = "s"_var(ops);
   op_ref t = "t"_var(ops);
 
-  auto formula_1 = forall(q, exists(r, forall(s, exists(t, p || q || r || s || t))));
+  auto formula_1 =
+    forall(q, exists(r, forall(s, exists(t, p || q || r || s || t))));
   auto formula_2 = forall(q, exists(r, (q || q || r)));
   auto formula_3 = forall(q, exists(r, (q || q || r)));
 
   auto formula = exists(p, formula_1 && formula_2 && !(formula_3));
 
-   prenex_quantifier pren;
-   auto prenexed = pren(formula);
+  prenex_quantifier pren;
+  auto prenexed = pren(formula);
 
-  REQUIRE(prenexed.to_string() == "?p #q ?r #s ?t ?p #q' ?r' ?p ?q'' #r'' ((p | q | r | s | t) & (p | q' | r') & !(p | q'' | r''))");
-
+  REQUIRE(prenexed.to_string() ==
+          "?p #q ?r #s ?t ?p #q' ?r' ?p ?q'' #r'' ((p | q | r | s | t) & (p | "
+          "q' | r') & !(p | q'' | r''))");
 }

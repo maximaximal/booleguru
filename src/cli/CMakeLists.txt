@@ -11,7 +11,7 @@ target_link_libraries(booleguru-cli PUBLIC booleguru-expression booleguru-cl boo
 add_executable(booleguru ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)
 target_link_libraries(booleguru PUBLIC booleguru-cli)
 
-if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+if(${CMAKE_BUILD_TYPE} MATCHES "Sanitize")
   target_link_libraries(booleguru-cli PRIVATE -fsanitize=address)
   target_link_libraries(booleguru PRIVATE -fsanitize=address)
 endif()
