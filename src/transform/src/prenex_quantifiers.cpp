@@ -23,3 +23,19 @@ operator<<(
   }
   return o;
 }
+
+std::ostream&
+operator<<(
+  std::ostream& o,
+  const std::list<booleguru::transform::prenex_quantifier_stack_entry>& v) {
+  bool first = true;
+  for(const auto& e : v) {
+    if(first) {
+      first = false;
+    } else {
+      o << ", ";
+    }
+    o << e;
+  }
+  return o;
+}

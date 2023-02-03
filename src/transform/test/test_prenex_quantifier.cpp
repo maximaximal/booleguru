@@ -104,7 +104,7 @@ TEST_CASE("Transform a simple Non-Prenex cleansed formula into prenex formula "
 
   CAPTURE(serialized.str());
 
-  prenex_quantifier<prenex_quantifier_Edown_Aup> p;
+  prenex_quantifier<prenex_quantifier_Eup_Aup> p;
 
   std::stringstream transformed;
   transformed << p(op_g14);
