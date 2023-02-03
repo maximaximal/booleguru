@@ -200,3 +200,72 @@ output(6)
   REQUIRE(o.str() == expected);
 
 }
+
+TEST_CASE("Formula with equivalence to QCIR") {
+  op_manager ops;
+
+  
+  op_ref a = "a"_var(ops);
+  op_ref b = "b"_var(ops);
+  op_ref c = "c"_var(ops);
+  op_ref x = "x"_var(ops);
+
+  auto formula = (x || !a || !b || !c) && (!x || a) && (!x || b) && (!x || c);
+
+    std::stringstream o;
+  booleguru::serialize::qcir serializer(o);
+  serializer(formula);
+
+  CAPTURE(formula);
+  // REQUIRE(false);
+  CAPTURE(o.str());
+
+   const char* expected = R"(#QCIR-G14 9
+free(1, 2, 3, 4)
+output(17)
+10 = or(4, -1, -2, -3)
+12 = or(-4, 1)
+14 = or(-4, 2)
+16 = or(-4, 3)
+17 = and(10, 12, 14, 16)
+)";
+
+  REQUIRE(o.str() == expected);
+
+}
+
+TEST_CASE("A gate is used 2 times") {
+  op_manager ops;
+
+  
+  op_ref a = "a"_var(ops);
+  op_ref b = "b"_var(ops);
+  op_ref c = "c"_var(ops);
+  op_ref x = "d"_var(ops);
+  op_ref x = "e"_var(ops);
+  op_ref x = "f"_var(ops);
+
+  auto formula = (x || !a || !b || !c) && (!x || a) && (!x || b) && (!x || c);
+
+    std::stringstream o;
+  booleguru::serialize::qcir serializer(o);
+  serializer(formula);
+
+  CAPTURE(formula);
+  // REQUIRE(false);
+  CAPTURE(o.str());
+
+   const char* expected = R"(#QCIR-G14 9
+free(1, 2, 3, 4)
+output(17)
+10 = or(4, -1, -2, -3)
+12 = or(-4, 1)
+14 = or(-4, 2)
+16 = or(-4, 3)
+17 = and(10, 12, 14, 16)
+)";
+
+  REQUIRE(o.str() == expected);
+
+}
+

@@ -49,8 +49,7 @@ TEST_CASE("Transform a simple Non-Prenex formula into prenex formula") {
 
   CAPTURE(transformed.str());
 
-  const char* expected = R"(?p #q ?r ?r' #q' ((p | q | r) & (!p | q' | r'))
-)";
+  const char* expected = R"(?p[14] ?r[12] #q[11] #q[10] ?r[9] ((p[14] | q[10] | r[9]) & (!p[14] | q[11] | r[12])))";
 
   REQUIRE(transformed.str() == expected);
 }
