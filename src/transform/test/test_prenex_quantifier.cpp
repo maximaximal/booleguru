@@ -55,10 +55,35 @@ TEST_CASE("Transform a simple Non-Prenex formula into prenex formula") {
   REQUIRE(transformed.str() == expected);
 }
 
+struct prenex_test_variant {
+  using F = std::function<op_ref(op_ref)>;
+  F transform;
+  std::string match_result;
+  std::string name;
+
+  template<class T>
+  static prenex_test_variant gen(std::string name, std::string match_result) {
+    return prenex_test_variant{ prenex_quantifier<T>(), match_result, name };
+  }
+};
+
 TEST_CASE("Transform a simple Non-Prenex cleansed formula into prenex formula "
+          "with multiple prenexing variants"
           "(check negation of quantifiers") {
   std::shared_ptr<op_manager> ops =
     std::make_shared<op_manager>(std::make_shared<var_manager>());
+
+  auto v = GENERATE(
+    prenex_test_variant::gen<prenex_quantifier_Eup_Aup>(
+      "Eup Aup",
+      "?p[29] ?q''[25] #q[21] #q'[23] #r''[24] ?r[20] ?r'[22] #s[19] ?t[18] "
+      "((p[29] | q[21] | r[20] | s[19] | t[18]) & (p[29] | q'[23] | r'[22]) & "
+      "!(p[29] | q''[25] | r''[24]))"),
+    prenex_test_variant::gen<prenex_quantifier_Edown_Adown>(
+      "Edown Adown",
+      "?p[29] #q[21] ?r[20] ?q''[25] #s[19] #q'[23] #r''[24] ?t[18] ?r'[22]"
+      "((p[29] | q[21] | r[20] | s[19] | t[18]) & (p[29] | q'[23] | r'[22]) & "
+      "!(p[29] | q''[25] | r''[24]))"));
 
   auto var_v2 = ops->vars().get(variable{ "q" });
   auto var_v3 = ops->vars().get(variable{ "r" });
@@ -99,24 +124,11 @@ TEST_CASE("Transform a simple Non-Prenex cleansed formula into prenex formula "
 
   auto op_g14 = ops->get(op(op_type::Exists, op_v1.get_id(), op_g13.get_id()));
 
-  std::stringstream serialized;
-  serialized << op_g14;
+  auto result = v.transform(op_g14);
 
-  CAPTURE(serialized.str());
+  CAPTURE(v.name);
 
-  prenex_quantifier<prenex_quantifier_Eup_Aup> p;
-
-  std::stringstream transformed;
-  transformed << p(op_g14);
-
-  CAPTURE(transformed.str());
-
-  const char* expected = R"(
-    ?p #q ?r #s ?t , ?p #q' ?r', ?p ?q'' #r''
-    ((p | q | r | s | t) & (p | q' | r') & !(p | q'' | r''))
-)";
-
-  REQUIRE(transformed.str() == expected);
+  REQUIRE(result.to_string() == v.match_result);
 }
 TEST_CASE("Transform a Non-Prenex formula into prenex") {
   op_manager ops;
