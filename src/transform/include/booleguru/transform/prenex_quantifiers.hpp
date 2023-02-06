@@ -28,6 +28,18 @@ struct prenex_quantifier_stack_entry {
     const prenex_quantifier_stack_entry& e) noexcept {
     return e.t == expression::op_type::Forall;
   }
+
+  static void mark_leaves(std::list<prenex_quantifier_stack_entry>& l) {
+    std::list<prenex_quantifier_stack_entry>::iterator last_it = l.end();
+    for(auto it = l.begin(); it != l.end(); ++it) {
+      if(last_it != l.end()) {
+        last_it->subtree_leaf = last_it->nesting >= it->nesting;
+      }
+      last_it = it;
+    }
+    // Last entry MUST be a leaf.
+    l.rbegin()->subtree_leaf = true;
+  }
 };
 }
 
@@ -108,16 +120,7 @@ struct prenex_quantifier_Eup_Adown {
   [[nodiscard]] inline std::list<prenex_quantifier_stack_entry>& operator()() {
     remaining.reverse();
 
-    std::list<prenex_quantifier_stack_entry>::iterator last_it =
-      remaining.end();
-    for(auto it = remaining.begin(); it != remaining.end(); ++it) {
-      if(last_it != remaining.end()) {
-        last_it->subtree_leaf = last_it->nesting >= it->nesting;
-      }
-      last_it = it;
-    }
-    // Last entry MUST be a leaf.
-    remaining.rbegin()->subtree_leaf = true;
+    prenex_quantifier_stack_entry::mark_leaves(remaining);
 
     auto cit = critical_path.begin();
     prenex_quantifier_stack_entry* ce = &*cit;
@@ -188,10 +191,86 @@ struct prenex_quantifier_Eup_Adown {
 };
 
 struct prenex_quantifier_Edown_Aup {
-  bool operator()(const prenex_quantifier_stack_entry& l,
-                  const prenex_quantifier_stack_entry& r) {
-    static_assert(expression::op_type::Exists < expression::op_type::Forall);
-    return l.nesting <= r.nesting && l.t > r.t;
+  std::list<prenex_quantifier_stack_entry>& critical_path;
+  std::list<prenex_quantifier_stack_entry>& remaining;
+  inline constexpr prenex_quantifier_Edown_Aup(
+    std::list<prenex_quantifier_stack_entry>& critical_path,
+    std::list<prenex_quantifier_stack_entry>& remaining) noexcept
+    : critical_path(critical_path)
+    , remaining(remaining) {}
+
+  [[nodiscard]] inline std::list<prenex_quantifier_stack_entry>& operator()() {
+    remaining.reverse();
+
+    prenex_quantifier_stack_entry::mark_leaves(remaining);
+    std::cout << "Remaining: " << remaining << std::endl;
+
+    auto cit = critical_path.begin();
+    prenex_quantifier_stack_entry* ce = &*cit;
+
+    while(!remaining.empty()) {
+      ce = &*cit;
+
+      if(prenex_quantifier_stack_entry::is_forall(*ce)) {
+        while(true) {
+          auto it = std::find_if(remaining.begin(),
+                                 remaining.end(),
+                                 [ce](const prenex_quantifier_stack_entry& e) {
+                                   return e.t == ce->t &&
+                                          (e.nesting == ce->nesting ||
+                                           e.nesting == ce->nesting + 1);
+                                 });
+
+          if(it == remaining.end()) {
+            ++cit;
+            break;
+          }
+
+          auto next_cit = cit;
+          ++next_cit;
+          cit = critical_path.emplace(next_cit, *it);
+          remaining.erase(it);
+        }
+      } else {
+        while(true) {
+          auto it =
+            std::find_if(remaining.begin(),
+                         remaining.end(),
+                         [ce](const prenex_quantifier_stack_entry& e) {
+                           if(e.subtree_leaf) {
+                             return false;
+                           } else {
+                             return e.t == ce->t && e.nesting <= ce->nesting;
+                           }
+                         });
+
+          if(it == remaining.end()) {
+            ++cit;
+            break;
+          }
+
+          auto next_cit = cit;
+          ++next_cit;
+          cit = critical_path.emplace(next_cit, *it);
+          remaining.erase(it);
+        }
+      }
+
+    std::cout << "Remaining: " << remaining << std::endl;
+      if(cit == critical_path.end()) {
+        std::copy(
+          remaining.begin(),
+          remaining.end(),
+          std::inserter(critical_path,
+                        (std::find_if(critical_path.rbegin(),
+                                      critical_path.rend(),
+                                      prenex_quantifier_stack_entry::is_exists)
+                           .base())));
+        remaining.clear();
+      }
+    }
+
+    return critical_path;
   }
 };
 

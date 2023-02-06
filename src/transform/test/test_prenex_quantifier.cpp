@@ -88,6 +88,11 @@ TEST_CASE("Transform a simple Non-Prenex cleansed formula into prenex formula "
       "Eup Adown",
       "?p[29] ?q''[25] #q[21] #q'[23] ?r[20] ?r'[22] #s[19] #r''[24] ?t[18] "
       "((p[29] | q[21] | r[20] | s[19] | t[18]) & (p[29] | q'[23] | r'[22]) & "
+      "!(p[29] | q''[25] | r''[24]))"),
+    prenex_test_variant::gen<prenex_quantifier_Edown_Aup>(
+      "Edown Aup",
+      "?p[29] ?q''[25] #q[21] #q'[23] #r''[24] ?r[20] #s[19] ?t[18] ?r'[22] "
+      "((p[29] | q[21] | r[20] | s[19] | t[18]) & (p[29] | q'[23] | r'[22]) & "
       "!(p[29] | q''[25] | r''[24]))"));
 
   auto var_v2 = ops->vars().get(variable{ "q" });
