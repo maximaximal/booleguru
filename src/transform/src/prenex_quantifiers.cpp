@@ -5,7 +5,8 @@
 std::ostream&
 operator<<(std::ostream& o,
            const booleguru::transform::prenex_quantifier_stack_entry& e) {
-  return o << e.t << ":" << e.nesting;
+  char leaf = e.subtree_leaf ? 'L' : 'I';
+  return o << e.t << ":" << e.nesting << leaf;
 }
 
 std::ostream&
