@@ -140,6 +140,28 @@ TEST_CASE("Transform a simple Non-Prenex cleansed formula into prenex formula "
 
   REQUIRE(result.to_string() == v.match_result);
 }
+
+TEST_CASE("Prenex a formula with multiple sub-trees with quantified variables "
+          "of the same name") {
+  op_manager ops;
+  op_ref x = "x"_var(ops);
+  op_ref y = "y"_var(ops);
+
+  op_ref sub_tree_1 = forall(x, exists(y, x && y));
+  op_ref sub_tree_2 = exists(y, forall(x, x && y));
+  op_ref sub_tree_3 = !exists(y, forall(x, x && y));
+
+  op_ref formula = sub_tree_1 && sub_tree_2 && sub_tree_3;
+
+  prenex_quantifier<prenex_quantifier_Eup_Aup> prenexer;
+  op_ref prenexed = prenexer(formula);
+
+  CAPTURE(prenexed.to_string());
+
+  REQUIRE(prenexed.to_string() == "#x[5] #x[6] #y[7] ?y[4] ?x[8] ?y[9] (x[5] & "
+                                  "y[4] & x[6] & y[7] & !(x[8] & y[9]))");
+}
+
 TEST_CASE("Transform a Non-Prenex formula into prenex") {
   op_manager ops;
 
