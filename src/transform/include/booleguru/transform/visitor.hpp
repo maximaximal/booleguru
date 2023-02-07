@@ -67,22 +67,34 @@ struct visitor {
     return ex.get_mgr().get(op(op_type::Not, c(ex).get_id(), 0));
   }
   inline ReturnType walk_and(op_ref ex) {
-    return ex.get_mgr().get(op(op_type::And, l(ex).get_id(), r(ex).get_id()));
+    uint32_t left = l(ex).get_id();
+    uint32_t right = r(ex).get_id();
+    return ex.get_mgr().get(op(op_type::And, left, right));
   }
   inline ReturnType walk_or(op_ref ex) {
-    return ex.get_mgr().get(op(op_type::Or, l(ex).get_id(), r(ex).get_id()));
+    uint32_t left = l(ex).get_id();
+    uint32_t right = r(ex).get_id();
+    return ex.get_mgr().get(op(op_type::Or, left, right));
   }
   inline ReturnType walk_equi(op_ref ex) {
-    return ex.get_mgr().get(op(op_type::Equi, l(ex).get_id(), r(ex).get_id()));
+    uint32_t left = l(ex).get_id();
+    uint32_t right = r(ex).get_id();
+    return ex.get_mgr().get(op(op_type::Equi, left, right));
   }
   inline ReturnType walk_impl(op_ref ex) {
-    return ex.get_mgr().get(op(op_type::Impl, l(ex).get_id(), r(ex).get_id()));
+    uint32_t left = l(ex).get_id();
+    uint32_t right = r(ex).get_id();
+    return ex.get_mgr().get(op(op_type::Impl, left, right));
   }
   inline ReturnType walk_lpmi(op_ref ex) {
-    return ex.get_mgr().get(op(op_type::Lpmi, l(ex).get_id(), r(ex).get_id()));
+    uint32_t left = l(ex).get_id();
+    uint32_t right = r(ex).get_id();
+    return ex.get_mgr().get(op(op_type::Lpmi, left, right));
   }
   inline ReturnType walk_xor(op_ref ex) {
-    return ex.get_mgr().get(op(op_type::Xor, l(ex).get_id(), r(ex).get_id()));
+    uint32_t left = l(ex).get_id();
+    uint32_t right = r(ex).get_id();
+    return ex.get_mgr().get(op(op_type::Xor, left, right));
   }
   inline ReturnType walk_var(op_ref ex) { return ex; }
 
