@@ -41,8 +41,20 @@
 (defun distribute-implication (a)
   (ffi:c-inline (a) (:uint32-t) :uint32-t "booleguru_cl_distribute_implication(#0)" :one-liner t))
 
-(defun prenex-quantifier (a)
-  (ffi:c-inline (a) (:uint32-t) :uint32-t "booleguru_cl_prenex_quantifier(#0)" :one-liner t))
+(defun prenex-quantifier (a &optional (variant 3))
+  (ffi:c-inline (a variant) (:uint32-t :uint32-t) :uint32-t "booleguru_cl_prenex_quantifier(#0, #1)" :one-liner t))
+
+(defun prenex-quantifier-Edown-Adown (a)
+  (ffi:c-inline (a) (:uint32-t) :uint32-t "booleguru_cl_prenex_quantifier(#0, 0)" :one-liner t))
+
+(defun prenex-quantifier-Edown-Aup(a)
+  (ffi:c-inline (a) (:uint32-t) :uint32-t "booleguru_cl_prenex_quantifier(#0, 1)" :one-liner t))
+
+(defun prenex-quantifier-Eup-Adown(a)
+  (ffi:c-inline (a) (:uint32-t) :uint32-t "booleguru_cl_prenex_quantifier(#0, 2)" :one-liner t))
+
+(defun prenex-quantifier-Eup-Aup(a)
+  (ffi:c-inline (a) (:uint32-t) :uint32-t "booleguru_cl_prenex_quantifier(#0, 3)" :one-liner t))
 
 (defun b-print (op)
   (ffi:c-inline (op) (:uint32-t) :void "booleguru_cl_print(#0)" :one-liner t))

@@ -9,9 +9,9 @@
 #include <booleguru/transform/distribute_ors.hpp>
 #include <booleguru/transform/eliminate_equivalence.hpp>
 #include <booleguru/transform/eliminate_implication.hpp>
+#include <booleguru/transform/prenex_quantifiers.hpp>
 #include <booleguru/transform/variable_extend.hpp>
 #include <booleguru/transform/variable_rename.hpp>
-#include <booleguru/transform/prenex_quantifiers.hpp>
 
 namespace booleguru::cl {
 std::shared_ptr<booleguru::expression::op_manager> op_manager;
@@ -34,8 +34,9 @@ uint32_t inline binop(uint32_t l, uint32_t r) noexcept {
 template<typename F>
 uint32_t inline transformer(F f, uint32_t op) noexcept {
   ensure_op();
-  if(op >= op_manager->size())
+  if(op > op_manager->size()) {
     return 0;
+  }
   return f((*op_manager)[op]).get_id();
 }
 }
@@ -162,8 +163,30 @@ booleguru_cl_distribute_equivalence(uint32_t l) {
 }
 
 extern "C" uint32_t
-booleguru_cl_prenex_quantifier(uint32_t l) {
-  return transformer(transform::prenex_quantifier(), l);
+booleguru_cl_prenex_quantifier(uint32_t l, uint32_t variant) {
+  switch(variant) {
+    case 0:
+      return transformer(transform::prenex_quantifier<
+                           transform::prenex_quantifier_Edown_Adown>(),
+                         l);
+    case 1:
+      return transformer(
+        transform::prenex_quantifier<transform::prenex_quantifier_Edown_Aup>(),
+        l);
+    case 2:
+      return transformer(
+        transform::prenex_quantifier<transform::prenex_quantifier_Eup_Adown>(),
+        l);
+    case 3:
+      return transformer(
+        transform::prenex_quantifier<transform::prenex_quantifier_Eup_Aup>(),
+        l);
+    default:
+      std::cerr << "Variant must be 0 (Edown Adown), 1 (Edown Aup), 2 (Eup "
+                   "Adown), or 3 (Eup Aup)!"
+                << std::endl;
+      return 0;
+  }
 }
 
 extern "C" void

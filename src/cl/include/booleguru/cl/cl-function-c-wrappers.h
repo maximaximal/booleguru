@@ -72,7 +72,7 @@ uint32_t
 booleguru_cl_distribute_equivalence(uint32_t l);
 
 uint32_t
-booleguru_cl_prenex_quantifier(uint32_t l);
+booleguru_cl_prenex_quantifier(uint32_t l, uint32_t variant);
 
 void
 booleguru_cl_print(uint32_t op);
