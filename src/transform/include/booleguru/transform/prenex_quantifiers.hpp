@@ -157,7 +157,7 @@ struct prenex_quantifier_Eup_Adown {
                            if(e.subtree_leaf) {
                              return false;
                            } else {
-                             return e.t == ce->t && e.nesting <= ce->nesting;
+                             return e.t == ce->t && e.nesting >= ce->nesting;
                            }
                          });
 
@@ -203,7 +203,6 @@ struct prenex_quantifier_Edown_Aup {
     remaining.reverse();
 
     prenex_quantifier_stack_entry::mark_leaves(remaining);
-    std::cout << "Remaining: " << remaining << std::endl;
 
     auto cit = critical_path.begin();
     prenex_quantifier_stack_entry* ce = &*cit;
@@ -240,7 +239,7 @@ struct prenex_quantifier_Edown_Aup {
                            if(e.subtree_leaf) {
                              return false;
                            } else {
-                             return e.t == ce->t && e.nesting <= ce->nesting;
+                             return e.t == ce->t && e.nesting >= ce->nesting;
                            }
                          });
 
@@ -256,7 +255,6 @@ struct prenex_quantifier_Edown_Aup {
         }
       }
 
-    std::cout << "Remaining: " << remaining << std::endl;
       if(cit == critical_path.end()) {
         std::copy(
           remaining.begin(),
