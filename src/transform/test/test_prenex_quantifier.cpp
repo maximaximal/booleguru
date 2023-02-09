@@ -185,3 +185,67 @@ TEST_CASE("Transform a Non-Prenex formula into prenex") {
           "?p #q ?r #s ?t ?p #q' ?r' ?p ?q'' #r'' ((p | q | r | s | t) & (p | "
           "q' | r') & !(p | q'' | r''))");
 }
+
+TEST_CASE("Transform a simple Non-Prenex NCF formula into prenex formula "
+          "with multiple prenexing variants") {
+  std::shared_ptr<op_manager> ops =
+    std::make_shared<op_manager>(std::make_shared<var_manager>());
+
+  auto v = GENERATE(
+    prenex_test_variant::gen<prenex_quantifier_Eup_Aup>(
+      "Eup Aup",
+      "?p[29] ?q''[25] #q[21] #q'[23] #r''[24] ?r[20] ?r'[22] #s[19] ?t[18] "
+      "((p[29] | q[21] | r[20] | s[19] | t[18]) & (p[29] | q'[23] | r'[22]) & "
+      "!(p[29] | q''[25] | r''[24]))"),
+    prenex_test_variant::gen<prenex_quantifier_Edown_Adown>(
+      "Edown Adown",
+      "?p[29] #q[21] ?q''[25] ?r[20] #q'[23] #r''[24] #s[19] ?r'[22] ?t[18] "
+      "((p[29] | q[21] | r[20] | s[19] | t[18]) & (p[29] | q'[23] | r'[22]) & "
+      "!(p[29] | q''[25] | r''[24]))"),
+    prenex_test_variant::gen<prenex_quantifier_Eup_Adown>(
+      "Eup Adown",
+      "?p[29] ?q''[25] #q[21] #q'[23] ?r[20] ?r'[22] #s[19] #r''[24] ?t[18] "
+      "((p[29] | q[21] | r[20] | s[19] | t[18]) & (p[29] | q'[23] | r'[22]) & "
+      "!(p[29] | q''[25] | r''[24]))"),
+    prenex_test_variant::gen<prenex_quantifier_Edown_Aup>(
+      "Edown Aup",
+      "?p[29] ?q''[25] #q[21] #q'[23] #r''[24] ?r[20] #s[19] ?t[18] ?r'[22] "
+      "((p[29] | q[21] | r[20] | s[19] | t[18]) & (p[29] | q'[23] | r'[22]) & "
+      "!(p[29] | q''[25] | r''[24]))"));
+
+  op_ref s0 = "s0"_var(ops);
+  op_ref s1 = "s1"_var(ops);
+  op_ref s2 = "s2"_var(ops);
+  op_ref s3 = "s3"_var(ops);
+
+  op_ref w = "w"_var(ops);
+
+  op_ref v0 = "v0"_var(ops);
+  op_ref v1 = "v1"_var(ops);
+  op_ref v2 = "v2"_var(ops);
+  op_ref v3 = "v3"_var(ops);
+
+  op_ref u0 = "u0"_var(ops);
+  op_ref u1 = "u1"_var(ops);
+  op_ref u2 = "u2"_var(ops);
+  op_ref u3 = "u3"_var(ops);
+
+  op_ref v_0 = "v_0"_var(ops);
+  op_ref v_1 = "v_1"_var(ops);
+  op_ref v_2 = "v_2"_var(ops);
+  op_ref v_3 = "v_3"_var(ops);
+
+  auto op_p0 = exists(v0, s0) && forall(u0, impl(u0, forall(v_0, v_0)));
+  auto op_p1 = forall(v1, s1) && exists(u1, impl(u1, exists(v_1, v_1)));
+  auto op_p2 = exists(v2, s2) && forall(u2, impl(u2, forall(v_2, v_2)));
+  auto op_p3 = forall(v3, s3) && exists(u3, impl(u3, exists(v_3, v_3)));
+
+  auto op_formula = exists(s0, op_p0 && forall(s1, impl(op_p1, exists(s2, op_p2 && forall(s3, impl(op_p3, forall(w, w)))))));
+  
+  auto result = v.transform(op_formula);
+
+  CAPTURE(v.name);
+  CAPTURE(op_formula.to_string());
+
+  REQUIRE(result.to_string() == v.match_result);
+}
