@@ -1,4 +1,4 @@
-#include <booleguru/lua/lua_context.hpp>
+#include <booleguru/lua/lua-context.hpp>
 #include <booleguru/cli/argument.hpp>
 #include <booleguru/cli/cli-processor.hpp>
 #include <booleguru/cli/input_file.hpp>

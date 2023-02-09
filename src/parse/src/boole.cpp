@@ -4,7 +4,7 @@
 #include <booleguru/expression/script_manager.hpp>
 #include <booleguru/expression/var_manager.hpp>
 
-#include <booleguru/cl/ecl-wrapper.hpp>
+#include <booleguru/lua/lua-context.hpp>
 
 #include <iostream>
 #include <sstream>
