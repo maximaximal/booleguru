@@ -23,7 +23,7 @@ function(create_resources dir output)
 create_resources("${CMAKE_CURRENT_SOURCE_DIR}/scripts" "${CMAKE_CURRENT_BINARY_DIR}/scripts")
 
 set(SRCS
-  src/lua_context.cpp
+  src/lua-context.cpp
 )
 
 add_library(booleguru-lua STATIC ${SRCS})
