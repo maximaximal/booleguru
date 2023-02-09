@@ -16,7 +16,7 @@
 namespace booleguru::transform {
 struct prenex_quantifier_stack_entry {
   expression::op_type t;
-  uint32_t inner;
+  uint32_t var;
   int32_t nesting;
   bool subtree_leaf = false;
 
@@ -34,6 +34,20 @@ struct prenex_quantifier_stack_entry {
     for(auto it = l.begin(); it != l.end(); ++it) {
       if(last_it != l.end()) {
         last_it->subtree_leaf = last_it->nesting >= it->nesting;
+
+        // Same element on the leaf must also be a leaf. So, once a leaf is
+        // found, walk backwards on the same sub-tree until there is some other
+        // element with a different op_type, which is when the backwards-walk
+        // ends.
+        if(last_it->subtree_leaf) {
+          auto rit = make_reverse_iterator(last_it);
+          ++rit;
+          while(rit != l.rend() && rit->t == last_it->t &&
+                rit->nesting + 1 == last_it->nesting) {
+            rit->subtree_leaf = true;
+            ++rit;
+          }
+        }
       }
       last_it = it;
     }
@@ -61,11 +75,15 @@ namespace booleguru::transform {
 struct prenex_quantifier_Eup_Aup {
   std::list<prenex_quantifier_stack_entry>& critical_path;
   std::list<prenex_quantifier_stack_entry>& remaining;
+  expression::op_manager& ops;
+
   inline constexpr prenex_quantifier_Eup_Aup(
     std::list<prenex_quantifier_stack_entry>& critical_path,
-    std::list<prenex_quantifier_stack_entry>& remaining) noexcept
+    std::list<prenex_quantifier_stack_entry>& remaining,
+    expression::op_manager& ops) noexcept
     : critical_path(critical_path)
-    , remaining(remaining) {}
+    , remaining(remaining)
+    , ops(ops) {}
 
   [[nodiscard]] inline std::list<prenex_quantifier_stack_entry>& operator()() {
     remaining.reverse();
@@ -111,11 +129,15 @@ struct prenex_quantifier_Eup_Aup {
 struct prenex_quantifier_Eup_Adown {
   std::list<prenex_quantifier_stack_entry>& critical_path;
   std::list<prenex_quantifier_stack_entry>& remaining;
+  expression::op_manager& ops;
+
   inline constexpr prenex_quantifier_Eup_Adown(
     std::list<prenex_quantifier_stack_entry>& critical_path,
-    std::list<prenex_quantifier_stack_entry>& remaining) noexcept
+    std::list<prenex_quantifier_stack_entry>& remaining,
+    expression::op_manager& ops) noexcept
     : critical_path(critical_path)
-    , remaining(remaining) {}
+    , remaining(remaining)
+    , ops(ops) {}
 
   [[nodiscard]] inline std::list<prenex_quantifier_stack_entry>& operator()() {
     remaining.reverse();
@@ -153,7 +175,7 @@ struct prenex_quantifier_Eup_Adown {
           auto it =
             std::find_if(remaining.begin(),
                          remaining.end(),
-                         [ce](const prenex_quantifier_stack_entry& e) {
+                         [ce, this](const prenex_quantifier_stack_entry& e) {
                            if(e.subtree_leaf) {
                              return false;
                            } else {
@@ -193,11 +215,15 @@ struct prenex_quantifier_Eup_Adown {
 struct prenex_quantifier_Edown_Aup {
   std::list<prenex_quantifier_stack_entry>& critical_path;
   std::list<prenex_quantifier_stack_entry>& remaining;
+  expression::op_manager& ops;
+
   inline constexpr prenex_quantifier_Edown_Aup(
     std::list<prenex_quantifier_stack_entry>& critical_path,
-    std::list<prenex_quantifier_stack_entry>& remaining) noexcept
+    std::list<prenex_quantifier_stack_entry>& remaining,
+    expression::op_manager& ops) noexcept
     : critical_path(critical_path)
-    , remaining(remaining) {}
+    , remaining(remaining)
+    , ops(ops) {}
 
   [[nodiscard]] inline std::list<prenex_quantifier_stack_entry>& operator()() {
     remaining.reverse();
@@ -275,12 +301,15 @@ struct prenex_quantifier_Edown_Aup {
 struct prenex_quantifier_Edown_Adown {
   std::list<prenex_quantifier_stack_entry>& critical_path;
   std::list<prenex_quantifier_stack_entry>& remaining;
+  expression::op_manager& ops;
 
   inline constexpr prenex_quantifier_Edown_Adown(
     std::list<prenex_quantifier_stack_entry>& critical_path,
-    std::list<prenex_quantifier_stack_entry>& remaining) noexcept
+    std::list<prenex_quantifier_stack_entry>& remaining,
+    expression::op_manager& ops) noexcept
     : critical_path(critical_path)
-    , remaining(remaining) {}
+    , remaining(remaining)
+    , ops(ops) {}
 
   [[nodiscard]] inline std::list<prenex_quantifier_stack_entry>& operator()() {
     critical_path.reverse();
@@ -293,18 +322,18 @@ struct prenex_quantifier_Edown_Adown {
 
       while(true) {
         int32_t nesting = std::numeric_limits<int32_t>::min();
-        auto it =
-          std::find_if(remaining.begin(),
-                       remaining.end(),
-                       [ce, &nesting](const prenex_quantifier_stack_entry& e) {
-                         if(e.nesting < nesting) {
-                           nesting = e.nesting;
-                           return false;
-                         } else if(e.nesting >= nesting) {
-                           nesting = e.nesting;
-                         }
-                         return e.t == ce->t && e.nesting <= ce->nesting;
-                       });
+        auto it = std::find_if(
+          remaining.begin(),
+          remaining.end(),
+          [ce, &nesting, this](const prenex_quantifier_stack_entry& e) {
+            if(e.nesting < nesting) {
+              nesting = e.nesting;
+              return false;
+            } else if(e.nesting >= nesting) {
+              nesting = e.nesting;
+            }
+            return e.t == ce->t && e.nesting <= ce->nesting;
+          });
 
         if(it == remaining.end()) {
           ++cit;
@@ -318,14 +347,35 @@ struct prenex_quantifier_Edown_Adown {
       }
 
       if(cit == critical_path.end()) {
-        std::copy(remaining.begin(),
-                  remaining.end(),
-                  std::back_inserter(critical_path));
-        remaining.clear();
+        break;
       }
     }
 
     critical_path.reverse();
+
+    if(!remaining.empty()) {
+      // Exists first
+      std::copy_if(
+        remaining.begin(),
+        remaining.end(),
+        std::inserter(critical_path,
+                      (std::find_if(critical_path.rbegin(),
+                                    critical_path.rend(),
+                                    prenex_quantifier_stack_entry::is_exists)
+                         .base())),
+        prenex_quantifier_stack_entry::is_exists);
+
+      std::copy_if(
+        remaining.begin(),
+        remaining.end(),
+        std::inserter(critical_path,
+                      (std::find_if(critical_path.rbegin(),
+                                    critical_path.rend(),
+                                    prenex_quantifier_stack_entry::is_forall)
+                         .base())),
+        prenex_quantifier_stack_entry::is_forall);
+      remaining.clear();
+    }
 
     return critical_path;
   }
@@ -356,11 +406,11 @@ struct prenex_quantifier : public visitor<prenex_quantifier<Strategy>> {
       it = quant_stack.erase(it);
     }
 
-    Strategy strategy(critical_path, quant_stack);
+    Strategy strategy(critical_path, quant_stack, o.get_mgr());
     std::list<prenex_quantifier_stack_entry>& result = strategy();
 
     for(prenex_quantifier_stack_entry& e : util::reverse(result)) {
-      o = o.get_mgr().get(expression::op(e.t, e.inner, o.get_id()));
+      o = o.get_mgr().get(expression::op(e.t, e.var, o.get_id()));
     }
     return o;
   }
