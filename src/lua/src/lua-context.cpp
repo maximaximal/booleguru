@@ -36,17 +36,11 @@ lua_context::~lua_context() {}
 void
 lua_context::init_fennel() {
   state_->script("fennel = require(\"fennel\")");
+  fennel_last_op_name_ = (*state_)["fennel"]["mangle"]("*last-op*");
 }
 
-lua_context::eval_result
-lua_context::eval_fennel(std::string_view code,
-                         std::optional<uint32_t> last_op) {
-  (void)code;
-  (void)last_op;
-
-  auto eval = (*state_)["fennel"]["eval"];
-  auto result = eval(code);
-
+static lua_context::eval_result
+fennel_return_to_eval_result(auto&& result) {
   if(!result.valid()) {
     sol::error err = result;
     std::string what = err.what();
@@ -67,5 +61,19 @@ lua_context::eval_fennel(std::string_view code,
   }
 
   return std::monostate{};
+}
+
+lua_context::eval_result
+lua_context::eval_fennel(std::string_view code) {
+  auto eval = (*state_)["fennel"]["eval"];
+  auto r = eval(code);
+  return fennel_return_to_eval_result(r);
+}
+
+lua_context::eval_result
+lua_context::eval_fennel(std::string_view code,
+                         const expression::op_ref& last_op) {
+  (*state_)[fennel_last_op_name_] = last_op;
+  return eval_fennel(code);
 }
 }

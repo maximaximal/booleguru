@@ -142,7 +142,7 @@ cli_processor::consume_eventual_lisp_arguments(expression::op_ref last_op) {
       // Just one thing, call that with *last-op* as parameter.
       cmd = "(" + cmd + " *last-op*)";
     }
-    auto ret = lua_->eval_fennel(cmd.c_str(), last_op.get_id());
+    auto ret = lua_->eval_fennel(cmd.c_str(), last_op);
     if(std::holds_alternative<expression::op_ref>(ret))
       last_op = std::get<expression::op_ref>(ret);
     else if(std::holds_alternative<std::string>(ret)) {

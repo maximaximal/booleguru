@@ -481,7 +481,12 @@ boole::parse_lisp(int paren_level, std::optional<uint32_t> last_op) {
 
   NEXT_OR_RETURN_;
 
-  auto ret = lua_->eval_fennel(sexp_.str(0), last_op);
+  auto ret = [this, last_op]() {
+    if(last_op)
+      return lua_->eval_fennel(sexp_.str(0), (*ops_)[*last_op]);
+    else
+      return lua_->eval_fennel(sexp_.str(0));
+  }();
 
   NEXT_OR_RETURN_;
 

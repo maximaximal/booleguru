@@ -150,6 +150,31 @@ lua_context::register_booleguru_types() {
     s, "distribute_to_cnf", "distribute-to-cnf", &transform::distribute_to_cnf);
   set_to_state(s, "vars_hash", "vars-hash", &compute_variables_hash);
 
+  set_to_state(
+    s,
+    "prenex_quantifier_Eup_Aup",
+    "prenex-quantifier-Eup-Aup",
+    &transform_op<
+      transform::prenex_quantifier<transform::prenex_quantifier_Eup_Aup>>);
+  set_to_state(
+    s,
+    "prenex_quantifier_Edown_Adown",
+    "prenex-quantifier-Edown-Adown",
+    &transform_op<
+      transform::prenex_quantifier<transform::prenex_quantifier_Edown_Adown>>);
+  set_to_state(
+    s,
+    "prenex_quantifier_Eup_Adown",
+    "prenex-quantifier-Eup-Adown",
+    &transform_op<
+      transform::prenex_quantifier<transform::prenex_quantifier_Eup_Adown>>);
+  set_to_state(
+    s,
+    "prenex_quantifier_Edown_Aup",
+    "prenex-quantifier-Edown-Aup",
+    &transform_op<
+      transform::prenex_quantifier<transform::prenex_quantifier_Edown_Aup>>);
+
   auto get_var = [this](const std::string& name) {
     return get_variable_from_manager(name, *ops_);
   };
