@@ -1,18 +1,18 @@
 # # # # sol2
 # The MIT License (MIT)
-# 
+#
 # Copyright (c) 2013-2022 Rapptz, ThePhD, and contributors
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy of
 # this software and associated documentation files (the "Software"), to deal in
 # the Software without restriction, including without limitation the rights to
 # use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
 # the Software, and to permit persons to whom the Software is furnished to do so,
 # subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
 # FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
@@ -111,26 +111,6 @@ configure_package_config_file(
 write_basic_package_version_file(
 	"${CMAKE_CURRENT_BINARY_DIR}/cmake/sol2-config-version.cmake"
 	COMPATIBILITY AnyNewerVersion)
-
-export(TARGETS sol2
-	FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake/sol2-targets.cmake")
-
-if(SOL2_ENABLE_INSTALL)
-	install(TARGETS sol2
-		EXPORT sol2)
-
-	install(EXPORT sol2
-		FILE sol2-targets.cmake
-		DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/sol2")
-
-	install(DIRECTORY include/sol
-		DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
-
-	install(FILES
-		"${CMAKE_CURRENT_BINARY_DIR}/cmake/sol2-config.cmake"
-		"${CMAKE_CURRENT_BINARY_DIR}/cmake/sol2-config-version.cmake"
-		DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/sol2")
-endif()
 
 # # # sol2 Library - Single header target
 if (SOL2_SINGLE)
@@ -267,7 +247,7 @@ if (sol2-is-top-level-project)
 		endforeach()
 		add_library(${lualib} ${lualibtype} IMPORTED)
 		set_target_properties(${lualib}
-			PROPERTIES 
+			PROPERTIES
 			INTERFACE_INCLUDE_DIRECTORIES ${LUA_INCLUDE_DIR}
 			INTERFACE_LINK_LIBRARIES "${LUA_SEARCH_DEPENDENCY_LIBS} ${CMAKE_DL_LIBS}"
 			IMPORTED_LINK_INTERFACE_LANGUAGES C
@@ -278,14 +258,14 @@ if (sol2-is-top-level-project)
 	if (NOT LUA_FOUND AND NOT LUABUILD_FOUND)
 		message(FATAL_ERROR "sol2 Lua \"${SOL2_LUA_VERSION}\" not found and could not be targeted for building")
 	endif()
-	
+
 	# # Enable test harness for regular, example or single tests
 	if (SOL2_DO_TESTS OR (SOL2_TESTS_EXAMPLES AND SOL2_DO_EXAMPLES))
 		# enable ctest
 		message(STATUS "sol2 testing enabled...")
 		enable_testing()
 	endif()
-	
+
 	# # # Examples
 	# # Enable examples to be built against the library
 	if (SOL2_DO_EXAMPLES)
@@ -293,7 +273,7 @@ if (sol2-is-top-level-project)
 		message(STATUS "sol2 adding examples...")
 		add_subdirectory(examples)
 	endif()
-	
+
 	# # # Tests
 	# # Add tests here
 	if (SOL2_DO_TESTS)

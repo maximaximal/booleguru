@@ -5,23 +5,28 @@
 #include <booleguru/parse/base.hpp>
 #include <booleguru/parse/result.hpp>
 
+#include <booleguru/lua/lua-context.hpp>
+
 namespace booleguru::parse {
 base::base(std::istream& in,
            std::shared_ptr<expression::var_manager> vars,
-
-           std::shared_ptr<expression::op_manager> ops)
+           std::shared_ptr<expression::op_manager> ops,
+           std::shared_ptr<lua::lua_context> lua)
   : vars_(vars)
   , ops_(ops)
+  , lua_(lua)
   , in_(in) {}
 
 base::base(std::istream& in, base& b)
   : vars_(b.vars_)
   , ops_(b.ops_)
+  , lua_(b.lua_)
   , in_(in) {}
 
 base::base(std::istream& in)
   : vars_(std::make_shared<expression::var_manager>())
   , ops_(std::make_shared<expression::op_manager>(vars_))
+  , lua_(std::make_shared<lua::lua_context>(ops_))
   , in_(in) {}
 
 base::base(std::istream& in, std::shared_ptr<expression::op_manager> ops)
@@ -33,7 +38,11 @@ base::~base() {}
 
 result
 base::generate_result(expression::op_ref expr) {
-  return result{ .expr = expr, .line = line_, .column = column_, .message = "", .code = result::error_code::OTHER };
+  return result{ .expr = expr,
+                 .line = line_,
+                 .column = column_,
+                 .message = "",
+                 .code = result::error_code::OTHER };
 }
 
 result

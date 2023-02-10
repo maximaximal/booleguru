@@ -30,6 +30,7 @@ class ecl_wrapper {
   static ecl_wrapper& get();
   using supported_return_types =
     std::variant<std::monostate, long int, std::string, expression::op_ref>;
+
   supported_return_types eval(
     const char* code,
     std::shared_ptr<expression::op_manager> ops = nullptr,

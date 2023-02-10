@@ -10,6 +10,10 @@ class var_manager;
 class op_manager;
 }
 
+namespace booleguru::lua {
+class lua_context;
+}
+
 namespace booleguru::parse {
 struct result;
 
@@ -17,6 +21,7 @@ class base {
   protected:
   std::shared_ptr<expression::var_manager> vars_;
   std::shared_ptr<expression::op_manager> ops_;
+  std::shared_ptr<lua::lua_context> lua_;
   std::istream& in_;
 
   int line_ = 0;
@@ -28,7 +33,8 @@ class base {
   public:
   base(std::istream& in,
        std::shared_ptr<expression::var_manager> vars,
-       std::shared_ptr<expression::op_manager> ops);
+       std::shared_ptr<expression::op_manager> ops,
+       std::shared_ptr<lua::lua_context> lua_context);
   base(std::istream& in, std::shared_ptr<expression::op_manager> ops);
 
   base(std::istream& in, base& b);

@@ -20,10 +20,13 @@ function(create_resources dir output)
     endforeach()
   endfunction()
 
-create_resources("${CMAKE_CURRENT_SOURCE_DIR}/scripts" "${CMAKE_CURRENT_BINARY_DIR}/scripts")
+create_resources("${CMAKE_CURRENT_SOURCE_DIR}/scripts" "${CMAKE_CURRENT_BINARY_DIR}/scripts.c")
 
 set(SRCS
   src/lua-context.cpp
+
+  # Embedded Scripts (Fennel, Lua Libraries, etc)
+  ${CMAKE_CURRENT_BINARY_DIR}/scripts.c
 )
 
 add_library(booleguru-lua STATIC ${SRCS})
@@ -31,7 +34,7 @@ add_library(booleguru-lua STATIC ${SRCS})
 target_include_directories(booleguru-lua PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 target_link_libraries(booleguru-lua PUBLIC booleguru-expression booleguru-transform booleguru-util)
-target_link_libraries(booleguru-lua PRIVATE lua)
+target_link_libraries(booleguru-lua PUBLIC lua lua-header sol2)
 
 if(TARGET Catch2::Catch2)
   add_subdirectory(test)

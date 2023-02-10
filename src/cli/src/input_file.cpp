@@ -15,7 +15,6 @@
 #include <booleguru/parse/boole.hpp>
 #include <booleguru/parse/qdimacs.hpp>
 #include <booleguru/parse/result.hpp>
-#include <booleguru/parse/smtlib2.hpp>
 
 namespace booleguru::cli {
 static int xzsig[] = { 0xFD, 0x37, 0x7A, 0x58, 0x5A, 0x00, 0x00, EOF };
@@ -79,8 +78,7 @@ struct input_file::internal {
   internal(FILE* popen_handle, bool pclose = true)
     : variants(std::in_place_type<popen_variant>, popen_handle) {}
   internal(std::string path)
-    : internal(fopen(path.c_str(), "r"), false) {
-  }
+    : internal(fopen(path.c_str(), "r"), false) {}
 };
 
 input_file::input_file(std::string_view path,
@@ -202,8 +200,9 @@ input_file::produce_parser(std::istream& is) {
   }
 
   switch(std::get<argument::input_types>(args_[argument::type])) {
-    case argument::smtlib2:
-      return std::make_unique<parse::smtlib2>(internal_->fd(), ops_);
+    case argument::smtlib2: {
+      throw std::runtime_error("SMTLIB Not supported yet!");
+    }
     case argument::qcir:
       throw std::runtime_error("QCIR Not supported yet!");
     case argument::boole: {
@@ -215,6 +214,8 @@ input_file::produce_parser(std::istream& is) {
     case argument::qdimacs:
       is >> std::noskipws;
       return std::make_unique<parse::qdimacs>(is, ops_);
+    default:
+      throw std::runtime_error("Hit some unsupported input file!");
   }
 }
 

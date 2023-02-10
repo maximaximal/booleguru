@@ -1,12 +1,12 @@
-#include <booleguru/cl/ecl-wrapper.hpp>
+#include <booleguru/lua/lua-context.hpp>
+
 #include <booleguru/parse/result.hpp>
 #include <booleguru/parse/smtlib2.hpp>
 
 #include <iostream>
 
 namespace booleguru::parse {
-smtlib2::smtlib2(int fileno,
-                 std::shared_ptr<expression::op_manager> ops)
+smtlib2::smtlib2(int fileno, std::shared_ptr<expression::op_manager> ops)
   : base(std::cin, ops->vars_ptr(), ops)
   , fileno_(fileno) {}
 

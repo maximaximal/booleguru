@@ -1,9 +1,11 @@
-#include <booleguru/lua/lua-context.hpp>
 #include <booleguru/cli/argument.hpp>
 #include <booleguru/cli/cli-processor.hpp>
 #include <booleguru/cli/input_file.hpp>
+
 #include <booleguru/expression/op.hpp>
 #include <booleguru/expression/op_manager.hpp>
+
+#include <booleguru/lua/lua-context.hpp>
 
 #include <cassert>
 #include <iostream>
@@ -37,7 +39,8 @@ cli_processor::cli_processor(arg_vec args)
   , args_(process_args_to_inputs(input_args_))
   , cur_(args_[0])
   , next_(args_[1])
-  , ops_(std::make_shared<expression::op_manager>()) {}
+  , ops_(std::make_shared<expression::op_manager>())
+  , lua_(std::make_shared<lua::lua_context>(ops_)) {}
 
 expression::op_ref
 cli_processor::process() {
@@ -133,14 +136,13 @@ cli_processor::consume_eventual_lisp_arguments(expression::op_ref last_op) {
     assert(cmd_ptr);
     std::string cmd(*cmd_ptr);
     next();
-    cl::ecl_wrapper& ecl = cl::ecl_wrapper::get();
     if(cmd[0] == '(') {
       // Some real lisp expression! Evaluate the whole thing.
     } else {
       // Just one thing, call that with *last-op* as parameter.
       cmd = "(" + cmd + " *last-op*)";
     }
-    auto ret = ecl.eval(cmd.c_str(), ops_, last_op.get_id());
+    auto ret = lua_->eval_fennel(cmd.c_str(), last_op.get_id());
     if(std::holds_alternative<expression::op_ref>(ret))
       last_op = std::get<expression::op_ref>(ret);
     else if(std::holds_alternative<std::string>(ret)) {

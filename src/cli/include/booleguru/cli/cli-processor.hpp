@@ -13,6 +13,10 @@ class op_ref;
 class op_manager;
 }
 
+namespace booleguru::lua {
+class lua_context;
+}
+
 struct no_input_file : public std::invalid_argument {
   using std::invalid_argument::invalid_argument;
 };
@@ -77,6 +81,7 @@ class cli_processor {
   std::reference_wrapper<arg_variant> cur_;
   std::reference_wrapper<arg_variant> next_;
   std::shared_ptr<expression::op_manager> ops_;
+  std::shared_ptr<lua::lua_context> lua_;
   void next();
 };
 }

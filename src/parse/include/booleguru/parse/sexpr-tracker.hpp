@@ -47,11 +47,11 @@ class sexpr_tracker {
       str_.push_back(c);
   }
 
-  inline const char* str(size_t depth = 1) const noexcept {
+  inline std::string_view str(size_t depth = 1) const noexcept {
     size_t s = scope_.size();
     if(s >= depth)
       s -= depth;
-    return str_.c_str() + scope_[s];
+    return std::string_view(str_.c_str() + scope_[s]);
   }
 };
 }

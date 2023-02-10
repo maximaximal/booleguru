@@ -12,7 +12,7 @@ set(srcFiles lapi.c lauxlib.c lbaselib.c lcode.c lcorolib.c lctype.c ldblib.c ld
     loslib.c lparser.c lstate.c lstring.c lstrlib.c ltable.c ltablib.c ltm.c lundump.c
     lutf8lib.c lvm.c lzio.c)
 
-set(publicHeaderFiles lauxlib.h lua.h luaconf.h lualib.h)
+set(publicHeaderFiles lauxlib.h lua.h luaconf.h lualib.h lua.hpp)
 
 list(TRANSFORM srcFiles PREPEND ${srcDir}/)
 list(TRANSFORM publicHeaderFiles PREPEND ${srcDir}/)
@@ -40,7 +40,7 @@ file(COPY ${publicHeaderFiles} DESTINATION ${includeDir})
 add_library(lua-header
     INTERFACE)
 
-target_include_directories(lua-header
+target_include_directories(lua-header BEFORE
     INTERFACE
     ${includeDir})
 
@@ -48,6 +48,9 @@ target_link_libraries(lua
     INTERFACE
     lua-header)
 
+target_include_directories(lua BEFORE
+    INTERFACE
+    ${includeDir})
+
 add_library(lua::lib ALIAS lua)
 add_library(lua::header ALIAS lua-header)
-
