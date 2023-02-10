@@ -18,8 +18,8 @@ class lua_context {
   std::shared_ptr<expression::op_manager> ops_;
   std::unique_ptr<sol::state> state_;
 
-  bool fennel_initiated_ = false;
   void init_fennel();
+  void register_booleguru_types();
 
   public:
   lua_context(std::shared_ptr<expression::op_manager> ops);

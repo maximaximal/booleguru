@@ -24,6 +24,7 @@ create_resources("${CMAKE_CURRENT_SOURCE_DIR}/scripts" "${CMAKE_CURRENT_BINARY_D
 
 set(SRCS
   src/lua-context.cpp
+  src/lua-context-register-types.cpp
 
   # Embedded Scripts (Fennel, Lua Libraries, etc)
   ${CMAKE_CURRENT_BINARY_DIR}/scripts.c
@@ -33,7 +34,8 @@ add_library(booleguru-lua STATIC ${SRCS})
 
 target_include_directories(booleguru-lua PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-target_link_libraries(booleguru-lua PUBLIC booleguru-expression booleguru-transform booleguru-util)
+target_link_libraries(booleguru-lua PUBLIC
+  booleguru-expression booleguru-transform booleguru-util booleguru-solve)
 target_link_libraries(booleguru-lua PUBLIC lua lua-header sol2)
 
 if(TARGET Catch2::Catch2)

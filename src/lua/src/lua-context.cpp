@@ -24,6 +24,8 @@ lua_context::lua_context(std::shared_ptr<expression::op_manager> ops)
   state_->require_script("fennel", fennel_lua_string_view);
 
   init_fennel();
+
+  register_booleguru_types();
 }
 
 lua_context::lua_context()
@@ -45,8 +47,23 @@ lua_context::eval_fennel(std::string_view code,
   auto eval = (*state_)["fennel"]["eval"];
   auto result = eval(code);
 
+  if(!result.valid()) {
+    sol::error err = result;
+    std::string what = err.what();
+    std::cout << what << std::endl;
+    return what;
+  }
+
   if(result.get_type() == sol::type::number) {
     return static_cast<long int>(result);
+  }
+
+  if(result.get_type() == sol::type::string) {
+    return static_cast<std::string>(result);
+  }
+
+  if(result.get_type() == sol::type::userdata) {
+    return static_cast<expression::op_ref>(result);
   }
 
   return std::monostate{};
