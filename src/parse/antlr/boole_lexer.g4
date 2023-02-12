@@ -1,7 +1,7 @@
 lexer grammar boole_lexer;
 
-AND : '&' | '&&' | '\u8743';
-OR : '/' | '|' | '||' | '\u8744';
+AND : '&' | '&&' | '\u2227';
+OR : '/' | '|' | '||' | '\u2228';
 NOT : '!' | '-' | '~' ;
 XOR : '^';
 LPAR : '(' ;
@@ -9,6 +9,8 @@ RPAR : ')' ;
 IMPL : '->' ;
 LPMI : '<-' ;
 EQUI : '<->' ;
+FORALL : '#' | '\u2200' ;
+EXISTS : '?' | '\u2203';
 SUBST_MODIFIER : ':' ;
 LUA_MODIFIER : 'L' ;
 FENNEL_MODIFIER : 'F' ;

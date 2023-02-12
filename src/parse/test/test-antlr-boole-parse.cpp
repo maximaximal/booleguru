@@ -13,8 +13,12 @@ using namespace antlr4;
 TEST_CASE("Use the ANTLR4 boole parser directly") {
   std::shared_ptr<op_manager> ops = std::make_shared<op_manager>();
 
-  std::string_view input_str =
-    GENERATE("a & b", "a & (a | b)", "a & b & c <-> d | (e -> f)");
+  std::string_view input_str = GENERATE("a & b",
+                                        "a & !b",
+                                        "a & (a | b)",
+                                        "a & b & c <-> d | (e -> f)",
+                                        "?a (a)",
+                                        "#d ((?a ?b (a & b)) | d)");
 
   isviewstream ins(input_str);
   ANTLRInputStream input(ins);

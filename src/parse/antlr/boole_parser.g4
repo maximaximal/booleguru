@@ -29,7 +29,18 @@ expr returns [uint32_t o]:
     | l=expr LPMI r=expr { $o = ops->get_id(op(op_type::Lpmi, $l.o, $r.o)); }
     | l=expr EQUI r=expr { $o = ops->get_id(op(op_type::Equi, $l.o, $r.o)); }
     | LPAR l=expr RPAR { $o = $l.o; }
-    | ID { auto text = $ID.text;
-           uint32_t v = ops->vars().get_id(variable{std::move(text)});
-           $o = ops->get_id(op(op_type::Var, v, 0)); }
+    | FORALL v=var r=expr {
+            $o = ops->get_id(op(op_type::Forall,
+                                ops->get_id(op(op_type::Var, $v.v, 0)),
+                                $r.o)); }
+    | EXISTS v=var r=expr {
+            $o = ops->get_id(op(op_type::Exists,
+                                ops->get_id(op(op_type::Var, $v.v, 0)),
+                                $r.o)); }
+    | v=var { $o = ops->get_id(op(op_type::Var, $v.v, 0)); }
+    ;
+
+var returns [uint32_t v]:
+      ID { auto text = $ID.text;
+           $v = ops->vars().get_id(variable{std::move(text)}); }
     ;
