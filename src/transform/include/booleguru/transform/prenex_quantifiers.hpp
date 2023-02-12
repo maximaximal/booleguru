@@ -175,7 +175,7 @@ struct prenex_quantifier_Eup_Adown {
           auto it =
             std::find_if(remaining.begin(),
                          remaining.end(),
-                         [ce, this](const prenex_quantifier_stack_entry& e) {
+                         [ce](const prenex_quantifier_stack_entry& e) {
                            if(e.subtree_leaf) {
                              return false;
                            } else {
@@ -322,18 +322,18 @@ struct prenex_quantifier_Edown_Adown {
 
       while(true) {
         int32_t nesting = std::numeric_limits<int32_t>::min();
-        auto it = std::find_if(
-          remaining.begin(),
-          remaining.end(),
-          [ce, &nesting, this](const prenex_quantifier_stack_entry& e) {
-            if(e.nesting < nesting) {
-              nesting = e.nesting;
-              return false;
-            } else if(e.nesting >= nesting) {
-              nesting = e.nesting;
-            }
-            return e.t == ce->t && e.nesting <= ce->nesting;
-          });
+        auto it =
+          std::find_if(remaining.begin(),
+                       remaining.end(),
+                       [ce, &nesting](const prenex_quantifier_stack_entry& e) {
+                         if(e.nesting < nesting) {
+                           nesting = e.nesting;
+                           return false;
+                         } else if(e.nesting >= nesting) {
+                           nesting = e.nesting;
+                         }
+                         return e.t == ce->t && e.nesting <= ce->nesting;
+                       });
 
         if(it == remaining.end()) {
           ++cit;
