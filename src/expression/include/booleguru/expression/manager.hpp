@@ -34,12 +34,10 @@ class manager {
   manager(size_t size = 2048) { objects_map_.reserve(size); };
 
   constexpr inline R operator[](ref r) noexcept {
-    assert(r > 0);
     assert(r < counter_);
     return R(*static_cast<C*>(this), r);
   }
   constexpr inline R operator[](ref r) const noexcept {
-    assert(r > 0);
     assert(r < counter_);
     const C* child = static_cast<const C*>(this);
     return R(*child, r);

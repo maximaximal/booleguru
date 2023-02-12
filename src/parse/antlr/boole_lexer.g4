@@ -11,9 +11,13 @@ LPMI : '<-' ;
 EQUI : '<->' ;
 FORALL : '#' | '\u2200' ;
 EXISTS : '?' | '\u2203';
-SUBST_MODIFIER : ':' ;
-LUA_MODIFIER : 'L' ;
-FENNEL_MODIFIER : 'F' ;
+
+FENNEL_SUBST : ':F(' | ':(' | ':f(' | 'f:(' { pushMode(LISP); };
+FENNEL : 'F(' | 'f(' { pushMode(LISP); };
 
 ID: [0-9A-Za-z\u0080-\uFFFF_]+ ;
 WS: [ \t\n\r\f]+ -> skip ;
+
+mode LISP;
+MATCHING_PAREN : '(' ( MATCHING_PAREN | ~[()] )* ')' ;
+END_PAREN : ')' -> popMode ;

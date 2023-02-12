@@ -4,6 +4,7 @@ options { tokenVocab=boole_lexer; }
 @header {
 #include <booleguru/expression/op_manager.hpp>
 #include <booleguru/expression/var_manager.hpp>
+#include <booleguru/lua/lua-context.hpp>
 }
 
 @members {
@@ -13,6 +14,7 @@ options { tokenVocab=boole_lexer; }
   using op_type = expression::op_type;
   using op_manager = expression::op_manager;
   std::shared_ptr<op_manager> ops;
+  std::shared_ptr<lua::lua_context> lua;
 }
 
 formula returns [op_ref o]
@@ -32,12 +34,19 @@ expr returns [uint32_t o]:
     | FORALL v=var r=expr {
             $o = ops->get_id(op(op_type::Forall,
                                 ops->get_id(op(op_type::Var, $v.v, 0)),
-                                $r.o)); }
+                                $r.o));
+        }
     | EXISTS v=var r=expr {
             $o = ops->get_id(op(op_type::Exists,
                                 ops->get_id(op(op_type::Var, $v.v, 0)),
-                                $r.o)); }
+                                $r.o));
+        }
     | v=var { $o = ops->get_id(op(op_type::Var, $v.v, 0)); }
+    | last_op=expr FENNEL_SUBST c=MATCHING_PAREN {
+            std::cout << $c.text << std::endl;
+            auto ret = lua->eval_fennel($c.text, (*ops)[$last_op.o]);
+            $o = std::get<op_ref>(ret).get_id();
+        }
     ;
 
 var returns [uint32_t v]:
