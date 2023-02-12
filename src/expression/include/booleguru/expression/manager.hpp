@@ -58,6 +58,13 @@ class manager {
     }
     return objref(static_cast<C&>(*this), it->second);
   }
+  constexpr inline ref get_id_from_map(const T& obj) const noexcept {
+    auto it = objects_map_.find(obj);
+    if(it == objects_map_.end()) {
+      return 0;
+    }
+    return it->second;
+  }
 
   constexpr inline size_t size() const { return objects_map_.size(); }
 
@@ -67,6 +74,13 @@ class manager {
     size_t idx = counter_++;
     objects_map_.insert(std::make_pair(std::move(obj), idx));
     return (*this)[idx];
+  }
+  constexpr inline ref insert_id(T&& obj) {
+    assert(static_cast<int32_t>(counter_) <
+           std::numeric_limits<int32_t>::max());
+    size_t idx = counter_++;
+    objects_map_.insert(std::make_pair(std::move(obj), idx));
+    return idx;
   }
 
   constexpr inline R get(const T& obj) {
@@ -88,6 +102,27 @@ class manager {
       return ref;
 
     return static_cast<C*>(this)->insert(std::move(obj));
+  }
+
+  constexpr inline ref get_id(const T& obj) {
+    if constexpr(std::is_same<T, variable>()) {
+      obj = static_cast<C*>(this)->transform_(obj);
+    }
+    ref r = static_cast<C*>(this)->get_id_from_map(obj);
+    if(r)
+      return r;
+
+    return static_cast<C*>(this)->insert_id(obj);
+  }
+  constexpr inline ref get_id(T&& obj) {
+    if constexpr(std::is_same<T, variable>()) {
+      obj = static_cast<C*>(this)->transform_(obj);
+    }
+    ref r = static_cast<C*>(this)->get_id_from_map(obj);
+    if(r)
+      return r;
+
+    return static_cast<C*>(this)->insert_id(std::move(obj));
   }
 };
 }

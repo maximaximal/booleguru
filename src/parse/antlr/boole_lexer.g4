@@ -13,5 +13,5 @@ SUBST_MODIFIER : ':' ;
 LUA_MODIFIER : 'L' ;
 FENNEL_MODIFIER : 'F' ;
 
-ID: [A-Za-z][0-9A-Za-z\u0080-\uFFFF_]+ ;
+ID: [0-9A-Za-z\u0080-\uFFFF_]+ ;
 WS: [ \t\n\r\f]+ -> skip ;

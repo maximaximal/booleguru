@@ -44,7 +44,6 @@ fennel_return_to_eval_result(auto&& result) {
   if(!result.valid()) {
     sol::error err = result;
     std::string what = err.what();
-    std::cout << what << std::endl;
     return what;
   }
 
