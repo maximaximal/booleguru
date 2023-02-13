@@ -43,9 +43,20 @@ expr returns [uint32_t o]:
         }
     | v=var { $o = ops->get_id(op(op_type::Var, $v.v, 0)); }
     | last_op=expr FENNEL_SUBST c=MATCHING_PAREN {
-            std::cout << $c.text << std::endl;
-            auto ret = lua->eval_fennel($c.text, (*ops)[$last_op.o]);
+            auto ret = lua->eval_fennel("(" + $c.text + ")", (*ops)[$last_op.o]);
             $o = std::get<op_ref>(ret).get_id();
+        }
+    | last_op=expr FENNEL c=MATCHING_PAREN {
+            auto ret = lua->eval_fennel("(" + $c.text + ")", (*ops)[$last_op.o]);
+            $o = $last_op.o;
+        }
+    | last_op=expr LUA_SUBST c=MATCHING_PAREN {
+            auto ret = lua->eval($c.text, (*ops)[$last_op.o]);
+            $o = std::get<op_ref>(ret).get_id();
+        }
+    | last_op=expr LUA c=MATCHING_PAREN {
+            auto ret = lua->eval($c.text, (*ops)[$last_op.o]);
+            $o = $last_op.o;
         }
     ;
 

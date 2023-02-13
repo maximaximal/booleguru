@@ -31,6 +31,10 @@ class lua_context {
     std::variant<std::monostate, long int, std::string, expression::op_ref>;
 
   eval_result eval_fennel(std::string_view code);
-  eval_result eval_fennel(std::string_view code, const expression::op_ref& last_op);
+  eval_result eval_fennel(std::string_view code,
+                          const expression::op_ref& last_op);
+
+  eval_result eval(std::string_view code);
+  eval_result eval(std::string_view code, const expression::op_ref& last_op);
 };
 }

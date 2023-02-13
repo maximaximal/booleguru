@@ -12,12 +12,15 @@ EQUI : '<->' ;
 FORALL : '#' | '\u2200' ;
 EXISTS : '?' | '\u2203';
 
-FENNEL_SUBST : ':F(' | ':(' | ':f(' | 'f:(' { pushMode(LISP); };
-FENNEL : 'F(' | 'f(' { pushMode(LISP); };
+FENNEL_SUBST : ( ':F(' | ':(' | ':f(' | 'f:(' | 'L:(' ) { pushMode(CODE); };
+FENNEL : ( 'F(' | 'f(' ) { pushMode(CODE); };
+
+LUA_SUBST : ( ':L(' | ':l(' | 'l:(' | 'L:(' ) { pushMode(CODE); };
+LUA : ( 'L(' | 'l(' ) { pushMode(CODE); };
 
 ID: [0-9A-Za-z\u0080-\uFFFF_]+ ;
 WS: [ \t\n\r\f]+ -> skip ;
 
-mode LISP;
-MATCHING_PAREN : '(' ( MATCHING_PAREN | ~[()] )* ')' ;
+mode CODE;
+MATCHING_PAREN : ~[()]+ | ( '(' ( MATCHING_PAREN | ~[()] )* ')' );
 END_PAREN : ')' -> popMode ;

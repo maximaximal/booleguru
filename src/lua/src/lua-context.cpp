@@ -40,7 +40,7 @@ lua_context::init_fennel() {
 }
 
 static lua_context::eval_result
-fennel_return_to_eval_result(auto&& result) {
+return_to_eval_result(auto&& result) {
   if(!result.valid()) {
     sol::error err = result;
     std::string what = err.what();
@@ -66,7 +66,7 @@ lua_context::eval_result
 lua_context::eval_fennel(std::string_view code) {
   auto eval = (*state_)["fennel"]["eval"];
   auto r = eval(code);
-  return fennel_return_to_eval_result(r);
+  return return_to_eval_result(r);
 }
 
 lua_context::eval_result
@@ -75,4 +75,17 @@ lua_context::eval_fennel(std::string_view code,
   (*state_)[fennel_last_op_name_] = last_op;
   return eval_fennel(code);
 }
+
+lua_context::eval_result
+lua_context::eval(std::string_view code) {
+  auto r = state_->script(code);
+  return return_to_eval_result(r);
+}
+
+lua_context::eval_result
+lua_context::eval(std::string_view code, const expression::op_ref& last_op) {
+  (*state_)["last_op"] = last_op;
+  return eval(code);
+}
+
 }
