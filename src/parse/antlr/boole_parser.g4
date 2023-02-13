@@ -15,6 +15,7 @@ options { tokenVocab=boole_lexer; }
   using op_manager = expression::op_manager;
   std::shared_ptr<op_manager> ops;
   std::shared_ptr<lua::lua_context> lua;
+  bool eval = false;
 }
 
 formula returns [op_ref o]
@@ -43,19 +44,31 @@ expr returns [uint32_t o]:
         }
     | v=var { $o = ops->get_id(op(op_type::Var, $v.v, 0)); }
     | last_op=expr FENNEL_SUBST c=MATCHING_PAREN {
-            auto ret = lua->eval_fennel("(" + $c.text + ")", (*ops)[$last_op.o]);
-            $o = std::get<op_ref>(ret).get_id();
+            if(eval) {
+                auto ret = lua->eval_fennel("(" + $c.text + ")", (*ops)[$last_op.o]);
+                $o = std::get<op_ref>(ret).get_id();
+            } else {
+                $o = $last_op.o;
+            }
         }
     | last_op=expr FENNEL c=MATCHING_PAREN {
-            auto ret = lua->eval_fennel("(" + $c.text + ")", (*ops)[$last_op.o]);
+            if(eval) {
+                lua->eval_fennel("(" + $c.text + ")", (*ops)[$last_op.o]);
+            }
             $o = $last_op.o;
         }
     | last_op=expr LUA_SUBST c=MATCHING_PAREN {
-            auto ret = lua->eval($c.text, (*ops)[$last_op.o]);
-            $o = std::get<op_ref>(ret).get_id();
+            if(eval) {
+                auto ret = lua->eval($c.text, (*ops)[$last_op.o]);
+                $o = std::get<op_ref>(ret).get_id();
+            } else {
+                $o = $last_op.o;
+            }
         }
     | last_op=expr LUA c=MATCHING_PAREN {
-            auto ret = lua->eval($c.text, (*ops)[$last_op.o]);
+            if(eval) {
+                auto ret = lua->eval($c.text, (*ops)[$last_op.o]);
+            }
             $o = $last_op.o;
         }
     ;

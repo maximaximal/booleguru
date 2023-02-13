@@ -21,7 +21,6 @@ TEST_CASE("Use the ANTLR4 boole parser directly") {
                                         "a & (a | b)",
                                         "a & b & c <-> d | (e -> f)",
                                         "?a (a)",
-                                        "(?a a) :F(print *last-op*)",
                                         "#d ((?a ?b (a & b)) | d)");
 
   isviewstream ins(input_str);

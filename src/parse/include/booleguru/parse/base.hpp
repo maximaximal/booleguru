@@ -24,6 +24,8 @@ class base {
   std::shared_ptr<lua::lua_context> lua_;
   std::istream& in_;
 
+  virtual void init() {}
+
   int line_ = 0;
   int column_ = 0;
 
