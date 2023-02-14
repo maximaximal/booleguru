@@ -23,5 +23,5 @@ ID: [0-9A-Za-z\u0080-\u2199\u22FF-\uFFFF_]+ ;
 WS: [ \t\n\r\f]+ -> skip ;
 
 mode CODE;
-MATCHING_PAREN : ~[()]+ | ( '(' ( MATCHING_PAREN | ~[()] )* ')' );
+MATCHING_PAREN : ~[()]+ MATCHING_PAREN* | ( '(' ( MATCHING_PAREN | ~[()] )* ')' );
 END_PAREN : ')' -> skip,popMode ;
