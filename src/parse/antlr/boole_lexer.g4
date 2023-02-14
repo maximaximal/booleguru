@@ -19,7 +19,7 @@ LUA_SUBST : ( ':L(' | ':l(' | 'l:(' | 'L:(' ) { pushMode(CODE); };
 LUA : ( 'L(' | 'l(' ) { pushMode(CODE); };
 
 // Exclude mathematical operators from the ID range, other unicode is allowed.
-ID: [0-9A-Za-z\u0080-\u2199\u22FF-\uFFFF_]+ ;
+ID: [0-9A-Za-z\u0080-\u2199\u22FF-\uFFFF_'"\][]+ ;
 WS: [ \t\n\r\f]+ -> skip ;
 
 mode CODE;
