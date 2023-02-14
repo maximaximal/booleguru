@@ -10,6 +10,18 @@ option(TESTS "Enable Test-Target (requires Catch2)" ON)
 
 get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
 
+if(${CMAKE_BUILD_TYPE} MATCHES "Release")
+  include(CheckIPOSupported)
+  check_ipo_supported(RESULT LTO_SUPPORTED OUTPUT error)
+
+  if( LTO_SUPPORTED )
+    message(STATUS "IPO / LTO enabled")
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+  else()
+    message(STATUS "IPO / LTO not supported: <${error}>")
+  endif()
+endif()
+
 if(isMultiConfig)
     if(NOT "Sanitize" IN_LIST CMAKE_CONFIGURATION_TYPES)
         list(APPEND CMAKE_CONFIGURATION_TYPES Sanitize)
