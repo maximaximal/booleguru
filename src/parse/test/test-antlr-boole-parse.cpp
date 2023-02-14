@@ -36,5 +36,5 @@ TEST_CASE("Use the ANTLR4 boole parser directly") {
   parser.setBuildParseTree(false);
   op_ref op = parser.formula()->o;
 
-  REQUIRE(op.to_string() == input_str);
+  REQUIRE(op.to_string() == std::string(input_str));
 }

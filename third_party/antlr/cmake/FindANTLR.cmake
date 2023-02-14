@@ -1,4 +1,6 @@
-find_package(Java QUIET COMPONENTS Runtime)
+find_package(Java 1.11 QUIET COMPONENTS Runtime REQUIRED)
+
+message(STATUS "Found Java: ${Java_VERSION} as ${Java_JAVA_EXECUTABLE}")
 
 if(NOT ANTLR_EXECUTABLE)
   find_program(ANTLR_EXECUTABLE
