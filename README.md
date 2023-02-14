@@ -41,27 +41,11 @@ break out. I'll do that.
 Call a SAT solver to actually solve a formula. Could also include QBF solvers
 in the future or become it's own solver at some point.
 
-### Embedded Common Lisp `booleguru::cl`
+### Lua and Fennel `booleguru::lua`
 
-This is the part that hosts the embedded common lisp code. Stuff that is
-actually embedded in cl is included here, contained in this namespace, to
-clearly mark lispy code. If performance of some transformation becomes a
-problem, one can move implementations. Stuff is imported into other namespaces
-with `using` or by importing namespaces (e.g. `booleguru::cl::transform`).
-
-# Live Lisp Development
-
-The common lisp part is also compiled info a `fasb` file that can be loaded from
-ECL. To use it, run the following expression in a running ECL REPL with the
-corrected path:
-
-```
-(load #p "~/sai/booleguru/build-clang/booleguru-cl.fasb")
-```
-
-To then enable live editing of the environment, load all functions into the ECL
-REPL and override at will. Non-overridden functions stay implemented inside the
-`fasb` file.
+[Lua 5.4.4](https://www.lua.org/) together with
+[Fennel](https://fennel-lang.org/) is embedded in the resulting binary. This
+enables users to generate more complex formulas.
 
 ## License
 
