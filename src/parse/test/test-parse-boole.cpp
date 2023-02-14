@@ -31,6 +31,8 @@ TEST_CASE("Parse example boole formulas and check the resulting expressions") {
                                     "a<->b",
                                     "a<-b",
                                     "a_b<-b",
+                                    "?a #o a|o",
+                                    u8"?a #o a∧o",
                                     u8"ä&ö",
                                     u8"a∧b",
                                     u8"ä∧ö",
@@ -54,6 +56,7 @@ TEST_CASE("Parse example boole formulas and check the resulting expressions") {
   if(res) {
     CAPTURE(*res);
   }
+  CAPTURE(res.message);
   REQUIRE(res);
 }
 
@@ -73,21 +76,20 @@ TEST_CASE("Parse invalid boolean formulas") {
 
 TEST_CASE("Parse formula containing lisp code") {
   std::string_view input = GENERATE(
-    "a & (b-var \"b\")",
-    "(b-var \"a\") & b",
-    "(a & (b-var \"b\"))",
-    "(b-var \"a\") & (b-var \"b\")",
-    "(b-and (b-var \"a\") (b-var \"b\"))",
-    "(b-and (b-var \"a\") (b-var \"b\")) :(b-and (b-var \"a\") (b-var \"b\"))",
-    "(b-and (b-var \"a\") (b-var \"b\")) :(b-and (b-var \"aa\") (b-var "
+    "a & f(b-var \"b\")",
+    "f(b-var \"a\") & b",
+    "(a & f(b-var \"b\"))",
+    "f(b-var \"a\") & f(b-var \"b\")",
+    "f(b-and (b-var \"a\") (b-var \"b\"))",
+    "f(b-and (b-var \"a\") (b-var \"b\")) :(b-and (b-var \"a\") (b-var \"b\"))",
+    "f(b-and (b-var \"a\") (b-var \"b\")) :(b-and (b-var \"aa\") (b-var "
     "\"bb\")) :(b-and (b-var \"a\") (b-var \"b\"))",
     "(b-and (b-var \"a\") (b-var \"b_\")) :(b-var-rename *last-op* \"b_\" \"b\")");
+  std::string inputs(input);
   auto is = isviewstream(input);
   boole parser(is);
   parser.eval(true);
   auto res = parser();
-
-  std::string inputs(input);
 
   CAPTURE(inputs);
   CAPTURE(res.message);

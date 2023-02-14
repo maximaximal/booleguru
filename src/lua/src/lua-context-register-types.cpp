@@ -67,19 +67,19 @@ rename_map(op_ref& r, const std::unordered_map<std::string, std::string>& map) {
 
 template<op_type type>
 static op_ref
-binop(op_ref l, op_ref r) {
+binop(op_ref& l, op_ref& r) {
   return l.get_mgr().get(op(type, l.get_id(), r.get_id()));
 }
 
 template<op_type type>
 static op_ref
-unop(op_ref l) {
+unop(op_ref& l) {
   return l.get_mgr().get(op(type, l.get_id(), 0));
 }
 
 template<class Transformer>
 static op_ref
-transform_op(op_ref o) {
+transform_op(op_ref& o) {
   return Transformer()(o);
 }
 
@@ -107,6 +107,11 @@ set_to_state(sol::state& s,
 void
 set_to_state(sol::state& s, const std::string& both, auto&& f) {
   set_to_state(s, both, both, f);
+}
+
+expression::op_ref
+lua_context::get_var(const std::string& name) {
+  return get_variable_from_manager(name, *ops_);
 }
 
 void
@@ -176,12 +181,10 @@ lua_context::register_booleguru_types() {
     &transform_op<
       transform::prenex_quantifier<transform::prenex_quantifier_Edown_Aup>>);
 
-  auto get_var = [this](const std::string& name) {
-    return get_variable_from_manager(name, *ops_);
-  };
-  fennel_s(s, "b-var") = get_var;
-  fennel_s(s, "v") = get_var;
-  s["v"] = get_var;
+  const std::string bvar = s["fennel"]["mangle"]("b-var");
+  s.set_function("b_var", &lua_context::get_var, this);
+  s.set_function(bvar, &lua_context::get_var, this);
+  s.set_function("v", &lua_context::get_var, this);
 
   auto op_type = s.new_usertype<op>("op");
 

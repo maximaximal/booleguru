@@ -19,7 +19,7 @@ options { tokenVocab=boole_lexer; }
 }
 
 formula returns [op_ref o]
-    : e=expr { $o = (*ops)[$e.o]; }
+    : e=expr EOF { $o = (*ops)[$e.o]; }
     | <EOF>
     ;
 
@@ -46,30 +46,63 @@ expr returns [uint32_t o]:
     | last_op=expr FENNEL_SUBST c=MATCHING_PAREN {
             if(eval) {
                 auto ret = lua->eval_fennel("(" + $c.text + ")", (*ops)[$last_op.o]);
-                $o = std::get<op_ref>(ret).get_id();
+                if(std::holds_alternative<std::string>(ret)) {
+                    notifyErrorListeners(std::get<std::string>(ret));
+                    $o = $last_op.o;
+                } else if(std::holds_alternative<op_ref>(ret)) {
+                    $o = std::get<op_ref>(ret).get_id();
+                } else {
+                    $o = $last_op.o;
+                }
             } else {
                 $o = $last_op.o;
             }
-        }
-    | last_op=expr FENNEL c=MATCHING_PAREN {
-            if(eval) {
-                lua->eval_fennel("(" + $c.text + ")", (*ops)[$last_op.o]);
-            }
-            $o = $last_op.o;
         }
     | last_op=expr LUA_SUBST c=MATCHING_PAREN {
             if(eval) {
                 auto ret = lua->eval($c.text, (*ops)[$last_op.o]);
-                $o = std::get<op_ref>(ret).get_id();
-            } else {
+                if(std::holds_alternative<std::string>(ret)) {
+                    notifyErrorListeners(std::get<std::string>(ret));
+                    $o = $last_op.o;
+                } else if(std::holds_alternative<op_ref>(ret)) {
+                    $o = std::get<op_ref>(ret).get_id();
+                } else {
+                    $o = $last_op.o;
+                }
+            }
+            else {
                 $o = $last_op.o;
             }
         }
-    | last_op=expr LUA c=MATCHING_PAREN {
-            if(eval) {
-                auto ret = lua->eval($c.text, (*ops)[$last_op.o]);
+    | FENNEL c=MATCHING_PAREN {
+            if(!eval) {
+                notifyErrorListeners("Cannot execute in non-eval formula!");
+            } else {
+                auto ret = lua->eval_fennel("(" + $c.text + ")");
+                if(std::holds_alternative<std::string>(ret)) {
+                    notifyErrorListeners(std::get<std::string>(ret));
+                    $o = $last_op.o;
+                } else if(std::holds_alternative<op_ref>(ret)) {
+                    $o = std::get<op_ref>(ret).get_id();
+                } else {
+                    notifyErrorListeners("Fennel returned invalid return type!");
+                }
             }
-            $o = $last_op.o;
+        }
+    | LUA c=MATCHING_PAREN {
+            if(!eval) {
+                notifyErrorListeners("Cannot execute in non-eval formula!");
+            } else {
+                auto ret = lua->eval($c.text);
+                if(std::holds_alternative<std::string>(ret)) {
+                    notifyErrorListeners(std::get<std::string>(ret));
+                    $o = $last_op.o;
+                } else if(std::holds_alternative<op_ref>(ret)) {
+                    $o = std::get<op_ref>(ret).get_id();
+                } else {
+                    notifyErrorListeners("Lua returned invalid return type!");
+                }
+            }
         }
     ;
 

@@ -22,6 +22,8 @@ class lua_context {
   void init_fennel();
   void register_booleguru_types();
 
+  expression::op_ref get_var(const std::string &name);
+
   public:
   lua_context(std::shared_ptr<expression::op_manager> ops);
   lua_context();
