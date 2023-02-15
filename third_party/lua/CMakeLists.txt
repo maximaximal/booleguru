@@ -54,3 +54,5 @@ target_include_directories(lua BEFORE
 
 add_library(lua::lib ALIAS lua)
 add_library(lua::header ALIAS lua-header)
+
+target_link_libraries(lua PUBLIC ${CMAKE_DL_LIBS})

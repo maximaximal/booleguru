@@ -36,7 +36,7 @@ target_include_directories(booleguru-lua PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/incl
 
 target_link_libraries(booleguru-lua PUBLIC
   booleguru-expression booleguru-transform booleguru-util booleguru-solve)
-target_link_libraries(booleguru-lua PUBLIC lua lua-header sol2)
+target_link_libraries(booleguru-lua PUBLIC lua lua-header sol2 ${CMAKE_DL_LIBS})
 
 if(TARGET Catch2::Catch2)
   add_subdirectory(test)
