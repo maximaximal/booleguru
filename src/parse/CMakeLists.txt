@@ -32,6 +32,9 @@ target_link_libraries(booleguru-parse PRIVATE $<TARGET_OBJECTS:booleguru-parse-a
 target_link_libraries(booleguru-parse PRIVATE antlr4_static)
 target_include_directories(booleguru-parse PRIVATE ${ANTLR4_INCLUDE_DIR})
 
+# Not done automatically.
+add_dependencies(booleguru-parse booleguru-parse-antlr)
+
 if(TARGET Catch2::Catch2)
   add_subdirectory(test)
 endif()
