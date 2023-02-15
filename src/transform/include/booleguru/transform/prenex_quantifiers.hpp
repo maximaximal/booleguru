@@ -390,6 +390,7 @@ struct prenex_quantifier : public visitor<prenex_quantifier<Strategy>> {
   using quant_stack_t = std::list<prenex_quantifier_stack_entry>;
   quant_stack_t quant_stack;
   quant_stack_t::iterator critical_path_end;
+  std::unordered_map<uint32_t, uint32_t> variable_counters;
 
   inline expression::op_ref post_action(expression::op_ref o) {
     std::list<prenex_quantifier_stack_entry> critical_path;
@@ -419,10 +420,11 @@ struct prenex_quantifier : public visitor<prenex_quantifier<Strategy>> {
     const auto old_v = o.get_mgr()[o->quant.v]->var;
 
     uint32_t outer_bound = bounds_map[old_v.v];
-    bounds_map[old_v.v] = o.get_id();
+    uint32_t bound = variable_counters[old_v.v]++;
+    bounds_map[old_v.v] = bound;
 
     auto bound_v = o.get_mgr().get(
-      expression::op(expression::op_type::Var, old_v.v, o.get_id()));
+      expression::op(expression::op_type::Var, old_v.v, bound));
 
     auto it = quant_stack.emplace(
       quant_stack.begin(),
