@@ -28,7 +28,8 @@ class StdoutProcessor {
         let self = this;
         let options = {
             preRun: function (mod) {
-                mod.FS.init(self.stdout.bind(self),
+                mod.FS.init(null,
+                            self.stdout.bind(self),
                             self.stderr.bind(self));
             },
         };
@@ -65,9 +66,11 @@ async function execute(query, type) {
 }
 
 onmessage = async (msg) => {
+    msg = msg.data;
     switch(msg.type) {
     case "task":
-        await execute(msg.query, msg.query_type);
+        let retcode = await execute(msg.query, msg.query_type);
+        postMessage({"type": "done", "code": retcode});
         break;
     }
 }

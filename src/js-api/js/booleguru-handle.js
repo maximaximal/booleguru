@@ -2,7 +2,7 @@ let worker_available_promise_resolve = null;
 let worker_available_promise = null;
 
 function reset_worker_available_promise() {
-    let worker_available_promise = new Promise((resolve, reject) => {
+    worker_available_promise = new Promise((resolve, reject) => {
         worker_available_promise_resolve = resolve;
     });
 }
@@ -40,6 +40,7 @@ class BooleguruWorker {
     }
 
     onmessage(msg) {
+        msg = msg.data;
         switch(msg.type) {
         case "request":
             this.worker.postMessage({"type": "reply", "code": this.request_cb(msg.name)});
@@ -101,7 +102,7 @@ export function execute(query, query_type, request_cb, stdout_cb, stderr_cb) {
     let promise = new Promise((resolve, reject) => {
         find_idle_worker().then(w => {
             w.run(resolve, reject, query, query_type, request_cb, stdout_cb, stderr_cb);
-            deferred_terminator.resolve(w.terminator.bind(w));
+            deferred_terminator.resolve(w.terminate.bind(w));
         });
     });
     let terminate = async () => {
