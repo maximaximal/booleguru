@@ -59,7 +59,7 @@ class BooleguruWorker {
     }
 
     run(promise_finish, promise_cancel, query, query_type, request_cb, stdout_cb, stderr_cb) {
-        assert(!this.working, "Worker must not be running in order to post new work.");
+        console.assert(!this.working, "Worker must not be running in order to post new work.");
         this.request_cb = request_cb;
         this.stdout_cb = stdout_cb;
         this.stderr_cb = stderr_cb;
@@ -78,7 +78,7 @@ let workers = [
 ];
 
 async function find_idle_worker() {
-    assert(worker_available_promise, "Worker availability promise must always be there!");
+    console.assert(worker_available_promise, "Worker availability promise must always be there!");
     let worker = await worker_available_promise;
 
     // Now, reset the availability promise so the next time this function is
@@ -96,11 +96,11 @@ function Deferred() {
     })
 }
 
-export function execute(query, request_cb, stdout_cb, stderr_cb) {
+export function execute(query, query_type, request_cb, stdout_cb, stderr_cb) {
     let deferred_terminator = new Deferred();
     let promise = new Promise((resolve, reject) => {
         find_idle_worker().then(w => {
-            w.run(resolve, reject, query, request_cb, stdout_cb, stderr_cb);
+            w.run(resolve, reject, query, query_type, request_cb, stdout_cb, stderr_cb);
             deferred_terminator.resolve(w.terminator.bind(w));
         });
     });
