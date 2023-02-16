@@ -1,0 +1,33 @@
+#+TITLE: Booleguru JS API
+#+AUTHOR: Max Heisinger
+
+* Overview
+
+Booleguru is provided as ~booleguru-handle.js~, ~booleguru-worker.js~, and
+~booleguru.js~. The native implementation is compiled into ~booleguru.wasm~ and
+loaded by ~booleguru.js~. ~booleguru-worker.js~ is the entry point of $n$
+[[https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API?retiredLocale=de][Web-Workers]] handling the raw work. ~booleguru-handle.js~ starts the workers and
+handles execution requests. ~booleguru-handle.js~ owns the whole communication
+with Web-Workers.
+
+* Loading Booleguru
+
+Load the (ES6) Module ~booleguru-handle~ in ~booleguru-handle.js~ like this:
+
+#+BEGIN_SRC js
+import { execute } from "booleguru-handle.js";
+#+END_SRC
+
+Afterwards, use the ~execute(query, query_type, request_cb, stdout_cb,
+stderr_cb)~ function as you see fit. The handle starts one web-worker
+immediately and another one if concurrent requests are issued. ~execute~ returns
+a promise and a termination function, so the execution may be aborted, but one
+can also wait for the execution to be finished. The return format is ~(promise,
+terminate)~. The ~query_type~ is the type of the code to be executed - boole
+input is ~boole~, fennel is ~fennel~ and lua is ~lua~.
+
+* Testing the JS Integration
+
+To test the JS functionality, a (very) thin HTML wrapper is provided in
+~test.html~. Start some web-server in this directory and give a symbolic link to
+~booleguru.js~ and ~booleguru.wasm~.

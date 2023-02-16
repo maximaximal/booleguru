@@ -10,6 +10,11 @@ option(TESTS "Enable Test-Target (requires Catch2)" ON)
 
 get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
 
+if(EMSCRIPTEN)
+  set(CMAKE_CXX_FLAGS "-fwasm-exceptions")
+  set(CMAKE_C_FLAGS "-fwasm-exceptions")
+endif()
+
 if(${CMAKE_BUILD_TYPE} MATCHES "Release")
   include(CheckIPOSupported)
   check_ipo_supported(RESULT LTO_SUPPORTED OUTPUT error)
