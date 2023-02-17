@@ -9,8 +9,12 @@
 #include <booleguru/parse/result.hpp>
 #include <booleguru/serialize/qcir.hpp>
 
+#include <booleguru/transform/output_to_qdimacs.hpp>
+#include <booleguru/transform/tseitin.hpp>
+
 #include <booleguru/cli/cli-processor.hpp>
 
+using namespace booleguru;
 using namespace booleguru::cli;
 
 /* The idea for the CLI of booleguru is a CLI expression parser. One should be
@@ -30,21 +34,26 @@ int
 main(int argc, char* argv[]) {
 
   // Preliminary stuff, just for testing!!
-  booleguru::cli::cli_processor cli(argc, argv);
+  cli::cli_processor cli(argc, argv);
 
   auto result = cli.process();
 
   argument::input_types t =
     std::get<argument::input_types>(cli.output_arg(argument::type));
   switch(t) {
-    case booleguru::cli::argument::qcir: {
-      booleguru::serialize::qcir qcir_out(std::cout);
+    case cli::argument::qcir: {
+      serialize::qcir qcir_out(std::cout);
       qcir_out(result);
       return EXIT_SUCCESS;
     }
-    case booleguru::cli::argument::boole:
+    case cli::argument::boole:
       std::cout << result << std::endl;
       return EXIT_SUCCESS;
+    case cli::argument::qdimacs: {
+      transform::tseitin<transform::output_to_qdimacs> qdimacs(std::cout);
+      qdimacs(result);
+      return EXIT_SUCCESS;
+    }
     default:
       std::cerr << "Unsupported output type." << std::endl;
   }

@@ -17,7 +17,9 @@
 #include <booleguru/transform/eliminate_equivalence.hpp>
 #include <booleguru/transform/eliminate_implication.hpp>
 #include <booleguru/transform/hash_variables.hpp>
+#include <booleguru/transform/output_to_op.hpp>
 #include <booleguru/transform/prenex_quantifiers.hpp>
+#include <booleguru/transform/tseitin.hpp>
 #include <booleguru/transform/variable_extend.hpp>
 #include <booleguru/transform/variable_rename.hpp>
 
@@ -170,6 +172,9 @@ lua_context::register_booleguru_types() {
     s, "distribute_to_cnf", "distribute-to-cnf", &transform::distribute_to_cnf);
   set_to_state(s, "vars_hash", "vars-hash", &compute_variables_hash);
   set_to_state(s, "b_var_rename", "b-var-rename", &rename);
+  set_to_state(s, "tseitin", "tseitin", [this]() {
+    return transform::tseitin<transform::output_to_op>(*ops_);
+  }());
 
   set_to_state(
     s,

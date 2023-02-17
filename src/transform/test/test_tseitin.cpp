@@ -25,8 +25,20 @@ TEST_CASE("Tseitin-transform a simple formula to QDIMACS") {
   tseitin<output_to_qdimacs> tseitin_transformer(output);
   tseitin_transformer(formula);
 
-  CAPTURE(output.str());
-  REQUIRE(false);
+  const char* expected = R"(p cnf 5 7
+e 1 0
+a 2 0
+e 3 4 5 0
+-1 -2 4 0
+1 -4 0
+2 -4 0
+4 3 -5 0
+-4 5 0
+-3 5 0
+5 0
+)";
+
+  REQUIRE(output.str() == expected);
 }
 
 TEST_CASE("Tseitin-transform a simple formula to an op tree") {
@@ -43,5 +55,5 @@ TEST_CASE("Tseitin-transform a simple formula to an op tree") {
   op_ref result = tseitin_transformer(formula);
 
   CAPTURE(result.to_string());
-  REQUIRE(false);
+  REQUIRE(result->is_cnf);
 }

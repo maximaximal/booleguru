@@ -200,7 +200,8 @@ op_manager::insert(T&& obj) {
       const auto& l = getobj(obj.left());
       const auto& r = getobj(obj.right());
       obj.is_cnf = ((l.is_cnf || l.is_ors) && r.is_ors) ||
-                   (l.is_ors && (r.is_cnf || r.is_ors));
+                   (l.is_ors && (r.is_cnf || r.is_ors)) ||
+                   (l.is_cnf && r.is_cnf);
       obj.is_prenex =
         (l.is_prenex && !l.is_quant()) && (r.is_prenex && !r.is_quant());
       // And should just keep the and_inside it already has from the op
@@ -228,6 +229,7 @@ op_manager::insert(T&& obj) {
       const auto& l = getobj(obj.left());
       obj.and_inside = l.and_inside;
       obj.is_prenex = l.is_prenex && !l.is_quant();
+      obj.is_ors = l.type == op_type::Var;
       break;
     }
     case op_type::Exists:
@@ -237,6 +239,7 @@ op_manager::insert(T&& obj) {
       const auto& r = getobj(obj.right());
       obj.and_inside = r.and_inside;
       obj.is_prenex = r.is_prenex;
+      obj.is_cnf = r.is_cnf;
       break;
     }
     case op_type::Var:

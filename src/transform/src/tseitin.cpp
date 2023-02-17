@@ -16,7 +16,7 @@ static std::pair<int32_t, int32_t>
 compute_number_of_clauses_and_variables_in_marked(const expression::op_ref& o) {
   const expression::op_manager& mgr = o.get_mgr();
 
-  int32_t num_clauses = 0;
+  int32_t num_clauses = 1;
   int32_t num_variables = 0;
 
   for(const auto& e : mgr.objects()) {
@@ -97,9 +97,9 @@ tseitin<O>::operator()(expression::op_ref o) {
     const expression::op& left = q.left().get_obj();
     const expression::op_ref::ref left_id = q_.left();
     if(q->type == expression::op_type::Exists) {
-      o_.exists(O::op_ref_to_ref(left, left_id, mgr));
+      o_.exists(o_.op_ref_to_ref(left, left_id));
     } else {
-      o_.forall(O::op_ref_to_ref(left, left_id, mgr));
+      o_.forall(o_.op_ref_to_ref(left, left_id));
     }
     q = q.right();
   }
@@ -125,7 +125,7 @@ tseitin<O>::operator()(expression::op_ref o) {
       case expression::op_type::Lpmi:
         [[fallthrough]];
       case expression::op_type::Not:
-        o_.exists(O::op_ref_to_ref(op, e.second, mgr));
+        o_.exists(o_.op_ref_to_ref(op, e.second));
         break;
       case expression::op_type::None:
         [[fallthrough]];
@@ -140,29 +140,71 @@ tseitin<O>::operator()(expression::op_ref o) {
 
   o_.end_prefix();
 
-  o_.unit(1);
-
   for(const auto& e : mgr.objects()) {
     const expression::op& op = e.first;
+    ref t = o_.op_ref_to_ref(op, e.second);
 
     if(!op.mark)
       continue;
 
     switch(op.type) {
-      case expression::op_type::Equi:
-        [[fallthrough]];
-      case expression::op_type::Xor:
-        [[fallthrough]];
-      case expression::op_type::Or:
-        [[fallthrough]];
-      case expression::op_type::And:
-        [[fallthrough]];
-      case expression::op_type::Impl:
-        [[fallthrough]];
-      case expression::op_type::Lpmi:
-        [[fallthrough]];
-      case expression::op_type::Not:
+      case expression::op_type::Equi: {
+        ref l = o_.op_ref_to_ref(mgr.getobj(op.left()), op.left());
+        ref r = o_.op_ref_to_ref(mgr.getobj(op.right()), op.right());
+        o_.ternary(t, o_.not_op(l), o_.not_op(r));
+        o_.ternary(t, l, r);
+        o_.ternary(o_.not_op(t), o_.not_op(l), r);
+        o_.ternary(o_.not_op(t), l, o_.not_op(r));
         break;
+      }
+      case expression::op_type::Xor: {
+        ref l = o_.op_ref_to_ref(mgr.getobj(op.left()), op.left());
+        ref r = o_.op_ref_to_ref(mgr.getobj(op.right()), op.right());
+        o_.ternary(o_.not_op(t), l, r);
+        o_.ternary(t, o_.not_op(l), r);
+        o_.ternary(t, l, o_.not_op(r));
+        o_.ternary(o_.not_op(t), o_.not_op(l), o_.not_op(r));
+        break;
+      }
+      case expression::op_type::Or: {
+        ref l = o_.op_ref_to_ref(mgr.getobj(op.left()), op.left());
+        ref r = o_.op_ref_to_ref(mgr.getobj(op.right()), op.right());
+        o_.ternary(l, r, o_.not_op(t));
+        o_.binary(o_.not_op(l), t);
+        o_.binary(o_.not_op(r), t);
+        break;
+      }
+      case expression::op_type::And: {
+        ref l = o_.op_ref_to_ref(mgr.getobj(op.left()), op.left());
+        ref r = o_.op_ref_to_ref(mgr.getobj(op.right()), op.right());
+        o_.ternary(o_.not_op(l), o_.not_op(r), t);
+        o_.binary(l, o_.not_op(t));
+        o_.binary(r, o_.not_op(t));
+
+        break;
+      }
+      case expression::op_type::Impl: {
+        ref l = o_.op_ref_to_ref(mgr.getobj(op.left()), op.left());
+        ref r = o_.op_ref_to_ref(mgr.getobj(op.right()), op.right());
+        o_.binary(t, l);
+        o_.binary(t, o_.not_op(r));
+        o_.ternary(o_.not_op(t), o_.not_op(l), r);
+        break;
+      }
+      case expression::op_type::Lpmi: {
+        ref l = o_.op_ref_to_ref(mgr.getobj(op.left()), op.left());
+        ref r = o_.op_ref_to_ref(mgr.getobj(op.right()), op.right());
+        o_.binary(t, o_.not_op(l));
+        o_.binary(t, r);
+        o_.ternary(o_.not_op(t), l, o_.not_op(r));
+        break;
+      }
+      case expression::op_type::Not: {
+        ref l = o_.op_ref_to_ref(mgr.getobj(op.left()), op.left());
+        o_.binary(o_.not_op(l), o_.not_op(t));
+        o_.binary(l, t);
+        break;
+      }
       case expression::op_type::None:
         [[fallthrough]];
       case expression::op_type::Var:
@@ -174,50 +216,7 @@ tseitin<O>::operator()(expression::op_ref o) {
     }
   }
 
-  /*
-  for (p = mgr->first; p; p = p->next_inserted)
-    {
-      switch (p->type)
-  {
-  case IFF:
-    break;
-  case IMPLIES:
-    binary_clause (mgr, p->idx, p->data.as_child[0]->idx);
-    binary_clause (mgr, p->idx, -p->data.as_child[1]->idx);
-    ternary_clause (mgr, -p->idx,
-        -p->data.as_child[0]->idx,
-        p->data.as_child[1]->idx);
-    break;
-  case SEILPMI:
-    binary_clause (mgr, p->idx, -p->data.as_child[0]->idx);
-    binary_clause (mgr, p->idx, p->data.as_child[1]->idx);
-    ternary_clause (mgr, -p->idx,
-        p->data.as_child[0]->idx,
-        -p->data.as_child[1]->idx);
-    break;
-  case OR:
-    binary_clause (mgr, p->idx, -p->data.as_child[0]->idx);
-    binary_clause (mgr, p->idx, -p->data.as_child[1]->idx);
-    ternary_clause (mgr, -p->idx,
-        p->data.as_child[0]->idx, p->data.as_child[1]->idx);
-    break;
-  case AND:
-    binary_clause (mgr, -p->idx, p->data.as_child[0]->idx);
-    binary_clause (mgr, -p->idx, p->data.as_child[1]->idx);
-    ternary_clause (mgr, p->idx,
-        -p->data.as_child[0]->idx,
-        -p->data.as_child[1]->idx);
-    break;
-  case NOT:
-    binary_clause (mgr, p->idx, p->data.as_child[0]->idx);
-    binary_clause (mgr, -p->idx, -p->data.as_child[0]->idx);
-    break;
-  default:
-    assert (p->type == VAR);
-    break;
-  }
-    }
-  */
+  o_.unit(o_.op_ref_to_ref(q.get_obj(), q.get_id()));
 
   return o_.get_out();
 }

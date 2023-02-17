@@ -14,6 +14,7 @@ class output_to_op {
   private:
   expression::op_ref o;
   expression::op_manager& mgr;
+  ref tseitin_id = mgr.vars().get_id(expression::variable{ "tseitin" });
 
   std::stack<std::pair<expression::op_type, ref>> quants;
 
@@ -58,16 +59,21 @@ class output_to_op {
     return o;
   }
 
-  static inline constexpr ref op_ref_to_ref(const expression::op o,
-                                            expression::op_ref::ref id,
-                                            expression::op_manager& mgr) {
+  inline constexpr ref op_ref_to_ref(const expression::op o,
+                                     expression::op_ref::ref id) {
     if(o.type == expression::op_type::Var) {
       return id;
     } else {
-      ref tseitin_id = mgr.vars().get_id(expression::variable{ "tseitin" });
       return mgr.get_id(
         expression::op(expression::op_type::Var, tseitin_id, id));
     }
+  }
+
+  inline ref not_op(ref r) {
+    return mgr.get_id(expression::op(
+      expression::op_type::Var,
+      tseitin_id,
+      mgr.get_id(expression::op(expression::op_type::Not, r, 0))));
   }
 };
 }

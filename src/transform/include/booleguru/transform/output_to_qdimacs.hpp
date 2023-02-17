@@ -83,12 +83,12 @@ class output_to_qdimacs {
 
   TransformResult get_out() const {}
 
-  static inline constexpr ref op_ref_to_ref(const expression::op& o,
-                                            expression::op_ref::ref id,
-                                            expression::op_manager& mgr) {
-    (void)mgr;
+  inline constexpr ref op_ref_to_ref(const expression::op& o,
+                                     expression::op_ref::ref id) {
     (void)id;
     return o.user_int32;
   }
+
+  inline ref not_op(ref r) { return -r; }
 };
 }
