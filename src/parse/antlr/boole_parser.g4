@@ -32,17 +32,25 @@ expr returns [uint32_t o]:
     | l=expr LPMI r=expr { $o = ops->get_id(op(op_type::Lpmi, $l.o, $r.o)); }
     | l=expr EQUI r=expr { $o = ops->get_id(op(op_type::Equi, $l.o, $r.o)); }
     | LPAR l=expr RPAR { $o = $l.o; }
-    | FORALL v=var r=expr {
+    | FORALL ID r=expr {
+            auto text = $ID.text;
+            uint32_t var_id = ops->vars().get_id(variable{std::move(text)});
+            uint32_t varop_id = ops->get_id(op(op_type::Var, var_id, 0));
             $o = ops->get_id(op(op_type::Forall,
-                                ops->get_id(op(op_type::Var, $v.v, 0)),
+                                ops->get_id(op(op_type::Var, varop_id, 0)),
                                 $r.o));
         }
-    | EXISTS v=var r=expr {
+    | EXISTS ID r=expr {
+            auto text = $ID.text;
+            uint32_t var_id = ops->vars().get_id(variable{std::move(text)});
+            uint32_t varop_id = ops->get_id(op(op_type::Var, var_id, 0));
             $o = ops->get_id(op(op_type::Exists,
-                                ops->get_id(op(op_type::Var, $v.v, 0)),
+                                ops->get_id(op(op_type::Var, varop_id, 0)),
                                 $r.o));
         }
-    | v=var { $o = ops->get_id(op(op_type::Var, $v.v, 0)); }
+    | ID { auto text = $ID.text;
+           uint32_t var_id = ops->vars().get_id(variable{std::move(text)});
+           $o = ops->get_id(op(op_type::Var, var_id, 0)); }
     | last_op=expr FENNEL_SUBST c=MATCHING_PAREN {
             if(eval) {
                 auto ret = lua->eval_fennel("(" + $c.text + ")", (*ops)[$last_op.o]);
@@ -104,9 +112,4 @@ expr returns [uint32_t o]:
                 }
             }
         }
-    ;
-
-var returns [uint32_t v]:
-      ID { auto text = $ID.text;
-           $v = ops->vars().get_id(variable{std::move(text)}); }
     ;
