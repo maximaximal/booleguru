@@ -114,6 +114,9 @@ struct boole::internal {
 
     // Ops are built directly in the parser using rule returns.
     parser.setBuildParseTree(false);
+
+    parser.getInterpreter<atn::ParserATNSimulator>()->setPredictionMode(
+      atn::PredictionMode::SLL);
   }
 };
 void
