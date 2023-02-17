@@ -1,7 +1,7 @@
 #pragma once
 
 namespace booleguru::expression {
-struct op_ref;
+class op_ref;
 }
 
 namespace booleguru::transform {
