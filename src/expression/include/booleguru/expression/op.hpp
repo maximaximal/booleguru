@@ -39,14 +39,14 @@ struct op {
   op_type type : 8;
   // 56 bit (fill up type to 8 byte) user flags for ops. These are not included
   // in the hashing of ops and are therefore left to be mutable.
+  bool and_inside : 1;
+  bool is_ors : 1;
+  bool is_cnf : 1;
+  bool is_prenex : 1;
   mutable bool mark : 1;
-  mutable bool and_inside : 1;
   mutable bool user_flag3 : 1;
   mutable bool user_flag4 : 1;
   mutable bool user_flag5 : 1;
-  mutable bool user_flag6 : 1;
-  mutable bool user_flag7 : 1;
-  mutable bool user_flag8 : 1;
   mutable int16_t user_int16 : 16;
   mutable int32_t user_int32 : 32;
 
@@ -62,14 +62,14 @@ struct op {
 
   inline explicit constexpr op(op_type type, uint32_t r1, uint32_t r2)
     : type(type)
-    , mark(false)
     , and_inside(false)
+    , is_ors(false)
+    , is_cnf(false)
+    , is_prenex(true)
+    , mark(false)
     , user_flag3(false)
     , user_flag4(false)
     , user_flag5(false)
-    , user_flag6(false)
-    , user_flag7(false)
-    , user_flag8(false)
     , user_int16(0)
     , user_int32(0)
     , bin(0, 0) {
@@ -97,6 +97,7 @@ struct op {
         bin.r = r2;
         break;
       case op_type::Var:
+        is_ors = true;
         var.v = r1;
         var.q = r2;
         break;
@@ -176,6 +177,9 @@ struct op {
       (void)t;
       return e.right();
     });
+  }
+  constexpr inline bool is_quant() const {
+    return type == op_type::Exists || type == op_type::Forall;
   }
 };
 

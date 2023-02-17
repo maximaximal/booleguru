@@ -1,6 +1,8 @@
 set(TEST_SRCS
   test_prenex_quantifier.cpp
   test_eliminate_implication.cpp
+  test_output_to_qdimacs.cpp
+  test_tseitin.cpp
 )
 
 add_executable(booleguru-transform-test ${TEST_SRCS})

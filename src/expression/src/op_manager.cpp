@@ -196,27 +196,53 @@ op_manager::op_manager(std::shared_ptr<var_manager> vars)
 op_manager::base::objref
 op_manager::insert(T&& obj) {
   switch(obj.type) {
-    case op_type::And:
-      // And And should just keep the and it already has.
+    case op_type::And: {
+      const auto& l = getobj(obj.left());
+      const auto& r = getobj(obj.right());
+      obj.is_cnf = ((l.is_cnf || l.is_ors) && r.is_ors) ||
+                   (l.is_ors && (r.is_cnf || r.is_ors));
+      obj.is_prenex =
+        (l.is_prenex && !l.is_quant()) && (r.is_prenex && !r.is_quant());
+      // And should just keep the and_inside it already has from the op
+      // constructor.
       break;
+    }
     case op_type::Or:
+      obj.is_ors = getobj(obj.left()).is_ors && getobj(obj.right()).is_ors;
+      [[fallthrough]];
     case op_type::Lpmi:
+      [[fallthrough]];
     case op_type::Impl:
+      [[fallthrough]];
     case op_type::Equi:
-      obj.and_inside =
-        getobj(obj.left()).and_inside || getobj(obj.right()).and_inside;
+      [[fallthrough]];
+    case op_type::Xor: {
+      const auto& l = getobj(obj.left());
+      const auto& r = getobj(obj.right());
+      obj.and_inside = l.and_inside || r.and_inside;
+      obj.is_prenex =
+        (l.is_prenex && !l.is_quant()) && (r.is_prenex && !r.is_quant());
       break;
-    case op_type::Not:
-      obj.and_inside = getobj(obj.left()).and_inside;
+    }
+    case op_type::Not: {
+      const auto& l = getobj(obj.left());
+      obj.and_inside = l.and_inside;
+      obj.is_prenex = l.is_prenex && !l.is_quant();
       break;
+    }
     case op_type::Exists:
-    case op_type::Forall:
-      obj.and_inside = getobj(obj.left()).and_inside;
+      [[fallthrough]];
+    case op_type::Forall: {
+      // l is the varop!
+      const auto& r = getobj(obj.right());
+      obj.and_inside = r.and_inside;
+      obj.is_prenex = r.is_prenex;
       break;
+    }
     case op_type::Var:
       assert(obj.var.v - 1 < vars().size());
       break;
-    default:
+    case op_type::None:
       break;
   }
 
@@ -242,9 +268,6 @@ op_manager::reset_op_user_vars() {
     op.first.user_flag3 = false;
     op.first.user_flag4 = false;
     op.first.user_flag5 = false;
-    op.first.user_flag6 = false;
-    op.first.user_flag7 = false;
-    op.first.user_flag8 = false;
     op.first.user_int16 = 0;
     op.first.user_int32 = 0;
   }

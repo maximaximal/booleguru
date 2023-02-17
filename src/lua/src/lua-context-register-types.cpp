@@ -46,6 +46,21 @@ get_op_right(const op_ref& r) {
   return r.get_mgr()[ref];
 }
 
+static bool
+get_op_and_inside(const op_ref& r) {
+  return r->and_inside;
+}
+
+static bool
+get_op_is_ors(const op_ref& r) {
+  return r->is_ors;
+}
+
+static bool
+get_op_is_cnf(const op_ref& r) {
+  return r->is_cnf;
+}
+
 static size_t
 compute_variables_hash(const op_ref& r) {
   std::set<int32_t> vars;
@@ -226,5 +241,9 @@ lua_context::register_booleguru_types() {
   reftype.set("child", sol::property(&get_op_left));
   reftype.set("r", sol::property(&get_op_right));
   reftype.set("right", sol::property(&get_op_right));
+
+  reftype.set("and_inside", sol::property(&get_op_and_inside));
+  reftype.set("is_ors", sol::property(&get_op_is_ors));
+  reftype.set("is_cnf", sol::property(&get_op_is_cnf));
 }
 }

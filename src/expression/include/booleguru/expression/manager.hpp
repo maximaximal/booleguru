@@ -27,11 +27,12 @@ class manager {
   using map = ankerl::unordered_dense::map<T, ref>;
   using vec = typename map::value_container_type;
   map objects_map_;
-  inline const vec& objects() const noexcept { return objects_map_.values(); }
   size_t counter_ = 1;
 
   public:
   manager(size_t size = 2048) { objects_map_.reserve(size); };
+
+  inline const vec& objects() const noexcept { return objects_map_.values(); }
 
   constexpr inline R operator[](ref r) noexcept {
     assert(r < counter_);
