@@ -98,12 +98,20 @@ struct prenex_quantifier_Eup_Aup {
       ++would_be_next_cit;
 
       while(true) {
+        std::cout << "Now at " << ops[cit->var] << ":" << *cit << std::endl;
+        int32_t nesting = std::numeric_limits<int32_t>::max();
         auto it =
           std::find_if(remaining.begin(),
                        remaining.end(),
-                       [ce](const prenex_quantifier_stack_entry& e) {
-                         return e.t == ce->t && (e.nesting == ce->nesting ||
-                                                 e.nesting == ce->nesting + 1);
+                       [ce, &nesting](const prenex_quantifier_stack_entry& e) {
+                         if(e.nesting > nesting) {
+                           // Smaller nesting means higher up in quantifier
+                           // tree.
+                           return false;
+                         } else if(e.nesting <= nesting) {
+                           nesting = e.nesting;
+                         }
+                         return e.t == ce->t && e.nesting >= ce->nesting;
                        });
 
         if(it == remaining.end()) {
@@ -111,9 +119,12 @@ struct prenex_quantifier_Eup_Aup {
           break;
         }
 
+        std::cout << "Found in remaining: " << ops[it->var] << ":" << *it
+                  << std::endl;
+
         auto next_cit = cit;
         ++next_cit;
-        critical_path.emplace(next_cit, *it);
+        cit = critical_path.emplace(next_cit, *it);
         remaining.erase(it);
       }
 
@@ -359,7 +370,7 @@ struct prenex_quantifier_Edown_Adown {
 
         auto next_cit = cit;
         ++next_cit;
-        critical_path.emplace(next_cit, *it);
+        cit = critical_path.emplace(next_cit, *it);
         remaining.erase(it);
       }
 
