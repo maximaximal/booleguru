@@ -37,7 +37,7 @@ expr returns [uint32_t o]:
             uint32_t var_id = ops->vars().get_id(variable{std::move(text)});
             uint32_t varop_id = ops->get_id(op(op_type::Var, var_id, 0));
             $o = ops->get_id(op(op_type::Forall,
-                                ops->get_id(op(op_type::Var, varop_id, 0)),
+                                varop_id,
                                 $r.o));
         }
     | EXISTS ID r=expr {
@@ -45,7 +45,7 @@ expr returns [uint32_t o]:
             uint32_t var_id = ops->vars().get_id(variable{std::move(text)});
             uint32_t varop_id = ops->get_id(op(op_type::Var, var_id, 0));
             $o = ops->get_id(op(op_type::Exists,
-                                ops->get_id(op(op_type::Var, varop_id, 0)),
+                                varop_id,
                                 $r.o));
         }
     | ID { auto text = $ID.text;
