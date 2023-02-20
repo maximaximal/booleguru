@@ -146,10 +146,10 @@ lua_context::register_booleguru_types() {
                                     { "equi", op_type::Equi },
                                     { "impl", op_type::Impl },
                                     { "lpmi", op_type::Lpmi },
-                                    { "or", op_type::Or },
-                                    { "and", op_type::And },
+                                    { "or_", op_type::Or },
+                                    { "and_", op_type::And },
                                     { "xor", op_type::Xor },
-                                    { "not", op_type::Not },
+                                    { "not_", op_type::Not },
                                     { "var", op_type::Var } });
 
   set_to_state(s,

@@ -5,10 +5,30 @@
 
 #include <booleguru/expression/op_manager.hpp>
 
+#ifdef BOOLEGURU_LUA_AUTOSTART_DIR
+static void
+prepare_state(sol::state& s) {
+  s.script_file(BOOLEGURU_LUA_AUTOSTART_DIR "/graph-printer.lua");
+  s.require_file("fennel", BOOLEGURU_LUA_AUTOSTART_DIR "/fennel.lua");
+}
+#else
 extern const char fennel_lua[];
 extern const unsigned fennel_lua_size;
 static const std::string_view fennel_lua_string_view(fennel_lua,
                                                      fennel_lua_size);
+
+extern const char graph_printer_lua[];
+extern const unsigned graph_printer_lua_size;
+static const std::string_view graph_printer_lua_string_view(
+  graph_printer_lua,
+  graph_printer_lua_size);
+
+static void
+prepare_state(sol::state& s) {
+  s.script(graph_printer_lua_string_view);
+  s.require_script("fennel", fennel_lua_string_view);
+}
+#endif
 
 namespace booleguru::lua {
 lua_context::lua_context(std::shared_ptr<expression::op_manager> ops)
@@ -19,9 +39,12 @@ lua_context::lua_context(std::shared_ptr<expression::op_manager> ops)
                          sol::lib::package,
                          sol::lib::string,
                          sol::lib::table,
-                         sol::lib::math);
+                         sol::lib::math,
+                         sol::lib::io);
 
-  state_->require_script("fennel", fennel_lua_string_view);
+  // Later, this could be handled as autoloads, as described here:
+  // https://www.lua.org/pil/15.5.html
+  prepare_state(*state_);
 
   init_fennel();
 
