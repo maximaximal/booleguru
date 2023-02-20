@@ -2,13 +2,20 @@
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
+#include <catch2/matchers/catch_matchers_string.hpp>
+
+#include <booleguru/util/istringviewstream.hpp>
 
 #include <booleguru/expression/literals.hpp>
 #include <booleguru/expression/var_manager.hpp>
 
+#include <booleguru/parse/boole.hpp>
+#include <booleguru/parse/result.hpp>
+
 #include <booleguru/transform/prenex_quantifiers.hpp>
 
 using namespace booleguru::expression;
+using namespace booleguru::parse;
 using namespace booleguru::transform;
 using namespace booleguru::expression::literals;
 
@@ -240,12 +247,96 @@ TEST_CASE("Transform a simple Non-Prenex NCF formula into prenex formula "
   auto op_p2 = exists(v2, s2) && forall(u2, impl(u2, forall(v_2, v_2)));
   auto op_p3 = forall(v3, s3) && exists(u3, impl(u3, exists(v_3, v_3)));
 
-  auto op_formula = exists(s0, op_p0 && forall(s1, impl(op_p1, exists(s2, op_p2 && forall(s3, impl(op_p3, forall(w, w)))))));
-  
+  auto op_formula = exists(
+    s0,
+    op_p0 &&
+      forall(s1,
+             impl(op_p1,
+                  exists(s2, op_p2 && forall(s3, impl(op_p3, forall(w, w)))))));
+
   auto result = v.transform(op_formula);
 
   CAPTURE(v.name);
   CAPTURE(op_formula.to_string());
 
   REQUIRE(result.to_string() == v.match_result);
+}
+
+TEST_CASE("QBF Prenex K3 Edown Adown") {
+  std::string_view k3_str =
+    "!(# s_1_0 # s_2_0 # s_3_0 (!(? v1 ? v2 ? v3 ? v4 ? v5 ((s_1_0 -> ( ((-v1 "
+    "| -v4 | v5) & (v3 | -v1 | -v5))))  & (s_2_0 -> ( ((v2 | -v1 | -v3) & (v5 "
+    "| -v1 | -v3))))  & (s_3_0 -> ( ((-v5 | v1 | -v4) & (-v2 | -v3 | v5))))  & "
+    "1) & (# u_1_0 # u_2_0 # u_3_0 (((( s_1_0 -> u_1_0 )&( s_2_0 -> u_2_0 )&( "
+    "s_3_0 -> u_3_0 )) & !(( u_1_0 -> s_1_0 )&( u_2_0 -> s_2_0 )&( u_3_0 -> "
+    "s_3_0 ))) -> (# v1 # v2 # v3 # v4 # v5 ((u_1_0 -> ( ((-v1 | -v4 | v5) & "
+    "(v3 | -v1 | -v5))))  & (u_2_0 -> ( ((v2 | -v1 | -v3) & (v5 | -v1 | "
+    "-v3))))  & (u_3_0 -> ( ((-v5 | v1 | -v4) & (-v2 | -v3 | v5)))) "
+    "->!1)))))&!(# s_1_1 # s_2_1 # s_3_1 # s_4_1 (!(? v1 ? v2 ? v3 ? v4 ? v5 "
+    "((s_1_1 -> ( s_1_0 -> ( ((-v1 | -v4 | v5) & (v3 | -v1 | -v5)))))  & "
+    "(s_2_1 -> ( s_2_0 -> ( ((v2 | -v1 | -v3) & (v5 | -v1 | -v3)))))  & (s_3_1 "
+    "-> ( s_3_0 -> ( ((-v5 | v1 | -v4) & (-v2 | -v3 | v5)))))  & (s_4_1 -> ( "
+    "1))  & 5) & (# u_1_1 # u_2_1 # u_3_1 # u_4_1 (((( s_1_1 -> u_1_1 )&( "
+    "s_2_1 -> u_2_1 )&( s_3_1 -> u_3_1 )&( s_4_1 -> u_4_1 )) & !(( u_1_1 -> "
+    "s_1_1 )&( u_2_1 -> s_2_1 )&( u_3_1 -> s_3_1 )&( u_4_1 -> s_4_1 ))) -> (# "
+    "v1 # v2 # v3 # v4 # v5 ((u_1_1 -> ( u_1_0 -> ( ((-v1 | -v4 | v5) & (v3 | "
+    "-v1 | -v5)))))  & (u_2_1 -> ( u_2_0 -> ( ((v2 | -v1 | -v3) & (v5 | -v1 | "
+    "-v3)))))  & (u_3_1 -> ( u_3_0 -> ( ((-v5 | v1 | -v4) & (-v2 | -v3 | "
+    "v5)))))  & (u_4_1 -> ( 1)) ->!5)))))&!(# s_1_2 # s_2_2 # s_3_2 # s_4_2 # "
+    "s_5_2 (!(? v1 ? v2 ? v3 ? v4 ? v5 ((s_1_2 -> ( s_1_1 -> ( s_1_0 -> ( "
+    "((-v1 | -v4 | v5) & (v3 | -v1 | -v5))))))  & (s_2_2 -> ( s_2_1 -> ( s_2_0 "
+    "-> ( ((v2 | -v1 | -v3) & (v5 | -v1 | -v3))))))  & (s_3_2 -> ( s_3_1 -> ( "
+    "s_3_0 -> ( ((-v5 | v1 | -v4) & (-v2 | -v3 | v5))))))  & (s_4_2 -> ( s_4_1 "
+    "-> ( 1)))  & (s_5_2 -> ( 5))  & 4) & (# u_1_2 # u_2_2 # u_3_2 # u_4_2 # "
+    "u_5_2 (((( s_1_2 -> u_1_2 )&( s_2_2 -> u_2_2 )&( s_3_2 -> u_3_2 )&( s_4_2 "
+    "-> u_4_2 )&( s_5_2 -> u_5_2 )) & !(( u_1_2 -> s_1_2 )&( u_2_2 -> s_2_2 "
+    ")&( u_3_2 -> s_3_2 )&( u_4_2 -> s_4_2 )&( u_5_2 -> s_5_2 ))) -> (# v1 # "
+    "v2 # v3 # v4 # v5 ((u_1_2 -> ( u_1_1 -> ( u_1_0 -> ( ((-v1 | -v4 | v5) & "
+    "(v3 | -v1 | -v5))))))  & (u_2_2 -> ( u_2_1 -> ( u_2_0 -> ( ((v2 | -v1 | "
+    "-v3) & (v5 | -v1 | -v3))))))  & (u_3_2 -> ( u_3_1 -> ( u_3_0 -> ( ((-v5 | "
+    "v1 | -v4) & (-v2 | -v3 | v5))))))  & (u_4_2 -> ( u_4_1 -> ( 1)))  & "
+    "(u_5_2 -> ( 5)) ->!4)))))&!(# s_1_3 # s_2_3 # s_3_3 # s_4_3 # s_5_3 # "
+    "s_6_3 (!(? v1 ? v2 ? v3 ? v4 ? v5 ((s_1_3 -> ( s_1_2 -> ( s_1_1 -> ( "
+    "s_1_0 -> ( ((-v1 | -v4 | v5) & (v3 | -v1 | -v5)))))))  & (s_2_3 -> ( "
+    "s_2_2 -> ( s_2_1 -> ( s_2_0 -> ( ((v2 | -v1 | -v3) & (v5 | -v1 | "
+    "-v3)))))))  & (s_3_3 -> ( s_3_2 -> ( s_3_1 -> ( s_3_0 -> ( ((-v5 | v1 | "
+    "-v4) & (-v2 | -v3 | v5)))))))  & (s_4_3 -> ( s_4_2 -> ( s_4_1 -> ( 1))))  "
+    "& (s_5_3 -> ( s_5_2 -> ( 5)))  & (s_6_3 -> ( 4))  & 2) & (# u_1_3 # u_2_3 "
+    "# u_3_3 # u_4_3 # u_5_3 # u_6_3 (((( s_1_3 -> u_1_3 )&( s_2_3 -> u_2_3 "
+    ")&( s_3_3 -> u_3_3 )&( s_4_3 -> u_4_3 )&( s_5_3 -> u_5_3 )&( s_6_3 -> "
+    "u_6_3 )) & !(( u_1_3 -> s_1_3 )&( u_2_3 -> s_2_3 )&( u_3_3 -> s_3_3 )&( "
+    "u_4_3 -> s_4_3 )&( u_5_3 -> s_5_3 )&( u_6_3 -> s_6_3 ))) -> (# v1 # v2 # "
+    "v3 # v4 # v5 ((u_1_3 -> ( u_1_2 -> ( u_1_1 -> ( u_1_0 -> ( ((-v1 | -v4 | "
+    "v5) & (v3 | -v1 | -v5)))))))  & (u_2_3 -> ( u_2_2 -> ( u_2_1 -> ( u_2_0 "
+    "-> ( ((v2 | -v1 | -v3) & (v5 | -v1 | -v3)))))))  & (u_3_3 -> ( u_3_2 -> ( "
+    "u_3_1 -> ( u_3_0 -> ( ((-v5 | v1 | -v4) & (-v2 | -v3 | v5)))))))  & "
+    "(u_4_3 -> ( u_4_2 -> ( u_4_1 -> ( 1))))  & (u_5_3 -> ( u_5_2 -> ( 5)))  & "
+    "(u_6_3 -> ( 4)) ->!2)))))&# v1 # v2 # v3 # v4 # v5 ((s_1_3 -> ( s_1_2 -> "
+    "( s_1_1 -> ( s_1_0 -> ( ((-v1 | -v4 | v5) & (v3 | -v1 | -v5)))))))  & "
+    "(s_2_3 -> ( s_2_2 -> ( s_2_1 -> ( s_2_0 -> ( ((v2 | -v1 | -v3) & (v5 | "
+    "-v1 | -v3)))))))  & (s_3_3 -> ( s_3_2 -> ( s_3_1 -> ( s_3_0 -> ( ((-v5 | "
+    "v1 | -v4) & (-v2 | -v3 | v5)))))))  & (s_4_3 -> ( s_4_2 -> ( s_4_1 -> ( "
+    "1))))  & (s_5_3 -> ( s_5_2 -> ( 5)))  & (s_6_3 -> ( 4)) ->2)))))))))";
+
+  isviewstream k3(k3_str);
+  boole parser(k3);
+  auto result = parser();
+  REQUIRE(result);
+  op_ref k3_root = *result;
+
+  prenex_quantifier<prenex_quantifier_Edown_Adown> prenexer;
+  op_ref k3_prenexed = prenexer(k3_root);
+
+  std::string quantifiers =
+    "?s_1_0 ?s_2_0 ?s_3_0 #s_1_1 #s_2_1 #s_3_1 #s_4_1 ?s_1_2 ?s_2_2 ?s_3_2 "
+    "?s_4_2 ?s_5_2 #s_1_3 #s_2_3 #s_3_3 #s_4_3 #s_5_3 #s_6_3 #v1[6] #v2[6] "
+    "#v3[6] #v4[6] #v5[8] #v4[8] #v3[8] #v2[8] #v1[8] #v5[6] #v5[5] #v4[5] "
+    "#v3[5] #v2[5] #v1[5] #u_5_2 #u_4_2 #u_3_2 #u_2_2 #u_1_2 #v5[2] #v4[2] "
+    "#v3[2] #v2[2] #v1[2] #v5[1] #v4[1] #v3[1] #v2[1] #v1[1] #u_3_0 #u_2_0 "
+    "#u_1_0 ?u_1_3 ?u_2_3 ?u_3_3 ?u_4_3 ?u_5_3 ?u_6_3 ?v1[7] ?v2[7] ?v3[7] "
+    "?v4[7] ?v5[7] ?v5[4] ?v4[4] ?v3[4] ?v2[4] ?v1[4] ?v5[3] ?v4[3] ?v3[3] "
+    "?v2[3] ?v1[3] ?u_4_1 ?u_3_1 ?u_2_1 ?u_1_1 ?v5 ?v4 ?v3 ?v2 ?v1";
+
+  auto match_expression = Catch::Matchers::StartsWith(quantifiers);
+  REQUIRE_THAT(k3_prenexed.to_string(), match_expression);
 }
