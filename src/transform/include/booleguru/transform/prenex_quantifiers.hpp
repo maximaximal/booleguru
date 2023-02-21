@@ -303,19 +303,27 @@ struct prenex_quantifier_Edown_Aup {
 
     std::list<prenex_quantifier_stack_entry> ignored_exists;
 
-    while(true) {
+    while(!remaining.empty()) {
       ce = &*cit;
 
       auto would_be_next_cit = cit;
       ++would_be_next_cit;
 
       while(true) {
+        // std::cout << "Now at " << ops[cit->var] << ":" << *cit << std::endl;
+        int32_t nesting = std::numeric_limits<int32_t>::max();
         auto it =
           std::find_if(remaining.begin(),
                        remaining.end(),
-                       [ce](const prenex_quantifier_stack_entry& e) {
-                         return e.t == ce->t && (e.nesting == ce->nesting ||
-                                                 e.nesting == ce->nesting + 1);
+                       [ce, &nesting](const prenex_quantifier_stack_entry& e) {
+                         if(e.nesting > nesting) {
+                           // Smaller nesting means higher up in quantifier
+                           // tree.
+                           return false;
+                         } else if(e.nesting <= nesting) {
+                           nesting = e.nesting;
+                         }
+                         return e.t == ce->t && e.nesting >= ce->nesting;
                        });
 
         if(it == remaining.end()) {
@@ -323,14 +331,18 @@ struct prenex_quantifier_Edown_Aup {
           break;
         }
 
+        //  std::cout << "Found in remaining: " << ops[it->var] << ":" << *it
+        //           << std::endl;
+
         if(it->t == expression::op_type::Exists) {
           ignored_exists.emplace_back(*it);
         } else {
           auto next_cit = cit;
           ++next_cit;
-          critical_path.emplace(next_cit, *it);
-          remaining.erase(it);
+          cit = critical_path.emplace(next_cit, *it);
         }
+
+        remaining.erase(it);
       }
 
       if(cit == critical_path.end()) {
@@ -349,34 +361,34 @@ struct prenex_quantifier_Edown_Aup {
       auto would_be_next_cit = cit;
       --would_be_next_cit;
 
-      if(prenex_quantifier_stack_entry::is_exists(*ce)) {
-        while(true) {
-          auto it =
-            std::find_if(remaining.begin(),
-                         remaining.end(),
-                         [ce](const prenex_quantifier_stack_entry& e) {
-                           if(e.subtree_leaf) {
-                             return false;
-                           } else {
-                             return e.t == ce->t && e.nesting >= ce->nesting;
-                           }
-                         });
+      while(true) {
+        int32_t nesting = std::numeric_limits<int32_t>::min();
+        auto it =
+          std::find_if(remaining.begin(),
+                       remaining.end(),
+                       [ce, &nesting](const prenex_quantifier_stack_entry& e) {
+                         if(e.nesting < nesting) {
+                           // Smaller nesting means higher up in quantifier
+                           // tree.
+                           return false;
+                         } else if(e.nesting >= nesting) {
+                           nesting = e.nesting;
+                         }
+                         return e.t == expression::op_type::Exists &&
+                                e.t == ce->t && e.nesting <= ce->nesting;
+                       });
 
-          if(it == remaining.end()) {
-            cit = would_be_next_cit;
-            break;
-          }
-
-          auto next_cit = cit;
-          --next_cit;
-          critical_path.emplace(next_cit, *it);
-          remaining.erase(it);
+        if(it == remaining.end()) {
+          cit = would_be_next_cit;
+          break;
         }
-      } else {
-        cit = would_be_next_cit;
+
+        auto next_cit = cit;
+        critical_path.emplace(next_cit, *it);
+        remaining.erase(it);
       }
 
-      if(cit == critical_path.end()) {
+      if(cit == critical_path.begin()) {
         break;
       }
     }
