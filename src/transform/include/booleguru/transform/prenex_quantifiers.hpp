@@ -161,6 +161,8 @@ struct prenex_quantifier_Eup_Adown {
     auto cit = critical_path.begin();
     prenex_quantifier_stack_entry* ce = &*cit;
 
+    std::list<prenex_quantifier_stack_entry> ignored_foralls;
+
     while(!remaining.empty()) {
       ce = &*cit;
 
@@ -168,7 +170,7 @@ struct prenex_quantifier_Eup_Adown {
       ++would_be_next_cit;
 
       while(true) {
-        std::cout << "Now at " << ops[cit->var] << ":" << *cit << std::endl;
+        // std::cout << "Now at " << ops[cit->var] << ":" << *cit << std::endl;
         int32_t nesting = std::numeric_limits<int32_t>::max();
         auto it =
           std::find_if(remaining.begin(),
@@ -178,8 +180,7 @@ struct prenex_quantifier_Eup_Adown {
                            // Smaller nesting means higher up in quantifier
                            // tree.
                            return false;
-                         } else if(e.t == expression::op_type::Forall &&
-                                   e.nesting <= nesting) {
+                         } else if(e.nesting <= nesting) {
                            nesting = e.nesting;
                          }
                          return e.t == ce->t && e.nesting >= ce->nesting;
@@ -190,12 +191,17 @@ struct prenex_quantifier_Eup_Adown {
           break;
         }
 
-        std::cout << "Found in remaining: " << ops[it->var] << ":" << *it
-                  << std::endl;
+        //  std::cout << "Found in remaining: " << ops[it->var] << ":" << *it
+        //           << std::endl;
 
-        auto next_cit = cit;
-        ++next_cit;
-        cit = critical_path.emplace(next_cit, *it);
+        if(it->t == expression::op_type::Forall) {
+          ignored_foralls.emplace_back(*it);
+        } else {
+          auto next_cit = cit;
+          ++next_cit;
+          cit = critical_path.emplace(next_cit, *it);
+        }
+
         remaining.erase(it);
       }
 
@@ -203,6 +209,8 @@ struct prenex_quantifier_Eup_Adown {
         break;
       }
     }
+
+    remaining.splice(remaining.end(), ignored_foralls);
 
     cit = critical_path.end();
     --cit;
@@ -214,7 +222,6 @@ struct prenex_quantifier_Eup_Adown {
       --would_be_next_cit;
 
       while(true) {
-        std::cout << "Now at " << ops[cit->var] << ":" << *cit << std::endl;
         int32_t nesting = std::numeric_limits<int32_t>::min();
         auto it =
           std::find_if(remaining.begin(),
@@ -294,45 +301,44 @@ struct prenex_quantifier_Edown_Aup {
     auto cit = critical_path.begin();
     prenex_quantifier_stack_entry* ce = &*cit;
 
+    std::list<prenex_quantifier_stack_entry> ignored_exists;
+
     while(true) {
       ce = &*cit;
 
       auto would_be_next_cit = cit;
       ++would_be_next_cit;
 
-      if(prenex_quantifier_stack_entry::is_forall(*ce)) {
-        while(true) {
-          std::cout << "ISFORALL Now at " << ops[cit->var] << ":" << *cit
-                    << std::endl;
-          auto it = std::find_if(remaining.begin(),
-                                 remaining.end(),
-                                 [ce](const prenex_quantifier_stack_entry& e) {
-                                   return e.t == ce->t &&
-                                          (e.nesting == ce->nesting ||
-                                           e.nesting == ce->nesting + 1);
-                                 });
+      while(true) {
+        auto it =
+          std::find_if(remaining.begin(),
+                       remaining.end(),
+                       [ce](const prenex_quantifier_stack_entry& e) {
+                         return e.t == ce->t && (e.nesting == ce->nesting ||
+                                                 e.nesting == ce->nesting + 1);
+                       });
 
-          if(it == remaining.end()) {
-            cit = would_be_next_cit;
-            break;
-          }
+        if(it == remaining.end()) {
+          cit = would_be_next_cit;
+          break;
+        }
 
-          std::cout << "Found in remaining: " << ops[it->var] << ":" << *it
-                    << std::endl;
-
+        if(it->t == expression::op_type::Exists) {
+          ignored_exists.emplace_back(*it);
+        } else {
           auto next_cit = cit;
           ++next_cit;
           critical_path.emplace(next_cit, *it);
           remaining.erase(it);
         }
-      } else {
-        cit = would_be_next_cit;
       }
 
       if(cit == critical_path.end()) {
         break;
       }
     }
+
+    remaining.splice(remaining.end(), ignored_exists);
 
     cit = critical_path.end();
     --cit;
@@ -345,8 +351,6 @@ struct prenex_quantifier_Edown_Aup {
 
       if(prenex_quantifier_stack_entry::is_exists(*ce)) {
         while(true) {
-          std::cout << "ISEXISTS Now at " << ops[cit->var] << ":" << *cit
-                    << std::endl;
           auto it =
             std::find_if(remaining.begin(),
                          remaining.end(),
@@ -363,9 +367,6 @@ struct prenex_quantifier_Edown_Aup {
             break;
           }
 
-          std::cout << "Found in remaining: " << ops[it->var] << ":" << *it
-                    << std::endl;
-
           auto next_cit = cit;
           --next_cit;
           critical_path.emplace(next_cit, *it);
@@ -376,15 +377,30 @@ struct prenex_quantifier_Edown_Aup {
       }
 
       if(cit == critical_path.end()) {
-        std::copy(
-          remaining.begin(),
-          remaining.end(),
-          std::inserter(critical_path,
-                        (std::find_if(critical_path.rbegin(),
-                                      critical_path.rend(),
-                                      prenex_quantifier_stack_entry::is_exists)
-                           .base())));
-        remaining.clear();
+        break;
+      }
+    }
+
+    if(!remaining.empty()) {
+      std::copy_if(remaining.begin(),
+                   remaining.end(),
+                   std::back_inserter(critical_path),
+                   prenex_quantifier_stack_entry::is_forall);
+
+      auto pos_exists = std::find_if(critical_path.rbegin(),
+                                     critical_path.rend(),
+                                     prenex_quantifier_stack_entry::is_exists)
+                          .base();
+      if(pos_exists == critical_path.end()) {
+        std::copy_if(remaining.begin(),
+                     remaining.end(),
+                     std::back_inserter(critical_path),
+                     prenex_quantifier_stack_entry::is_exists);
+      } else {
+        std::copy_if(remaining.begin(),
+                     remaining.end(),
+                     std::inserter(critical_path, pos_exists),
+                     prenex_quantifier_stack_entry::is_exists);
       }
     }
 
