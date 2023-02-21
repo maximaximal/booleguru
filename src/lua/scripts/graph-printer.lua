@@ -69,4 +69,5 @@ function quantblocks(op)
     end
     print(quants)
   end
+  print("")
 end

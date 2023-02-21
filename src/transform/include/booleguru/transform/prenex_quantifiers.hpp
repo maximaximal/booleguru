@@ -98,7 +98,7 @@ struct prenex_quantifier_Eup_Aup {
       ++would_be_next_cit;
 
       while(true) {
-        std::cout << "Now at " << ops[cit->var] << ":" << *cit << std::endl;
+        // std::cout << "Now at " << ops[cit->var] << ":" << *cit << std::endl;
         int32_t nesting = std::numeric_limits<int32_t>::max();
         auto it =
           std::find_if(remaining.begin(),
@@ -119,8 +119,8 @@ struct prenex_quantifier_Eup_Aup {
           break;
         }
 
-        std::cout << "Found in remaining: " << ops[it->var] << ":" << *it
-                  << std::endl;
+        // std::cout << "Found in remaining: " << ops[it->var] << ":" << *it
+        //           << std::endl;
 
         auto next_cit = cit;
         ++next_cit;
@@ -167,61 +167,105 @@ struct prenex_quantifier_Eup_Adown {
       auto would_be_next_cit = cit;
       ++would_be_next_cit;
 
-      if(prenex_quantifier_stack_entry::is_exists(*ce)) {
-        while(true) {
-          auto it = std::find_if(remaining.begin(),
-                                 remaining.end(),
-                                 [ce](const prenex_quantifier_stack_entry& e) {
-                                   return e.t == ce->t &&
-                                          (e.nesting == ce->nesting ||
-                                           e.nesting == ce->nesting + 1);
-                                 });
+      while(true) {
+        std::cout << "Now at " << ops[cit->var] << ":" << *cit << std::endl;
+        int32_t nesting = std::numeric_limits<int32_t>::max();
+        auto it =
+          std::find_if(remaining.begin(),
+                       remaining.end(),
+                       [ce, &nesting](const prenex_quantifier_stack_entry& e) {
+                         if(e.nesting > nesting) {
+                           // Smaller nesting means higher up in quantifier
+                           // tree.
+                           return false;
+                         } else if(e.t == expression::op_type::Forall &&
+                                   e.nesting <= nesting) {
+                           nesting = e.nesting;
+                         }
+                         return e.t == ce->t && e.nesting >= ce->nesting;
+                       });
 
-          if(it == remaining.end()) {
-            cit = would_be_next_cit;
-            break;
-          }
-
-          auto next_cit = cit;
-          ++next_cit;
-          critical_path.emplace(next_cit, *it);
-          remaining.erase(it);
+        if(it == remaining.end()) {
+          cit = would_be_next_cit;
+          break;
         }
-      } else {
-        while(true) {
-          auto it =
-            std::find_if(remaining.begin(),
-                         remaining.end(),
-                         [ce](const prenex_quantifier_stack_entry& e) {
-                           if(e.subtree_leaf) {
-                             return false;
-                           } else {
-                             return e.t == ce->t && e.nesting >= ce->nesting;
-                           }
-                         });
 
-          if(it == remaining.end()) {
-            cit = would_be_next_cit;
-            break;
-          }
+        std::cout << "Found in remaining: " << ops[it->var] << ":" << *it
+                  << std::endl;
 
-          auto next_cit = cit;
-          ++next_cit;
-          critical_path.emplace(next_cit, *it);
-          remaining.erase(it);
-        }
+        auto next_cit = cit;
+        ++next_cit;
+        cit = critical_path.emplace(next_cit, *it);
+        remaining.erase(it);
       }
 
       if(cit == critical_path.end()) {
-        std::copy(
-          remaining.begin(),
-          remaining.end(),
-          std::inserter(critical_path,
-                        (std::find_if(critical_path.rbegin(),
-                                      critical_path.rend(),
-                                      prenex_quantifier_stack_entry::is_forall)
-                           .base())));
-        remaining.clear();
+        break;
+      }
+    }
+
+    cit = critical_path.end();
+    --cit;
+
+    while(!remaining.empty()) {
+      ce = &*cit;
+
+      auto would_be_next_cit = cit;
+      --would_be_next_cit;
+
+      while(true) {
+        std::cout << "Now at " << ops[cit->var] << ":" << *cit << std::endl;
+        int32_t nesting = std::numeric_limits<int32_t>::min();
+        auto it =
+          std::find_if(remaining.begin(),
+                       remaining.end(),
+                       [ce, &nesting](const prenex_quantifier_stack_entry& e) {
+                         if(e.nesting < nesting) {
+                           // Smaller nesting means higher up in quantifier
+                           // tree.
+                           return false;
+                         } else if(e.nesting >= nesting) {
+                           nesting = e.nesting;
+                         }
+                         return e.t == expression::op_type::Forall &&
+                                e.t == ce->t && e.nesting <= ce->nesting;
+                       });
+
+        if(it == remaining.end()) {
+          cit = would_be_next_cit;
+          break;
+        }
+
+        auto next_cit = cit;
+        critical_path.emplace(next_cit, *it);
+        remaining.erase(it);
+      }
+
+      if(cit == critical_path.begin()) {
+        break;
+      }
+    }
+
+    if(!remaining.empty()) {
+      std::copy_if(remaining.begin(),
+                   remaining.end(),
+                   std::back_inserter(critical_path),
+                   prenex_quantifier_stack_entry::is_exists);
+
+      auto pos_forall = std::find_if(critical_path.rbegin(),
+                                     critical_path.rend(),
+                                     prenex_quantifier_stack_entry::is_forall)
+                          .base();
+      if(pos_forall == critical_path.end()) {
+        std::copy_if(remaining.begin(),
+                     remaining.end(),
+                     std::back_inserter(critical_path),
+                     prenex_quantifier_stack_entry::is_forall);
+      } else {
+        std::copy_if(remaining.begin(),
+                     remaining.end(),
+                     std::inserter(critical_path, pos_forall),
+                     prenex_quantifier_stack_entry::is_forall);
       }
     }
 
@@ -250,7 +294,7 @@ struct prenex_quantifier_Edown_Aup {
     auto cit = critical_path.begin();
     prenex_quantifier_stack_entry* ce = &*cit;
 
-    while(!remaining.empty()) {
+    while(true) {
       ce = &*cit;
 
       auto would_be_next_cit = cit;
@@ -258,6 +302,8 @@ struct prenex_quantifier_Edown_Aup {
 
       if(prenex_quantifier_stack_entry::is_forall(*ce)) {
         while(true) {
+          std::cout << "ISFORALL Now at " << ops[cit->var] << ":" << *cit
+                    << std::endl;
           auto it = std::find_if(remaining.begin(),
                                  remaining.end(),
                                  [ce](const prenex_quantifier_stack_entry& e) {
@@ -271,13 +317,36 @@ struct prenex_quantifier_Edown_Aup {
             break;
           }
 
+          std::cout << "Found in remaining: " << ops[it->var] << ":" << *it
+                    << std::endl;
+
           auto next_cit = cit;
           ++next_cit;
-          cit = critical_path.emplace(next_cit, *it);
+          critical_path.emplace(next_cit, *it);
           remaining.erase(it);
         }
       } else {
+        cit = would_be_next_cit;
+      }
+
+      if(cit == critical_path.end()) {
+        break;
+      }
+    }
+
+    cit = critical_path.end();
+    --cit;
+
+    while(!remaining.empty()) {
+      ce = &*cit;
+
+      auto would_be_next_cit = cit;
+      --would_be_next_cit;
+
+      if(prenex_quantifier_stack_entry::is_exists(*ce)) {
         while(true) {
+          std::cout << "ISEXISTS Now at " << ops[cit->var] << ":" << *cit
+                    << std::endl;
           auto it =
             std::find_if(remaining.begin(),
                          remaining.end(),
@@ -294,11 +363,16 @@ struct prenex_quantifier_Edown_Aup {
             break;
           }
 
+          std::cout << "Found in remaining: " << ops[it->var] << ":" << *it
+                    << std::endl;
+
           auto next_cit = cit;
-          ++next_cit;
-          cit = critical_path.emplace(next_cit, *it);
+          --next_cit;
+          critical_path.emplace(next_cit, *it);
           remaining.erase(it);
         }
+      } else {
+        cit = would_be_next_cit;
       }
 
       if(cit == critical_path.end()) {
