@@ -58,6 +58,16 @@ get_op_is_ors(const op_ref& r) {
   return r->is_ors;
 }
 
+static uint32_t
+get_op_varop_v(const op_ref& op) {
+  return op->var.v;
+}
+
+static uint32_t
+get_op_varop_q(const op_ref& op) {
+  return op->var.q;
+}
+
 static bool
 get_op_is_cnf(const op_ref& r) {
   return r->is_cnf;
@@ -246,6 +256,9 @@ lua_context::register_booleguru_types() {
   reftype.set("child", sol::property(&get_op_left));
   reftype.set("r", sol::property(&get_op_right));
   reftype.set("right", sol::property(&get_op_right));
+
+  reftype.set("v", sol::property(&get_op_varop_v));
+  reftype.set("q", sol::property(&get_op_varop_q));
 
   reftype.set("and_inside", sol::property(&get_op_and_inside));
   reftype.set("is_ors", sol::property(&get_op_is_ors));
