@@ -52,5 +52,5 @@ function dotter (op, out)
     end
   end
 
-  o:write("}\n")
+  o:write("}\n\n")
 end

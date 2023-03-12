@@ -26,4 +26,5 @@ function unquantified(op)
       end
     end
   end
+  print("")
 end
