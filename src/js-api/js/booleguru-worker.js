@@ -57,12 +57,16 @@ async function load_execute() {
 let loaded = false;
 let execute_func = null;
 
+function more_data_cb(name) {
+    return "";
+}
+
 async function execute(query, type) {
     if(!loaded) {
         execute_func = await load_execute();
         loaded = true;
     }
-    return execute_func(query, type);
+    return execute_func(query, type, more_data_cb);
 }
 
 onmessage = async (msg) => {

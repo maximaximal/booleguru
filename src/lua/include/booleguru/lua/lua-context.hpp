@@ -22,7 +22,11 @@ class lua_context {
   void init_fennel();
   void register_booleguru_types();
 
-  expression::op_ref get_var(const std::string &name);
+#ifdef EMSCRIPTEN
+  void register_js_require_cb();
+#endif
+
+  expression::op_ref get_var(const std::string& name);
 
   public:
   lua_context(std::shared_ptr<expression::op_manager> ops);

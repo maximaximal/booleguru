@@ -5,6 +5,11 @@
 
 #include <booleguru/expression/op_manager.hpp>
 
+#ifdef EMSCRIPTEN
+using more_data_cb = std::function<std::string(std::string)>;
+extern more_data_cb js_more_data_cb;
+#endif
+
 #ifdef BOOLEGURU_LUA_AUTOSTART_DIR
 static void
 prepare_state(sol::state& s) {
@@ -49,6 +54,10 @@ lua_context::lua_context(std::shared_ptr<expression::op_manager> ops)
   init_fennel();
 
   register_booleguru_types();
+
+#ifdef EMSCRIPTEN
+  register_js_require_cb();
+#endif
 }
 
 lua_context::lua_context()
@@ -61,6 +70,25 @@ lua_context::init_fennel() {
   state_->script("fennel = require(\"fennel\")");
   fennel_last_op_name_ = (*state_)["fennel"]["mangle"]("*last-op*");
 }
+
+#ifdef EMSCRIPTEN
+std::string_view js_more_data_searcher =
+  R"(package.searchers[#package.searchers + 1] = function(libraryname)
+  r = js_more_data_cb(libraryname)
+  if r == "" then
+    return nil
+  end
+  return r
+end
+)";
+
+void
+lua_context::register_js_require_cb() {
+  auto& s = *state_;
+  s["js_more_data_cb"] = js_more_data_cb;
+  s.script(js_more_data_searcher);
+}
+#endif
 
 static lua_context::eval_result
 return_to_eval_result(auto&& result) {
