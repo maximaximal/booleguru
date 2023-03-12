@@ -88,6 +88,23 @@ return_to_eval_result(auto&& result) {
 lua_context::eval_result
 lua_context::eval_fennel(std::string_view code) {
   auto& s = *state_;
+
+  // Try to auto-load the desired function if it is not known yet.
+  if(code.starts_with("(")) {
+    std::string_view fun = code;
+    fun.remove_prefix(1);
+    while(fun.starts_with(" ")) {
+      fun.remove_prefix(1);
+    }
+    size_t fun_end = fun.find_first_of(" ");
+    fun.remove_suffix(fun.length() - fun_end);
+    if(!s[fun].valid()) {
+      auto req = s["require"];
+      assert(req.valid());
+      req(fun);
+    }
+  }
+
   auto eval = s["fennel"]["eval"];
   auto r = eval(code);
   return return_to_eval_result(r);
