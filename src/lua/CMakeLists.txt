@@ -21,7 +21,13 @@ function(create_resources dir output)
     # Convert hex data for C compatibility
     string(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1," filedata ${filedata})
     # Append data to output file
-    file(APPEND ${output} "const unsigned char ${filename}[] = {${filedata}};\nconst unsigned ${filename}_size = sizeof(${filename});\n")
+    file(APPEND ${output} "const char embedded_script_${filename}[] = {${filedata}}; const unsigned int embedded_script_${filename}_size = sizeof(embedded_script_${filename});\n")
+
+    set(EMBEDDED_SCRIPTS_EXTERNS "${EMBEDDED_SCRIPTS_EXTERNS}\nextern const char embedded_script_${filename}[]; extern const unsigned int embedded_script_${filename}_size;")
+    set(EMBEDDED_SCRIPTS_EXTERNS "${EMBEDDED_SCRIPTS_EXTERNS}" PARENT_SCOPE)
+
+    set(EMBEDDED_SCRIPTS "embedded_script{\"${filename}\", std::string_view(&embedded_script_${filename}[0], embedded_script_${filename}_size)}, ${EMBEDDED_SCRIPTS}")
+    set(EMBEDDED_SCRIPTS "${EMBEDDED_SCRIPTS}" PARENT_SCOPE)
   endforeach()
 endfunction()
 
@@ -37,10 +43,12 @@ target_include_directories(booleguru-lua PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/incl
 
 if(${CMAKE_BUILD_TYPE} MATCHES "Release" OR ${CMAKE_BUILD_TYPE} MATCHES "RelWithDbgInfo")
   create_resources("${CMAKE_CURRENT_SOURCE_DIR}/scripts" "${CMAKE_CURRENT_BINARY_DIR}/scripts.c")
+  file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/scripts.h" "#include <string_view>\n${EMBEDDED_SCRIPTS_EXTERNS}\nstruct embedded_script { std::string_view name; std::string_view data; };\nconst embedded_script embedded_scripts[] = {${EMBEDDED_SCRIPTS}};\n")
   add_library(booleguru-lua-scripts OBJECT
     ${CMAKE_CURRENT_BINARY_DIR}/scripts.c
   )
   target_link_libraries(booleguru-lua PRIVATE $<TARGET_OBJECTS:booleguru-lua-scripts>)
+  target_include_directories(booleguru-lua PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 else()
   target_compile_definitions(booleguru-lua PRIVATE BOOLEGURU_LUA_AUTOSTART_DIR="${CMAKE_CURRENT_SOURCE_DIR}/scripts")
 endif()

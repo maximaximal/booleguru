@@ -8,25 +8,25 @@
 #ifdef BOOLEGURU_LUA_AUTOSTART_DIR
 static void
 prepare_state(sol::state& s) {
-  s.script_file(BOOLEGURU_LUA_AUTOSTART_DIR "/graph-printer.lua");
-  s.require_file("fennel", BOOLEGURU_LUA_AUTOSTART_DIR "/fennel.lua");
+  const std::string package_path = s["package"]["path"];
+  s["package"]["path"] = package_path + (!package_path.empty() ? ";" : "") +
+                         std::string(BOOLEGURU_LUA_AUTOSTART_DIR) + "/?.lua";
 }
 #else
-extern const char fennel_lua[];
-extern const unsigned fennel_lua_size;
-static const std::string_view fennel_lua_string_view(fennel_lua,
-                                                     fennel_lua_size);
-
-extern const char graph_printer_lua[];
-extern const unsigned graph_printer_lua_size;
-static const std::string_view graph_printer_lua_string_view(
-  graph_printer_lua,
-  graph_printer_lua_size);
+#include <scripts.h>
 
 static void
 prepare_state(sol::state& s) {
-  s.script(graph_printer_lua_string_view);
-  s.require_script("fennel", fennel_lua_string_view);
+  for(const embedded_script& e : embedded_scripts) {
+    std::string_view name = e.name;
+    const std::string_view& data = e.data;
+
+    if(name.ends_with("_lua")) {
+      name.remove_suffix(4);
+      s.require_script(std::string(name), data);
+      continue;
+    }
+  }
 }
 #endif
 
@@ -87,7 +87,8 @@ return_to_eval_result(auto&& result) {
 
 lua_context::eval_result
 lua_context::eval_fennel(std::string_view code) {
-  auto eval = (*state_)["fennel"]["eval"];
+  auto& s = *state_;
+  auto eval = s["fennel"]["eval"];
   auto r = eval(code);
   return return_to_eval_result(r);
 }
