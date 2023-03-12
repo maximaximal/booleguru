@@ -21,6 +21,14 @@ struct no_input_file : public std::invalid_argument {
   using std::invalid_argument::invalid_argument;
 };
 
+struct fennel_error : public std::invalid_argument {
+  using std::invalid_argument::invalid_argument;
+};
+
+struct fennel_invalid_return_type : public std::invalid_argument {
+  using std::invalid_argument::invalid_argument;
+};
+
 namespace booleguru::cli {
 class cli_processor {
   // Logical Parsing of command line input.
@@ -71,6 +79,7 @@ class cli_processor {
   arg_stream process_args_to_inputs(arg_vec& args);
 
   expression::op_ref process_input_file(const arg_vec& v);
+  expression::op_ref process_input_fennel(arg_vec& v);
 
   template<cli_processor::arg_op type, typename Functor>
   expression::op_ref process_assoc_op(Functor next);

@@ -11,6 +11,7 @@
 #include <iostream>
 #include <string>
 #include <unordered_map>
+#include <variant>
 
 #define CUR_IS(OP)                              \
   arg_op* o = std::get_if<arg_op>(&cur_.get()); \
@@ -124,7 +125,22 @@ cli_processor::process_basic() {
     throw no_input_file("Expected some input file");
   }
 
-  auto op = process_input_file(std::get<arg_vec>(cur_.get()));
+  arg_vec& v = std::get<arg_vec>(cur_.get());
+  auto& input_file = v[v.size() - 1];
+
+  bool lpar = input_file.starts_with("(");
+  bool f_lpar = input_file.starts_with("f(");
+  bool rpar = input_file.ends_with(")");
+
+  expression::op_ref op;
+  if((lpar || f_lpar) && rpar) {
+    if(f_lpar) {
+      input_file.remove_prefix(1);
+    }
+    op = process_input_fennel(v);
+  } else {
+    op = process_input_file(v);
+  }
   next();
   return op;
 }
@@ -247,6 +263,21 @@ cli_processor::process_input_file(const arg_vec& v) {
   std::string_view path = v[v.size() - 1];
   input_file f(path, std::move(arguments), ops_);
   return f.process();
+}
+
+expression::op_ref
+cli_processor::process_input_fennel(arg_vec& v) {
+  auto& input_file = v[v.size() - 1];
+  lua::lua_context::eval_result result = lua_->eval_fennel(input_file);
+  if(std::holds_alternative<std::string>(result)) {
+    throw fennel_error("Error while executing fennel: " +
+                       std::get<std::string>(result));
+  } else if(std::holds_alternative<expression::op_ref>(result)) {
+    return std::get<expression::op_ref>(result);
+  } else {
+    throw fennel_invalid_return_type(
+      "Unknwon return type from fennel call, requires some expression.");
+  }
 }
 
 void
