@@ -40,7 +40,7 @@ file(COPY ${publicHeaderFiles} DESTINATION ${includeDir})
 add_library(lua-header
     INTERFACE)
 
-target_include_directories(lua-header BEFORE
+target_include_directories(lua-header 
     INTERFACE
     ${includeDir})
 
@@ -48,7 +48,7 @@ target_link_libraries(lua
     INTERFACE
     lua-header)
 
-target_include_directories(lua BEFORE
+target_include_directories(lua
     INTERFACE
     ${includeDir})
 

@@ -25,18 +25,15 @@ file(GLOB libantlrcpp_SRC
   "${PROJECT_SOURCE_DIR}/runtime/src/tree/xpath/*.cpp"
 )
 
-add_library(antlr4_shared SHARED ${libantlrcpp_SRC})
 add_library(antlr4_static STATIC ${libantlrcpp_SRC})
 
 # Make sure to link against threads (pthreads) library in order to be able to
 # make use of std::call_once in the code without producing runtime errors
 # (see also https://github.com/antlr/antlr4/issues/3708 and/or https://stackoverflow.com/q/51584960).
 find_package(Threads REQUIRED)
-target_link_libraries(antlr4_shared Threads::Threads)
 target_link_libraries(antlr4_static Threads::Threads)
 
 if(APPLE)
-  target_link_libraries(antlr4_shared ${COREFOUNDATION_LIBRARY})
   target_link_libraries(antlr4_static ${COREFOUNDATION_LIBRARY})
 endif()
 
@@ -59,19 +56,12 @@ set(static_lib_suffix "")
 
 if (WIN32)
   set(static_lib_suffix "-static")
-  target_compile_definitions(antlr4_shared PUBLIC ANTLR4CPP_EXPORTS)
   target_compile_definitions(antlr4_static PUBLIC ANTLR4CPP_STATIC)
   if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     set(extra_share_compile_flags "-MP /wd4251")
     set(extra_static_compile_flags "-MP")
   endif()
 endif()
-
-set_target_properties(antlr4_shared
-                      PROPERTIES VERSION   ${ANTLR_VERSION}
-                                 SOVERSION ${ANTLR_VERSION}
-                                 OUTPUT_NAME antlr4-runtime
-                                 COMPILE_FLAGS "${disabled_compile_warnings} ${extra_share_compile_flags}")
 
 set_target_properties(antlr4_static
                       PROPERTIES VERSION   ${ANTLR_VERSION}
@@ -81,26 +71,12 @@ set_target_properties(antlr4_static
                                  COMPILE_FLAGS "${disabled_compile_warnings} ${extra_static_compile_flags}")
 
 if (ANTLR_BUILD_CPP_TESTS)
-  # Copy the generated binaries to dist folder (required by test suite)
-  add_custom_command(
-    TARGET antlr4_shared
-    POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_HOME_DIRECTORY}/dist
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:antlr4_shared> ${CMAKE_HOME_DIRECTORY}/dist
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_LINKER_FILE:antlr4_shared> ${CMAKE_HOME_DIRECTORY}/dist)
-
   add_custom_command(
     TARGET antlr4_static
     POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_HOME_DIRECTORY}/dist
     COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:antlr4_static> ${CMAKE_HOME_DIRECTORY}/dist)
 endif()
-
-install(TARGETS antlr4_shared
-        EXPORT antlr4-targets
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 install(TARGETS antlr4_static
         EXPORT antlr4-targets

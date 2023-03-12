@@ -5,16 +5,6 @@ cmake_minimum_required (VERSION 3.15)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-# Detect build type, fallback to release and throw a warning if use didn't specify any
-if(NOT CMAKE_BUILD_TYPE)
-  message(WARNING "Build type not set, falling back to Release mode.
- To specify build type use:
- -DCMAKE_BUILD_TYPE=<mode> where <mode> is Debug or Release.")
-  set(CMAKE_BUILD_TYPE "Release" CACHE STRING
-       "Choose the type of build, options are: Debug Release."
-       FORCE)
-endif(NOT CMAKE_BUILD_TYPE)
-
 option(WITH_LIBCXX "Building with clang++ and libc++(in Linux). To enable with: -DWITH_LIBCXX=On" Off)
 option(WITH_STATIC_CRT "(Visual C++) Enable to statically link CRT, which avoids requiring users to install the redistribution package.
  To disable with: -DWITH_STATIC_CRT=Off" On)

@@ -35,12 +35,12 @@ add_library(booleguru-lua STATIC ${SRCS})
 
 target_include_directories(booleguru-lua PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-if(${CMAKE_BUILD_TYPE} MATCHES "Release" OR ${CMAKE_BUILD_TYPE} MATCHES "RelWithDebugInfo")
+if(${CMAKE_BUILD_TYPE} MATCHES "Release" OR ${CMAKE_BUILD_TYPE} MATCHES "RelWithDbgInfo")
   create_resources("${CMAKE_CURRENT_SOURCE_DIR}/scripts" "${CMAKE_CURRENT_BINARY_DIR}/scripts.c")
   add_library(booleguru-lua-scripts OBJECT
     ${CMAKE_CURRENT_BINARY_DIR}/scripts.c
   )
-  target_link_libraries(booleguru-lua $<TARGET_OBJECTS:booleguru-lua-scripts>)
+  target_link_libraries(booleguru-lua PRIVATE $<TARGET_OBJECTS:booleguru-lua-scripts>)
 else()
   target_compile_definitions(booleguru-lua PRIVATE BOOLEGURU_LUA_AUTOSTART_DIR="${CMAKE_CURRENT_SOURCE_DIR}/scripts")
 endif()
