@@ -97,6 +97,12 @@ lua_context::eval_fennel(std::string_view code) {
       fun.remove_prefix(1);
     }
     size_t fun_end = fun.find_first_of(" ");
+    if(fun_end == std::string_view::npos) {
+      fun_end = fun.find_first_of("(");
+      if(fun_end == std::string_view::npos) {
+        fun_end = fun.find_first_of(")");
+      }
+    }
     fun.remove_suffix(fun.length() - fun_end);
     if(!s[fun].valid()) {
       auto req = s["require"];
