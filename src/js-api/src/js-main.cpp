@@ -15,16 +15,24 @@ int
 execute_booleguru(std::string input, std::string type) {
   std::string_view view(input);
   auto is = isviewstream(view);
-  auto boole = std::make_unique<parse::boole>(is);
-  // Web is a sandbox, can always just enable eval.
-  boole->eval(true);
-  auto res = (*boole)();
-  if(!res) {
-    std::cerr << "Parse error! Result: \"" << res
-              << "\", error: " << res.message << std::endl;
-    return 1;
+  try {
+    auto boole = std::make_unique<parse::boole>(is);
+    // Web is a sandbox, can always just enable eval.
+    boole->eval(true);
+    auto res = (*boole)();
+    if(res) {
+      std::cout << res << std::endl;
+    } else {
+      std::cerr << "Parse error! Result: \"" << res
+                << "\", error: " << res.message << std::endl;
+      return 1;
+    }
+    return 0;
+  } catch(std::exception& e) {
+    std::cerr << "Error: " << e.what() << std::endl;
+  } catch(...) {
+    std::cerr << "Unknown Error!" << std::endl;
   }
-  return 0;
 }
 
 EMSCRIPTEN_BINDINGS(booleguru) {
