@@ -621,5 +621,35 @@ struct prenex_quantifier : public visitor<prenex_quantifier<Strategy>> {
     }
     return o;
   }
+
+  // This eliminates impls of the form ->
+  inline expression::op_ref walk_impl(expression::op_ref o) {
+    auto begin_before_visit = quant_stack.begin();
+    auto left = !this->visit(o.left());
+    auto begin_after_visit = quant_stack.begin();
+    auto right= this->visit(o.right());
+    if(begin_before_visit != begin_after_visit) {
+      for(auto it = begin_after_visit; it != begin_before_visit; ++it) {
+        expression::op_type& t = it->t;
+        t = expression::op_type_flip_quantifier(t);
+      }
+    }
+    return o.get_mgr().get(expression::op(expression::op_type::Or, left.get_id(), right.get_id()));
+  }
+  
+  // This eliminates impls of the form <-
+  inline expression::op_ref walk_lpmi(expression::op_ref o) {
+    auto left = this->visit(o.left());
+    auto begin_before_visit = quant_stack.begin();
+    auto right= !this->visit(o.right());
+    auto begin_after_visit = quant_stack.begin();
+    if(begin_before_visit != begin_after_visit) {
+      for(auto it = begin_after_visit; it != begin_before_visit; ++it) {
+        expression::op_type& t = it->t;
+        t = expression::op_type_flip_quantifier(t);
+      }
+    }
+    return o.get_mgr().get(expression::op(expression::op_type::Or, left.get_id(), right.get_id()));
+  }
 };
 }
