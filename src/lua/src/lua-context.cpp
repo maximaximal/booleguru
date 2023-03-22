@@ -1,3 +1,4 @@
+#include <cstdlib>
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
@@ -35,6 +36,12 @@ prepare_state(sol::state& s) {
 }
 #endif
 
+#if defined(WIN32) || defined(_WIN32)
+#define SEP ';'
+#else
+#define SEP ':'
+#endif
+
 namespace booleguru::lua {
 lua_context::lua_context(std::shared_ptr<expression::op_manager> ops)
   : ops_(ops)
@@ -55,10 +62,25 @@ lua_context::lua_context(std::shared_ptr<expression::op_manager> ops)
 
   register_booleguru_types();
 
+  if(const char* lua_path_env = std::getenv("BOOLEGURU_LUA_PATH")) {
+    auto& s = *state_;
+    std::stringstream lua_path_env_stringstream(lua_path_env);
+
+    std::string lua_package_path = s["package"]["path"];
+
+    std::string p;
+    while(std::getline(lua_path_env_stringstream, p, SEP)) {
+      lua_package_path += (!lua_package_path.empty() ? ";" : "") + p + "/?.lua";
+    }
+    s["package"]["path"] = lua_package_path;
+  }
+
 #ifdef EMSCRIPTEN
   register_js_require_cb();
 #endif
 }
+
+#undef SEP
 
 lua_context::lua_context()
   : lua_context(std::make_shared<expression::op_manager>()) {}
