@@ -1,5 +1,6 @@
 #include <functional>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <string>
 
@@ -12,12 +13,29 @@
 using namespace emscripten;
 using namespace booleguru;
 
-using more_data_cb = std::function<std::string(std::string)>;
+std::string
+getExceptionMessage(intptr_t exceptionPtr) {
+  return std::string(reinterpret_cast<std::exception*>(exceptionPtr)->what());
+}
+
+EMSCRIPTEN_BINDINGS(Bindings) {
+  emscripten::function("getExceptionMessage", &getExceptionMessage);
+};
+
+using more_data_cb = std::function<std::string_view(std::string)>;
 more_data_cb js_more_data_cb;
 
 int
-execute_booleguru(std::string input, std::string type, more_data_cb cb) {
-  js_more_data_cb = cb;
+execute_booleguru(std::string input,
+                  std::string type,
+                  std::map<std::string, std::string> more_code) {
+  js_more_data_cb = [&more_code](std::string name) -> std::string_view {
+    auto it = more_code.find(name);
+    if(it != more_code.end()) {
+      return it->second;
+    }
+    return "";
+  };
 
   std::string_view view(input);
   auto is = isviewstream(view);
@@ -27,7 +45,7 @@ execute_booleguru(std::string input, std::string type, more_data_cb cb) {
     boole->eval(true);
     auto res = (*boole)();
     if(res) {
-      std::cout << res << std::endl;
+      std::cout << *res << std::endl;
     } else {
       std::cerr << "Parse error! Result: \"" << res
                 << "\", error: " << res.message << std::endl;
@@ -45,4 +63,5 @@ execute_booleguru(std::string input, std::string type, more_data_cb cb) {
 
 EMSCRIPTEN_BINDINGS(booleguru) {
   function("execute", &execute_booleguru);
+  register_map<std::string, std::string>("StringMap");
 }

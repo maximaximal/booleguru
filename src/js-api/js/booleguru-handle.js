@@ -18,7 +18,6 @@ class BooleguruWorker {
 
     reset() {
         this.working = false;
-        this.request_cb = null;
         this.stdout_cb = null;
         this.stderr_cb = null;
         this.finish = null;
@@ -42,9 +41,6 @@ class BooleguruWorker {
     onmessage(msg) {
         msg = msg.data;
         switch(msg.type) {
-        case "request":
-            this.worker.postMessage({"type": "reply", "code": this.request_cb(msg.name)});
-            break;
         case "out":
             this.stdout_cb(msg.data);
             break;
@@ -59,9 +55,8 @@ class BooleguruWorker {
         }
     }
 
-    run(promise_finish, promise_cancel, query, query_type, request_cb, stdout_cb, stderr_cb) {
+    run(promise_finish, promise_cancel, query, query_type, more_code, stdout_cb, stderr_cb) {
         console.assert(!this.working, "Worker must not be running in order to post new work.");
-        this.request_cb = request_cb;
         this.stdout_cb = stdout_cb;
         this.stderr_cb = stderr_cb;
         this.finish = promise_finish;
@@ -69,7 +64,8 @@ class BooleguruWorker {
         this.worker.postMessage({
             "type": "task",
             "query": query,
-            "query_type": query_type
+            "query_type": query_type,
+            "more_code": more_code,
         });
     }
 }
@@ -97,11 +93,11 @@ function Deferred() {
     })
 }
 
-export function execute(query, query_type, request_cb, stdout_cb, stderr_cb) {
+export function execute(query, query_type, more_code, stdout_cb, stderr_cb) {
     let deferred_terminator = new Deferred();
     let promise = new Promise((resolve, reject) => {
         find_idle_worker().then(w => {
-            w.run(resolve, reject, query, query_type, request_cb, stdout_cb, stderr_cb);
+            w.run(resolve, reject, query, query_type, more_code, stdout_cb, stderr_cb);
             deferred_terminator.resolve(w.terminate.bind(w));
         });
     });
@@ -109,5 +105,5 @@ export function execute(query, query_type, request_cb, stdout_cb, stderr_cb) {
         let terminator = await deferred_terminator;
         terminator();
     }
-    return (promise, terminate);
+    return [promise, terminate];
 }

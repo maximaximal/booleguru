@@ -7,7 +7,7 @@
 #include <booleguru/expression/op_manager.hpp>
 
 #ifdef EMSCRIPTEN
-using more_data_cb = std::function<std::string(std::string)>;
+using more_data_cb = std::function<std::string_view(std::string)>;
 extern more_data_cb js_more_data_cb;
 #endif
 

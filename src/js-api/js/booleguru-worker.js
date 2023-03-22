@@ -49,31 +49,37 @@ importScripts("./booleguru.js")
 
 let processor = new StdoutProcessor();
 
+let mod = null;
+
 async function load_execute() {
-    let mod = await processor.load(createBooleguruModule);
+    mod = await processor.load(createBooleguruModule);
     return mod.execute;
 }
 
 let loaded = false;
 let execute_func = null;
 
-function more_data_cb(name) {
-    return "";
-}
-
-async function execute(query, type) {
+async function execute(query, type, more) {
     if(!loaded) {
         execute_func = await load_execute();
         loaded = true;
     }
-    return execute_func(query, type, more_data_cb);
+    try {
+        let more_code = new mod.StringMap;
+        for (const [key, value] of Object.entries(more)) {
+            more_code[key] = value;
+        }
+        let result = execute_func(query, type, more_code);
+    } catch(exception) {
+        console.error(mod.getExceptionMessage(exception));
+    }
 }
 
 onmessage = async (msg) => {
     msg = msg.data;
     switch(msg.type) {
     case "task":
-        let retcode = await execute(msg.query, msg.query_type);
+        let retcode = await execute(msg.query, msg.query_type, msg.more_code);
         postMessage({"type": "done", "code": retcode});
         break;
     }
