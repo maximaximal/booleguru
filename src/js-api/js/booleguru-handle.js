@@ -52,6 +52,8 @@ class BooleguruWorker {
             this.reset();
             finish();
             break;
+        default:
+            break;
         }
     }
 
@@ -70,6 +72,7 @@ class BooleguruWorker {
     }
 }
 
+// eslint-disable-next-line no-unused-vars
 let workers = [
     new BooleguruWorker('booleguru-worker.js')
 ];
