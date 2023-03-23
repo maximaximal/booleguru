@@ -104,37 +104,39 @@ tseitin<O>::operator()(expression::op_ref o) {
     q = q.right();
   }
 
-  // Append existential tseitin variables.
-  for(const auto& e : mgr.objects()) {
-    const expression::op& op = e.first;
+  if(o->is_quant()) {
+    // Append existential tseitin variables.
+    for(const auto& e : mgr.objects()) {
+      const expression::op& op = e.first;
 
-    if(!op.mark)
-      continue;
+      if(!op.mark)
+        continue;
 
-    switch(op.type) {
-      case expression::op_type::Equi:
-        [[fallthrough]];
-      case expression::op_type::Xor:
-        [[fallthrough]];
-      case expression::op_type::Or:
-        [[fallthrough]];
-      case expression::op_type::And:
-        [[fallthrough]];
-      case expression::op_type::Impl:
-        [[fallthrough]];
-      case expression::op_type::Lpmi:
-        [[fallthrough]];
-      case expression::op_type::Not:
-        o_.exists(o_.op_ref_to_ref(op, e.second));
-        break;
-      case expression::op_type::None:
-        [[fallthrough]];
-      case expression::op_type::Var:
-        [[fallthrough]];
-      case expression::op_type::Forall:
-        [[fallthrough]];
-      case expression::op_type::Exists:
-        break;
+      switch(op.type) {
+        case expression::op_type::Equi:
+          [[fallthrough]];
+        case expression::op_type::Xor:
+          [[fallthrough]];
+        case expression::op_type::Or:
+          [[fallthrough]];
+        case expression::op_type::And:
+          [[fallthrough]];
+        case expression::op_type::Impl:
+          [[fallthrough]];
+        case expression::op_type::Lpmi:
+          [[fallthrough]];
+        case expression::op_type::Not:
+          o_.exists(o_.op_ref_to_ref(op, e.second));
+          break;
+        case expression::op_type::None:
+          [[fallthrough]];
+        case expression::op_type::Var:
+          [[fallthrough]];
+        case expression::op_type::Forall:
+          [[fallthrough]];
+        case expression::op_type::Exists:
+          break;
+      }
     }
   }
 
