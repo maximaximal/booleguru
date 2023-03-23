@@ -233,7 +233,7 @@ lua_context::register_booleguru_types() {
     "opref",
     "rename",
     rename,
-    "rename",
+    "rename_map",
     rename_map,
     sol::meta_function::bitwise_and,
     sol::resolve<op_ref(op_ref, op_ref)>(operator&&),
