@@ -6,6 +6,10 @@ what it reads. Supports multiple input- and output formats.
 This is still very early in development and everything may change. We are very
 open for inputs and requests!
 
+Presented at MBMV'23 in Freiburg
+([Presentation](http://maximaximal.pages.sai.jku.at/mbmv23/), [Workshop
+Website](https://cca.informatik.uni-freiburg.de/mbmv23/)).
+
 ## Structure
 
 This document describes how the different components of booleguru interact with
