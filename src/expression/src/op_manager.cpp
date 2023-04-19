@@ -294,6 +294,7 @@ op_manager::mark_through_tree(uint32_t root) {
       case op_type::Exists:
       case op_type::Forall:
         unvisited.push(current.quant.e);
+        unvisited.push(current.quant.v);
         break;
       case op_type::Not:
         unvisited.push(current.un.c);
@@ -304,8 +305,8 @@ op_manager::mark_through_tree(uint32_t root) {
       case op_type::Impl:
       case op_type::Lpmi:
       case op_type::Xor:
-        unvisited.push(current.bin.l);
         unvisited.push(current.bin.r);
+        unvisited.push(current.bin.l);
         break;
       case op_type::Var:
       case op_type::None:
@@ -331,6 +332,7 @@ op_manager::traverse_depth_first_through_tree(
       case op_type::Exists:
       case op_type::Forall:
         unvisited.push(current.quant.e);
+        unvisited.push(current.quant.v);
         break;
       case op_type::Not:
         unvisited.push(current.un.c);
@@ -341,8 +343,8 @@ op_manager::traverse_depth_first_through_tree(
       case op_type::Impl:
       case op_type::Lpmi:
       case op_type::Xor:
-        unvisited.push(current.bin.l);
         unvisited.push(current.bin.r);
+        unvisited.push(current.bin.l);
         break;
       case op_type::Var:
       case op_type::None:
@@ -371,6 +373,7 @@ op_manager::traverse_unmarked_depth_first_through_tree(
       case op_type::Exists:
       case op_type::Forall:
         unvisited.push(current.quant.e);
+        unvisited.push(current.quant.v);
         break;
       case op_type::Not:
         unvisited.push(current.un.c);
@@ -381,8 +384,8 @@ op_manager::traverse_unmarked_depth_first_through_tree(
       case op_type::Impl:
       case op_type::Lpmi:
       case op_type::Xor:
-        unvisited.push(current.bin.l);
         unvisited.push(current.bin.r);
+        unvisited.push(current.bin.l);
         break;
       case op_type::Var:
       case op_type::None:

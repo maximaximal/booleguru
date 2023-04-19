@@ -96,6 +96,8 @@ tseitin<O>::operator()(expression::op_ref o) {
     const expression::op& q_ = q.get_obj();
     const expression::op& left = q.left().get_obj();
     const expression::op_ref::ref left_id = q_.left();
+    assert(left_id != 0);
+    assert(left.type == expression::op_type::Var);
     if(q->type == expression::op_type::Exists) {
       o_.exists(o_.op_ref_to_ref(left, left_id));
     } else {

@@ -48,6 +48,7 @@ class output_to_qdimacs {
   using ref = int32_t;
   void exists(ref x) {
     assert(in_prefix);
+    assert(x != 0);
     maybe_end_forall();
     if(!in_exists) {
       o << "e ";
@@ -57,6 +58,7 @@ class output_to_qdimacs {
   }
   void forall(ref x) {
     assert(in_prefix);
+    assert(x != 0);
     maybe_end_exists();
     if(!in_forall) {
       o << "a ";
@@ -70,14 +72,20 @@ class output_to_qdimacs {
   };
   void unit(ref x1) {
     assert(!in_prefix);
+    assert(x1 != 0);
     o << x1 << " 0\n";
   }
   void binary(ref x1, ref x2) {
     assert(!in_prefix);
+    assert(x1 != 0);
+    assert(x2 != 0);
     o << x1 << " " << x2 << " 0\n";
   }
   void ternary(ref x1, ref x2, ref x3) {
     assert(!in_prefix);
+    assert(x1 != 0);
+    assert(x2 != 0);
+    assert(x3 != 0);
     o << x1 << " " << x2 << " " << x3 << " 0\n";
   }
 
