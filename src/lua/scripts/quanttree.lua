@@ -1,6 +1,7 @@
 require "io"
 
 -- Builds a tree according to quantifiers.
+-- Example usage: ./booleguru <formula>.boole :quanttree --null | dot -Tpng > <formula>.png
 function quanttree (op, out)
   local o = nil
   if out then
