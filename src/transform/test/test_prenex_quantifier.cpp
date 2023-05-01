@@ -54,8 +54,6 @@ TEST_CASE("Transform a simple Non-Prenex formula into prenex formula") {
   std::stringstream transformed;
   transformed << p(op_g8);
 
-  CAPTURE(transformed.str());
-
   const char* expected =
     R"(?p[14] ?r[12] #q[10] #q[11] ?r[9] ((p[14] | q[10] | r[9]) & (!p[14] | q[11] | r[12])))";
 
