@@ -9,6 +9,9 @@
 #include <iterator>
 #include <limits>
 
+using std::cout;
+using std::endl;
+
 std::ostream&
 operator<<(std::ostream& o,
            const booleguru::transform::prenex_quantifier_stack_entry& e);
@@ -24,6 +27,9 @@ operator<<(
   const std::list<booleguru::transform::prenex_quantifier_stack_entry>& e);
 
 namespace booleguru::transform {
+
+#define IT(I) ops[I->var] << ":" << *I
+
 void
 prenex_quantifier_stack_entry::mark_leaves(
   std::list<prenex_quantifier_stack_entry>& l) {
@@ -150,7 +156,7 @@ struct prenex_quantifier_Eup_Adown {
       ++would_be_next_cit;
 
       while(true) {
-        // std::cout << "Now at " << ops[cit->var] << ":" << *cit << std::endl;
+        // cout << "Now at " << IT(cit) << endl;
         int32_t nesting = std::numeric_limits<int32_t>::max();
         auto it =
           std::find_if(remaining.begin(),
@@ -171,18 +177,30 @@ struct prenex_quantifier_Eup_Adown {
           break;
         }
 
-        //  std::cout << "Found in remaining: " << ops[it->var] << ":" << *it
-        //           << std::endl;
+        // std::cout << "Found in remaining: " << IT(it) << std::endl;
 
         if(it->t == expression::op_type::Forall) {
-          ignored_foralls.emplace_back(*it);
+          // The whole sub-tree, i.e. everything following this exists, must be
+          // ignored!
+          int32_t nesting = it->nesting;
+          auto it_ = it;
+          ++it_;
+          // cout << "Remove " << IT(it) << endl;
+          ignored_foralls.splice(ignored_foralls.end(), remaining, it);
+          it = it_;
+          while(it != remaining.end() && it->nesting > nesting) {
+            // cout << "Remove " << IT(it) << endl;
+            it_ = it;
+            ++it_;
+            ignored_foralls.splice(ignored_foralls.end(), remaining, it);
+            it = it_;
+          }
         } else {
           auto next_cit = cit;
           ++next_cit;
           cit = critical_path.emplace(next_cit, *it);
+          remaining.erase(it);
         }
-
-        remaining.erase(it);
       }
 
       if(cit == critical_path.end()) {
@@ -190,7 +208,19 @@ struct prenex_quantifier_Eup_Adown {
       }
     }
 
+    /*
+    for(auto r = remaining.begin(); r != remaining.end(); ++r) {
+      cout << "Remaining before Splice: " << IT(r) << endl;
+    }
+    */
+
     remaining.splice(remaining.end(), ignored_foralls);
+
+    /*
+    for(auto r = remaining.begin(); r != remaining.end(); ++r) {
+      cout << "Remaining after Splice: " << IT(r) << endl;
+    }
+    */
 
     cit = critical_path.end();
     --cit;
@@ -290,7 +320,7 @@ struct prenex_quantifier_Edown_Aup {
       ++would_be_next_cit;
 
       while(true) {
-        // std::cout << "Now at " << ops[cit->var] << ":" << *cit << std::endl;
+        // cout << "Now at " << IT(cit) << endl;
         int32_t nesting = std::numeric_limits<int32_t>::max();
         auto it =
           std::find_if(remaining.begin(),
@@ -311,18 +341,30 @@ struct prenex_quantifier_Edown_Aup {
           break;
         }
 
-        //  std::cout << "Found in remaining: " << ops[it->var] << ":" << *it
-        //           << std::endl;
+        // cout << "Found in remaining: " << IT(it) << endl;
 
         if(it->t == expression::op_type::Exists) {
-          ignored_exists.emplace_back(*it);
+          // The whole sub-tree, i.e. everything following this exists, must be
+          // ignored!
+          int32_t nesting = it->nesting;
+          auto it_ = it;
+          ++it_;
+          // cout << "Remove " << IT(it) << endl;
+          ignored_exists.splice(ignored_exists.end(), remaining, it);
+          it = it_;
+          while(it != remaining.end() && it->nesting > nesting) {
+            // cout << "Remove " << IT(it) << endl;
+            it_ = it;
+            ++it_;
+            ignored_exists.splice(ignored_exists.end(), remaining, it);
+            it = it_;
+          }
         } else {
           auto next_cit = cit;
           ++next_cit;
           cit = critical_path.emplace(next_cit, *it);
+          remaining.erase(it);
         }
-
-        remaining.erase(it);
       }
 
       if(cit == critical_path.end()) {
@@ -330,7 +372,15 @@ struct prenex_quantifier_Edown_Aup {
       }
     }
 
+    // for(auto r = remaining.begin(); r != remaining.end(); ++r) {
+    //   cout << "Remaining before Splice: " << IT(r) << endl;
+    // }
+
     remaining.splice(remaining.end(), ignored_exists);
+
+    // for(auto r = remaining.begin(); r != remaining.end(); ++r) {
+    //   cout << "Remaining after Splice: " << IT(r) << endl;
+    // }
 
     cit = critical_path.end();
     --cit;
@@ -362,6 +412,12 @@ struct prenex_quantifier_Edown_Aup {
           cit = would_be_next_cit;
           break;
         }
+
+    // for(auto r = critical_path.begin(); r != critical_path.end(); ++r) {
+    //   cout << "Critical Path: " << IT(r) << endl;
+    // }
+
+        // cout << "CE: " << IT(ce) << " and CIT: " << IT(cit) << " Found: " << IT(it) << endl;
 
         auto next_cit = cit;
         critical_path.emplace(next_cit, *it);

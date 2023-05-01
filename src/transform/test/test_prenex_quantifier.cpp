@@ -103,8 +103,6 @@ TEST_CASE("Transform a simple Non-Prenex cleansed formula into prenex formula "
                          "((p | q | r | s | t) & (p | q' | r') & "
                          "!(p | q'' | r''))";
 
-  std::cout << formula << std::endl;
-
   prenex_quantifier<prenex_quantifier_Eup_Aup> p;
   op_ref prenexed = p(formula);
 
@@ -121,8 +119,6 @@ TEST_CASE("Transform a simple Non-Prenex cleansed formula into prenex formula "
   const char* expected = "?p #q #q' ?r ?q'' #s #r'' ?r' ?t "
                          "((p | q | r | s | t) & (p | q' | r') & "
                          "!(p | q'' | r''))";
-
-  std::cout << formula << std::endl;
 
   prenex_quantifier<prenex_quantifier_Edown_Aup> p;
   op_ref prenexed = p(formula);
@@ -141,8 +137,6 @@ TEST_CASE("Transform a simple Non-Prenex cleansed formula into prenex formula "
                          "((p | q | r | s | t) & (p | q' | r') & "
                          "!(p | q'' | r''))";
 
-  std::cout << formula << std::endl;
-
   prenex_quantifier<prenex_quantifier_Eup_Adown> p;
   op_ref prenexed = p(formula);
 
@@ -159,8 +153,6 @@ TEST_CASE("Transform a simple Non-Prenex cleansed formula into prenex formula "
   const char* expected = "?p #q ?q'' ?r #q' #r'' #s ?r' ?t "
                          "((p | q | r | s | t) & (p | q' | r') & "
                          "!(p | q'' | r''))";
-
-  std::cout << formula << std::endl;
 
   prenex_quantifier<prenex_quantifier_Edown_Adown> p;
   op_ref prenexed = p(formula);
