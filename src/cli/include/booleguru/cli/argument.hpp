@@ -22,7 +22,7 @@ struct argument {
     count_,
   };
 
-  enum input_types { qcir, smtlib2, boole, qdimacs };
+  enum input_types { qcir, smtlib2, boole, qdimacs, none };
 
   keywords keyword;
 

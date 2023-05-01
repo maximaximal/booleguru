@@ -54,6 +54,8 @@ main(int argc, char* argv[]) {
       qdimacs(result);
       return EXIT_SUCCESS;
     }
+    case cli::argument::none:
+      return EXIT_SUCCESS;
     default:
       std::cerr << "Unsupported output type." << std::endl;
   }

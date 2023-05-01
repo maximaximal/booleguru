@@ -14,7 +14,7 @@ keyword_from_string_view(std::string_view str, std::string_view& param) {
     return argument::type;
   else if(str == "qcir" || str == "smtlib2" || str == "smtlib" ||
           str == "smt" || str == "dimacs" || str == "qdimacs" ||
-          str == "boole" || str == "limboole") {
+          str == "boole" || str == "limboole" || str == "null") {
     param = str;
     return argument::type;
   } else if(str == "ns" || str == "namespace") {
@@ -44,6 +44,8 @@ variant_from_param(argument::keywords k, std::string_view param) {
         return argument::qdimacs;
       if(param == "boole" || param == "limboole")
         return argument::boole;
+      if(param == "none" || param == "no" || param == "off" || param == "null")
+        return argument::none;
     case argument::variable_namespace:
       return param;
     default:
