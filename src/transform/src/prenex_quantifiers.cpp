@@ -523,7 +523,7 @@ prenex_quantifier<Strategy>::post_action(expression::op_ref o) {
     it = quant_stack.erase(it);
   }
 
-  prenex_quantifier_Eup_Aup strategy(critical_path, quant_stack, o.get_mgr());
+  Strategy strategy(critical_path, quant_stack, o.get_mgr());
   std::list<prenex_quantifier_stack_entry>& result = strategy();
 
   for(prenex_quantifier_stack_entry& e : util::reverse(result)) {
