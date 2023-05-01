@@ -9,6 +9,10 @@ add_subdirectory(serialize)
 
 if(NOT EMSCRIPTEN)
   add_subdirectory(cli)
+
+  if(pybind11_FOUND)
+    add_subdirectory(py)
+  endif()
 endif()
 
 if(EMSCRIPTEN)

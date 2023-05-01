@@ -78,6 +78,15 @@ if(EMSCRIPTEN)
   add_link_options("-s ALLOW_MEMORY_GROWTH=1 -s TOTAL_MEMORY=2000MB")
 endif()
 
+set(PYBIND11_FINDPYTHON ON)
+find_package(pybind11 CONFIG QUIET)
+
+if(pybind11_FOUND)
+  message(STATUS "Pybind11 found! Python bindings enabled.")
+else()
+  message(STATUS "Pybind11 not found! Install the package for Python bindings.")
+endif()
+
 add_subdirectory(third_party)
 add_subdirectory(src)
 
