@@ -201,7 +201,7 @@ TEST_CASE("Simple Test 5") {
 
   REQUIRE(equiv_.to_string() == expected);
 }
-TEST_CASE("Simple Test 6") {
+TEST_CASE("Simple Test 6", "[.]") {
   op_manager ops;
 
   op_ref p = "p"_var(ops);
