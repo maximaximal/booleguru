@@ -15,6 +15,8 @@ class script_manager;
 
 struct variable {
   std::string name;
+  mutable uint32_t counter = 0; /** Counter for things like tseitin-variables.
+                                   Not part of hashing or equality. */
 
   inline size_t hash() const noexcept {
     return std::hash<decltype(name)>{}(name);

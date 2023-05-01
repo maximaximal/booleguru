@@ -532,7 +532,6 @@ struct prenex_quantifier : public visitor<prenex_quantifier<Strategy>> {
   using quant_stack_t = std::list<prenex_quantifier_stack_entry>;
   quant_stack_t quant_stack;
   quant_stack_t::iterator critical_path_end;
-  std::unordered_map<uint32_t, uint32_t> variable_counters;
 
   inline expression::op_ref post_action(expression::op_ref o) {
     std::list<prenex_quantifier_stack_entry> critical_path;
@@ -563,9 +562,10 @@ struct prenex_quantifier : public visitor<prenex_quantifier<Strategy>> {
 
   inline expression::op_ref walk_quant(expression::op_ref o) {
     const auto old_v = o.get_mgr()[o->quant.v]->var;
+    auto &old_v_obj = o.get_mgr().vars().getobj(old_v.v);
 
     uint32_t outer_bound = bounds_map[old_v.v];
-    uint32_t bound = variable_counters[old_v.v]++;
+    uint32_t bound = old_v_obj.counter++;
     bounds_map[old_v.v] = bound;
 
     auto bound_v =
@@ -627,21 +627,22 @@ struct prenex_quantifier : public visitor<prenex_quantifier<Strategy>> {
     auto begin_before_visit = quant_stack.begin();
     auto left = !this->visit(o.left());
     auto begin_after_visit = quant_stack.begin();
-    auto right= this->visit(o.right());
+    auto right = this->visit(o.right());
     if(begin_before_visit != begin_after_visit) {
       for(auto it = begin_after_visit; it != begin_before_visit; ++it) {
         expression::op_type& t = it->t;
         t = expression::op_type_flip_quantifier(t);
       }
     }
-    return o.get_mgr().get(expression::op(expression::op_type::Or, left.get_id(), right.get_id()));
+    return o.get_mgr().get(
+      expression::op(expression::op_type::Or, left.get_id(), right.get_id()));
   }
-  
+
   // This eliminates impls of the form <-
   inline expression::op_ref walk_lpmi(expression::op_ref o) {
     auto left = this->visit(o.left());
     auto begin_before_visit = quant_stack.begin();
-    auto right= !this->visit(o.right());
+    auto right = !this->visit(o.right());
     auto begin_after_visit = quant_stack.begin();
     if(begin_before_visit != begin_after_visit) {
       for(auto it = begin_after_visit; it != begin_before_visit; ++it) {
@@ -649,7 +650,8 @@ struct prenex_quantifier : public visitor<prenex_quantifier<Strategy>> {
         t = expression::op_type_flip_quantifier(t);
       }
     }
-    return o.get_mgr().get(expression::op(expression::op_type::Or, left.get_id(), right.get_id()));
+    return o.get_mgr().get(
+      expression::op(expression::op_type::Or, left.get_id(), right.get_id()));
   }
 };
 }
