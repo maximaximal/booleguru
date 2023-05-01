@@ -15,8 +15,8 @@ function dotter (op, out)
 
   local optype_symbol = {}
   optype_symbol[optype.none] = "none"
-  optype_symbol[optype.exists] = "?"
-  optype_symbol[optype.forall] = "#"
+  optype_symbol[optype.exists] = "∃"
+  optype_symbol[optype.forall] = "∀"
   optype_symbol[optype.equi] = "<->"
   optype_symbol[optype.impl] = "->"
   optype_symbol[optype.lpmi] = "<-"

@@ -14,8 +14,8 @@ function quanttree (op, out)
 
   local optype_symbol = {}
   optype_symbol[optype.none] = "none"
-  optype_symbol[optype.exists] = "?"
-  optype_symbol[optype.forall] = "#"
+  optype_symbol[optype.exists] = "∃"
+  optype_symbol[optype.forall] = "∀"
   optype_symbol[optype.equi] = "<->"
   optype_symbol[optype.impl] = "->"
   optype_symbol[optype.lpmi] = "<-"
@@ -41,12 +41,13 @@ function quanttree (op, out)
     local curr_node = ""
     local children = {}
 
-    local symb = optype_symbol[top.t]
-    if symb == nil then
-      symb = tostring(top)
-    end
 
     while top.type == optype.exists or top.type == optype.forall do
+      local symb = optype_symbol[top.t]
+      if symb == nil then
+        symb = tostring(top)
+      end
+
       curr_node = curr_node .. " " .. symb .. tostring(top.l)
       top = top.r
     end
