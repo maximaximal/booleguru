@@ -1,17 +1,8 @@
 #pragma once
 
 #include "visitor.hpp"
-#include <algorithm>
-#include <booleguru/expression/op.hpp>
-#include <booleguru/util/reverse.hpp>
-
-#include <iosfwd>
-#include <iterator>
-#include <limits>
 #include <list>
 #include <unordered_map>
-
-#include <iostream>
 
 namespace booleguru::transform {
 struct prenex_quantifier_stack_entry {

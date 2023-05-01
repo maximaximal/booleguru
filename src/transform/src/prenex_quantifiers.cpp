@@ -1,6 +1,13 @@
 #include <booleguru/transform/prenex_quantifiers.hpp>
 
+#include <algorithm>
+#include <booleguru/expression/op.hpp>
+#include <booleguru/util/reverse.hpp>
+
+#include <iosfwd>
 #include <iostream>
+#include <iterator>
+#include <limits>
 
 std::ostream&
 operator<<(std::ostream& o,
