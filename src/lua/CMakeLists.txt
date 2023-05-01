@@ -41,7 +41,7 @@ add_library(booleguru-lua STATIC ${SRCS})
 
 target_include_directories(booleguru-lua PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-if(${CMAKE_BUILD_TYPE} MATCHES "Release" OR ${CMAKE_BUILD_TYPE} MATCHES "RelWithDbgInfo")
+if(CMAKE_BUILD_TYPE MATCHES "Release" OR CMAKE_BUILD_TYPE MATCHES "RelWithDbgInfo")
   create_resources("${CMAKE_CURRENT_SOURCE_DIR}/scripts" "${CMAKE_CURRENT_BINARY_DIR}/scripts.c")
   file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/scripts.h" "#include <string_view>\n${EMBEDDED_SCRIPTS_EXTERNS}\nstruct embedded_script { std::string_view name; std::string_view data; };\nconst embedded_script embedded_scripts[] = {${EMBEDDED_SCRIPTS}};\n")
   add_library(booleguru-lua-scripts OBJECT
