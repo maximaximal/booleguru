@@ -1,4 +1,5 @@
 #include <sstream>
+#include <iostream>
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
@@ -99,7 +100,7 @@ TEST_CASE("Transform a simple Non-Prenex cleansed formula into prenex formula "
       "?p #q #q' ?r ?q'' #s #r'' ?r' ?t "
       "((p | q | r | s | t) & (p | q' | r') & "
       "!(p | q'' | r''))"));
-  
+
   op_ref p = "p"_var(ops);
   op_ref q = "q"_var(ops);
   op_ref r = "r"_var(ops);
@@ -116,7 +117,7 @@ TEST_CASE("Transform a simple Non-Prenex cleansed formula into prenex formula "
   auto formula_3 = forall(q__, exists(r__, (p || q__ || r__)));
 
   auto formula = exists(p, formula_1 && formula_2 && !(formula_3));
-  std::cout << formula << std::endl; 
+  std::cout << formula << std::endl;
 
   auto prenexed = v.transform(formula);
 
