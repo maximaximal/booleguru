@@ -30,34 +30,6 @@ namespace booleguru::transform {
 
 #define IT(I) ops[I->var] << ":" << *I
 
-void
-prenex_quantifier_stack_entry::mark_leaves(
-  std::list<prenex_quantifier_stack_entry>& l) {
-  std::list<prenex_quantifier_stack_entry>::iterator last_it = l.end();
-  for(auto it = l.begin(); it != l.end(); ++it) {
-    if(last_it != l.end()) {
-      last_it->subtree_leaf = last_it->nesting >= it->nesting;
-
-      // Same element on the leaf must also be a leaf. So, once a leaf is
-      // found, walk backwards on the same sub-tree until there is some other
-      // element with a different op_type, which is when the backwards-walk
-      // ends.
-      if(last_it->subtree_leaf) {
-        auto rit = make_reverse_iterator(last_it);
-        ++rit;
-        while(rit != l.rend() && rit->t == last_it->t &&
-              rit->nesting + 1 == last_it->nesting) {
-          rit->subtree_leaf = true;
-          ++rit;
-        }
-      }
-    }
-    last_it = it;
-  }
-  // Last entry MUST be a leaf.
-  l.rbegin()->subtree_leaf = true;
-}
-
 struct prenex_quantifier_Eup_Aup {
   std::list<prenex_quantifier_stack_entry>& critical_path;
   std::list<prenex_quantifier_stack_entry>& remaining;

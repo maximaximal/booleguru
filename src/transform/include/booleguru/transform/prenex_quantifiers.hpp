@@ -1,30 +1,10 @@
 #pragma once
 
+#include <booleguru/expression/quantlist.hpp>
+
 #include "visitor.hpp"
-#include <list>
-#include <unordered_map>
 
 namespace booleguru::transform {
-struct prenex_quantifier_stack_entry {
-  expression::op_type t;
-  uint32_t var;
-  int32_t nesting;
-  bool subtree_leaf = false;
-
-  [[nodiscard]] static bool inline is_exists(
-    const prenex_quantifier_stack_entry& e) noexcept {
-    return e.t == expression::op_type::Exists;
-  }
-  [[nodiscard]] static bool inline is_forall(
-    const prenex_quantifier_stack_entry& e) noexcept {
-    return e.t == expression::op_type::Forall;
-  }
-  static void mark_leaves(std::list<prenex_quantifier_stack_entry>& l);
-};
-
-using prenex_quantifier_quant_stack_t =
-  std::list<prenex_quantifier_stack_entry>;
-
 struct prenex_quantifier_Eup_Aup;
 struct prenex_quantifier_Eup_Adown;
 struct prenex_quantifier_Edown_Aup;
@@ -35,8 +15,8 @@ struct prenex_quantifier : public visitor<prenex_quantifier<Strategy>> {
   int32_t quantifier_nesting = 0;
   int32_t deepest_quantifier_nesting = std::numeric_limits<int32_t>::min();
 
-  prenex_quantifier_quant_stack_t quant_stack;
-  prenex_quantifier_quant_stack_t::iterator critical_path_end;
+  expression::quantlist quants;
+  expression::quantlist::iterator critical_path_end;
 
   expression::op_ref post_action(expression::op_ref o);
 
