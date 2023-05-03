@@ -187,3 +187,4 @@ build/
 build-*
 /.ccls-cache/
 /.cache
+.DS_Store
