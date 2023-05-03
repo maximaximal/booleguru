@@ -28,8 +28,49 @@ quantvec::mark_leaves() {
   v[v.size() - 1].subtree_leaf = true;
 }
 
-void
+size_t
 quantvec::add(op_type quant_type, uint32_t var, int32_t nesting) {
-  v.emplace_back(quant_type, var, nesting);
+  if(deepest_quantifier_nesting < nesting) {
+    critical_path_end = v.size();
+    deepest_quantifier_nesting = nesting;
+  }
+
+  op_type t = should_flip() ? op_type_flip_quantifier(quant_type) : quant_type;
+  v.emplace_back(t, var, nesting);
+  return v.size() - 1;
 }
+
+quantvec
+quantvec::extract_critical_path() {
+  quantvec c(deepest_quantifier_nesting + 1);
+  c.v.resize(deepest_quantifier_nesting + 1);
+  for(ssize_t i = critical_path_end, j = deepest_quantifier_nesting; i >= 0;
+      --i) {
+    if(v[i].nesting == j) {
+      c.v[j] = v[i];
+      if(j == 0) {
+        break;
+      } else {
+        --j;
+      }
+    }
+  }
+  return c;
+}
+}
+
+std::ostream&
+operator<<(std::ostream& o, const booleguru::expression::quantvec& q) {
+  bool first = true;
+  for(size_t i = 0; i < q.size(); ++i) {
+    if(first)
+      first = false;
+    else
+      o << ", ";
+
+    char inner = q.is_leaf(i) ? 'L' : 'I';
+
+    o << q.var(i) << "/" << q.nesting(i) << "/" << q.type(i) << "/" << inner;
+  }
+  return o;
 }

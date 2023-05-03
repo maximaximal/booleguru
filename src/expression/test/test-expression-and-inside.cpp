@@ -24,3 +24,8 @@ TEST_CASE(
   auto a = v1 && v2;
   REQUIRE(a->and_inside);
 }
+
+TEST_CASE("Flip quantifier type enum") {
+  REQUIRE(op_type_flip_quantifier(op_type::Forall) == op_type::Exists);
+  REQUIRE(op_type_flip_quantifier(op_type::Exists) == op_type::Forall);
+}

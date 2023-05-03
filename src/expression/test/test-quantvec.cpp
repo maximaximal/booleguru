@@ -6,13 +6,13 @@
 using namespace booleguru::expression;
 using namespace booleguru::expression::literals;
 
-TEST_CASE("Mark leaves in a quantvec") {
+TEST_CASE("Mark leaves in a quantvec and extract the critical path") {
   quantvec v;
   v.add(op_type::Forall, 0, 0);
   v.add(op_type::Exists, 1, 1);
   v.add(op_type::Forall, 2, 2);
-  v.add(op_type::Forall, 3, 2);
-  v.add(op_type::Forall, 4, 2);
+  v.add(op_type::Exists, 3, 2);
+  v.add(op_type::Exists, 4, 2);
   v.add(op_type::Forall, 5, 1);
   v.mark_leaves();
 
@@ -22,4 +22,29 @@ TEST_CASE("Mark leaves in a quantvec") {
   REQUIRE(v.is_leaf(3));
   REQUIRE(v.is_leaf(4));
   REQUIRE(v.is_leaf(5));
+
+  quantvec c{ v.extract_critical_path() };
+
+  REQUIRE(c.size() == 3);
+  REQUIRE(c.type(0) == op_type::Forall);
+  REQUIRE(c.type(1) == op_type::Exists);
+  REQUIRE(c.type(2) == op_type::Forall);
+}
+
+TEST_CASE("Insert quantifiers into with flipping contexts") {
+  quantvec v;
+  v.add(op_type::Forall, 0, 0);
+  {
+    quantvec::flip_ctx ctx{ v.open_flip_ctx() };
+    v.add(op_type::Exists, 0, 0);
+
+    quantvec::flip_ctx ctx_{ v.open_flip_ctx() };
+    v.add(op_type::Forall, 0, 0);
+  }
+  v.add(op_type::Exists, 0, 0);
+
+  REQUIRE(v.type(0) == op_type::Forall);
+  REQUIRE(v.type(1) == op_type::Forall);
+  REQUIRE(v.type(2) == op_type::Forall);
+  REQUIRE(v.type(3) == op_type::Exists);
 }
