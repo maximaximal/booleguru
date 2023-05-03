@@ -85,7 +85,7 @@ class quantvec {
 
   void mark_leaves();
 
-  quantvec extract_critical_path();
+  quantvec extract_critical_path(bool keep = false);
 
   [[nodiscard]] constexpr size_t size() const noexcept { return v.size(); }
   size_t add(op_type quant_type, uint32_t var, int32_t nesting);

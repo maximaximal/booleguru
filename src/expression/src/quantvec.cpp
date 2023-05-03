@@ -41,19 +41,26 @@ quantvec::add(op_type quant_type, uint32_t var, int32_t nesting) {
 }
 
 quantvec
-quantvec::extract_critical_path() {
+quantvec::extract_critical_path(bool keep) {
   quantvec c(deepest_quantifier_nesting + 1);
   c.v.resize(deepest_quantifier_nesting + 1);
   for(ssize_t i = critical_path_end, j = deepest_quantifier_nesting; i >= 0;
       --i) {
     if(v[i].nesting == j) {
       c.v[j] = v[i];
+      if(!keep) {
+        v.erase(v.begin() + i);
+      }
       if(j == 0) {
         break;
       } else {
         --j;
       }
     }
+  }
+  if(!keep) {
+    deepest_quantifier_nesting = 0;
+    critical_path_end = 0;
   }
   return c;
 }

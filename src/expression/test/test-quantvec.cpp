@@ -23,12 +23,22 @@ TEST_CASE("Mark leaves in a quantvec and extract the critical path") {
   REQUIRE(v.is_leaf(4));
   REQUIRE(v.is_leaf(5));
 
-  quantvec c{ v.extract_critical_path() };
+  quantvec c{ v.extract_critical_path(true) };
 
   REQUIRE(c.size() == 3);
   REQUIRE(c.type(0) == op_type::Forall);
   REQUIRE(c.type(1) == op_type::Exists);
   REQUIRE(c.type(2) == op_type::Forall);
+
+  // When keeping the critical path, the size should stay at 6. Otherwise, the
+  // elements are removed.
+  REQUIRE(v.size() == 6);
+  v.extract_critical_path();
+  REQUIRE(v.size() == 3);
+
+  REQUIRE(v.type(0) == op_type::Exists);
+  REQUIRE(v.type(1) == op_type::Exists);
+  REQUIRE(v.type(2) == op_type::Forall);
 }
 
 TEST_CASE("Insert quantifiers into with flipping contexts") {
