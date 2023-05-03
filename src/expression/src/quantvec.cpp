@@ -3,6 +3,10 @@
 namespace booleguru::expression {
 void
 quantvec::mark_leaves() {
+  // Only putting this here as quantvec::entry is private. The entry should be
+  // very compact, otherwise the std::vector becomes even worse.
+  static_assert(sizeof(entry) == 8);
+
   size_t last_i = v.size() - 1;
   for(size_t i = 0; i != v.size(); ++i) {
     if(last_i != v.size() - 1) {

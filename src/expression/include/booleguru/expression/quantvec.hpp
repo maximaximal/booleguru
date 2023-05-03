@@ -33,6 +33,13 @@ class quantvec {
       , subtree_leaf(false) {}
   };
 
+  /** While a vector is in theory a bad datastructure for this kind of
+   * restructuring, the adavntage is that indices stay constant and erases
+   * should not cost too much. We keep the implementation of a quantvec fully
+   * private though, so if this becomes an issue at some point for huge
+   * prefixes, we could swap it against a linked list. The main issue is
+   * extracting the critical path and destructively searching, which is n^2 in
+   * the worst case. */
   using qvec_t = std::vector<entry>;
   qvec_t v;
 
