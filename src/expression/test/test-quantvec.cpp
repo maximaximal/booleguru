@@ -41,6 +41,29 @@ TEST_CASE("Mark leaves in a quantvec and extract the critical path") {
   REQUIRE(v.type(2) == op_type::Forall);
 }
 
+TEST_CASE(
+  "Extract the critical path from a quanttree against other sub-trees") {
+  quantvec v;
+  v.add(op_type::Forall, 0 /* var */, 0 /* nesting */);
+  v.add(op_type::Exists, 1, 1);
+  v.add(op_type::Forall, 2, 2);
+  v.add(op_type::Exists, 2, 3);
+  v.add(op_type::Exists, 3, 2);
+  v.add(op_type::Forall, 3, 3);
+  v.add(op_type::Exists, 3, 4);
+  v.add(op_type::Exists, 4, 2);
+  v.add(op_type::Forall, 5, 1);
+
+  quantvec c{ v.extract_critical_path() };
+
+  REQUIRE(c.size() == 5);
+  REQUIRE(c.type(0) == op_type::Forall);
+  REQUIRE(c.type(1) == op_type::Exists);
+  REQUIRE(c.type(2) == op_type::Exists);
+  REQUIRE(c.type(3) == op_type::Forall);
+  REQUIRE(c.type(4) == op_type::Exists);
+}
+
 TEST_CASE("Insert quantifiers into with flipping contexts") {
   quantvec v;
   v.add(op_type::Forall, 0, 0);

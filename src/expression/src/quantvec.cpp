@@ -30,14 +30,16 @@ quantvec::mark_leaves() {
 
 size_t
 quantvec::add(op_type quant_type, uint32_t var, int32_t nesting) {
+  size_t s = v.size();
+
   if(deepest_quantifier_nesting < nesting) {
-    critical_path_end = v.size();
+    critical_path_end = s;
     deepest_quantifier_nesting = nesting;
   }
 
   op_type t = should_flip() ? op_type_flip_quantifier(quant_type) : quant_type;
   v.emplace_back(t, var, nesting);
-  return v.size() - 1;
+  return s;
 }
 
 quantvec
