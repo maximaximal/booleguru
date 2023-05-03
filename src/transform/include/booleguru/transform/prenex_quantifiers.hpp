@@ -1,6 +1,6 @@
 #pragma once
 
-#include <booleguru/expression/quantlist.hpp>
+#include <booleguru/expression/quantvec.hpp>
 
 #include "visitor.hpp"
 
