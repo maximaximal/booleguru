@@ -1,0 +1,6 @@
+INPUT = "@DOXYGEN_INPUT_DIR@"
+OUTPUT_DIRECTORY = "@DOXYGEN_OUTPUT_DIR@"
+GENERATE_XML = YES
+
+# Has to be set in order to traverse all the folders in src/
+RECURSIVE = YES

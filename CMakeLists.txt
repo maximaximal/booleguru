@@ -7,6 +7,7 @@ project(booleguru
 set(CMAKE_CXX_STANDARD 20)
 
 option(TESTS "Enable Test-Target (requires Catch2)" ON)
+option(DOCS "Enable Generation of Documentation (requires Doxygen, Sphinx, and Breathe)" ON)
 
 get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
 
@@ -96,4 +97,10 @@ if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
 	target_compile_options(booleguru-serialize PRIVATE -Wall -Wextra -Wpedantic -Werror)
 	target_compile_options(booleguru PRIVATE -Wall -Wextra -Wpedantic -Werror)
   endif()
+endif()
+
+include(GNUInstallDirs)
+
+if(DOCS)
+  add_subdirectory(docs)
 endif()
