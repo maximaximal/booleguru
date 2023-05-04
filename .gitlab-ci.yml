@@ -1,0 +1,12 @@
+image: gitlab.sai.jku.at:5050/booleguru/builder/image:latest
+
+stages:
+  - deploy
+
+pages:
+  stage: deploy
+  script:
+    - mkdir -p build
+    - cmake -Bbuild -S. -DCMAKE_BUILD_TYPE=Release
+    - make -C build sphinx
+    - mv build/docs public
