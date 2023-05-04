@@ -9,7 +9,7 @@ pages:
     - mkdir -p build
     - cmake -Bbuild -S. -DCMAKE_BUILD_TYPE=Release
     - make -C build sphinx
-    - mv build/docs public
+    - mv build/docs/sphinx public
   artifacts:
     paths:
       - public/
