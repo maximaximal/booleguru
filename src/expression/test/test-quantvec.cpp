@@ -6,6 +6,10 @@
 using namespace booleguru::expression;
 using namespace booleguru::expression::literals;
 
+#include <iostream>
+using std::cout;
+using std::endl;
+
 TEST_CASE("Mark leaves in a quantvec and extract the critical path") {
   quantvec v;
   v.add(op_type::Forall, 0, 0);
@@ -80,4 +84,41 @@ TEST_CASE("Insert quantifiers into with flipping contexts") {
   REQUIRE(v.type(1) == op_type::Forall);
   REQUIRE(v.type(2) == op_type::Forall);
   REQUIRE(v.type(3) == op_type::Exists);
+}
+
+TEST_CASE("Merge two quantvecs using EupAup") {
+  quantvec critical, rem;
+  critical.add(op_type::Exists, 1, 0);
+  critical.add(op_type::Forall, 2, 1);
+  critical.add(op_type::Exists, 3, 2);
+  critical.add(op_type::Forall, 4, 3);
+  critical.add(op_type::Exists, 5, 4);
+  critical.add(op_type::Forall, 6, 5);
+
+  rem.add(op_type::Exists, 10, 1);
+
+  rem.add(op_type::Forall, 20, 1);
+  rem.add(op_type::Forall, 21, 2);
+  rem.add(op_type::Forall, 22, 3);
+  rem.add(op_type::Exists, 23, 4);
+
+  quantvec merged = quantvec::merge<quantvec::EupAup>(critical, rem);
+
+  cout << merged << endl;
+}
+
+TEST_CASE("Merge two quantvecs using EupAup 2") {
+  quantvec critical, rem;
+  critical.add(op_type::Exists, 1, 0);
+  critical.add(op_type::Forall, 2, 1);
+  critical.add(op_type::Exists, 3, 2);
+
+  rem.add(op_type::Exists, 10, 1);
+
+  rem.add(op_type::Forall, 20, 1);
+  rem.add(op_type::Exists, 21, 2);
+
+  quantvec merged = quantvec::merge<quantvec::EupAup>(critical, rem);
+
+  cout << merged << endl;
 }

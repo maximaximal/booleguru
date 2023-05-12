@@ -9,30 +9,45 @@ namespace booleguru::expression {
  * prefix.
  */
 class quantvec {
+  public:
+  enum class quant_type : uint8_t { Exists = 0, Forall = 1 };
+
+  static inline constexpr quant_type op_type_to_quant_type(op_type op) {
+    assert(op == op_type::Forall || op == op_type::Exists);
+    return static_cast<quant_type>(static_cast<unsigned int>(op) - 1);
+  }
+  static inline constexpr op_type quant_type_to_op_type(quant_type quant) {
+    return static_cast<op_type>(static_cast<unsigned int>(quant) + 1);
+  }
+
   struct entry {
     uint32_t var;
-    int32_t nesting : 27;
-    op_type type : 4;
+    int32_t tree_depth : 29;
+    quant_type quant : 1;
     bool subtree_leaf : 1 = false;
+    bool marked : 1 = false;
 
     [[nodiscard]] bool consteval inline is_exists() const noexcept {
-      return type == op_type::Exists;
+      return quant == quant_type::Exists;
     }
     [[nodiscard]] bool consteval inline is_forall() const noexcept {
-      return type == op_type::Forall;
+      return quant == quant_type::Forall;
     }
 
-    explicit entry(op_type quant_type, uint32_t var, int32_t nesting) noexcept
+    inline void constexpr mark() noexcept { marked = true; }
+
+    explicit entry(op_type op_type, uint32_t var, int32_t tree_depth) noexcept
       : var(var)
-      , nesting(nesting)
-      , type(quant_type) {}
+      , tree_depth(tree_depth)
+      , quant(op_type_to_quant_type(op_type)) {}
     explicit entry() noexcept
       : var(0)
-      , nesting(0)
-      , type(op_type::None)
+      , tree_depth(0)
+      , quant(quant_type::Forall)
       , subtree_leaf(false) {}
   };
 
+  private:
   /** While a vector is in theory a bad datastructure for this kind of
    * restructuring, the adavntage is that indices stay constant and erases
    * should not cost too much. We keep the implementation of a quantvec fully
@@ -94,28 +109,56 @@ class quantvec {
 
   quantvec extract_critical_path(bool keep = false);
 
-  [[nodiscard]] constexpr size_t size() const noexcept { return v.size(); }
-  size_t add(op_type quant_type, uint32_t var, int32_t nesting);
+  [[nodiscard]] inline constexpr size_t size() const noexcept {
+    return v.size();
+  }
+  size_t add(op_type quant_type, uint32_t var, int32_t tree_depth);
+  inline constexpr void add(const entry& e) { v.emplace_back(e); }
 
-  [[nodiscard]] constexpr bool is_leaf(size_t i) const noexcept {
+  [[nodiscard]] inline constexpr bool is_leaf(size_t i) const noexcept {
     assert(i < v.size());
     return v[i].subtree_leaf;
   }
-  [[nodiscard]] constexpr int32_t nesting(size_t i) const noexcept {
+  [[nodiscard]] inline constexpr int32_t tree_depth(size_t i) const noexcept {
     assert(i < v.size());
-    return v[i].nesting;
+    return v[i].tree_depth;
   }
-  [[nodiscard]] constexpr int32_t var(size_t i) const noexcept {
+  [[nodiscard]] inline constexpr int32_t var(size_t i) const noexcept {
     assert(i < v.size());
     return v[i].var;
   }
-
-  [[nodiscard]] constexpr op_type type(size_t i) const noexcept {
+  [[nodiscard]] inline constexpr quant_type quant(size_t i) const noexcept {
     assert(i < v.size());
-    return v[i].type;
+    return v[i].quant;
   }
+  [[nodiscard]] inline constexpr op_type type(size_t i) const noexcept {
+    assert(i < v.size());
+    op_type op = quant_type_to_op_type(v[i].quant);
+    assert(op == op_type::Forall || op == op_type::Exists);
+    return op;
+  }
+  [[nodiscard]] inline constexpr entry& operator[](size_t i) noexcept {
+    assert(i < v.size());
+    return v[i];
+  }
+  [[nodiscard]] inline constexpr const entry& operator[](
+    size_t i) const noexcept {
+    return const_cast<quantvec&>(*this)[i];
+  }
+
+  struct EupAup;
+  struct EdownAdown;
+
+  /** @brief Combine two quantvecs according to their nestings.
+   *
+   */
+  template<typename Merger>
+  static quantvec merge(quantvec& tgt, quantvec& src);
 };
 }
+
+std::ostream&
+operator<<(std::ostream& o, const booleguru::expression::quantvec::entry& e);
 
 std::ostream&
 operator<<(std::ostream& o, const booleguru::expression::quantvec& q);

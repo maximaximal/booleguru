@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <booleguru/expression/op.hpp>
+#include <booleguru/expression/quantvec.hpp>
 #include <booleguru/util/reverse.hpp>
 
 #include <iosfwd>
@@ -12,38 +13,18 @@
 using std::cout;
 using std::endl;
 
-std::ostream&
-operator<<(std::ostream& o,
-           const booleguru::transform::prenex_quantifier_stack_entry& e);
-
-std::ostream&
-operator<<(
-  std::ostream& o,
-  const std::vector<booleguru::transform::prenex_quantifier_stack_entry>& e);
-
-std::ostream&
-operator<<(
-  std::ostream& o,
-  const std::list<booleguru::transform::prenex_quantifier_stack_entry>& e);
-
 namespace booleguru::transform {
 
 #define IT(I) ops[I->var] << ":" << *I
 
-struct prenex_quantifier_Eup_Aup {
-  std::list<prenex_quantifier_stack_entry>& critical_path;
-  std::list<prenex_quantifier_stack_entry>& remaining;
+struct prenex_strategy {
+  expression::quantvec& critical_path;
+  expression::quantvec& remaining;
   expression::op_manager& ops;
+}
 
-  inline constexpr prenex_quantifier_Eup_Aup(
-    std::list<prenex_quantifier_stack_entry>& critical_path,
-    std::list<prenex_quantifier_stack_entry>& remaining,
-    expression::op_manager& ops) noexcept
-    : critical_path(critical_path)
-    , remaining(remaining)
-    , ops(ops) {}
-
-  [[nodiscard]] inline std::list<prenex_quantifier_stack_entry>& operator()() {
+struct prenex_quantifier_Eup_Aup : public prenex_strategy {
+  [[nodiscard]] inline expression::quantvec& operator()() {
     remaining.reverse();
 
     auto cit = critical_path.begin();
@@ -385,11 +366,12 @@ struct prenex_quantifier_Edown_Aup {
           break;
         }
 
-    // for(auto r = critical_path.begin(); r != critical_path.end(); ++r) {
-    //   cout << "Critical Path: " << IT(r) << endl;
-    // }
+        // for(auto r = critical_path.begin(); r != critical_path.end(); ++r) {
+        //   cout << "Critical Path: " << IT(r) << endl;
+        // }
 
-        // cout << "CE: " << IT(ce) << " and CIT: " << IT(cit) << " Found: " << IT(it) << endl;
+        // cout << "CE: " << IT(ce) << " and CIT: " << IT(cit) << " Found: " <<
+        // IT(it) << endl;
 
         auto next_cit = cit;
         critical_path.emplace(next_cit, *it);
