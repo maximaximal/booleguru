@@ -121,23 +121,6 @@ quanttree::compute_critical_path(uint32_t root) {
   return qv;
 }
 
-quanttree::quantvec
-quanttree::Eup_Aup(quantvec critical_path) {
-  quantvec out;
-  out.reserve(number_of_quantifiers);
-  for(size_t ci = 0; ci < critical_path.size(); ++ci) {
-    const path& p = v[critical_path[ci]].p;
-
-    // The critical path has alternating forks and paths. When encountering a
-    // fork, one may decide to "pull in" the sibling.
-
-    if(p.is_fork) {
-
-    }
-  }
-  return out;
-}
-
 std::ostream&
 quanttree::to_dot(std::ostream& o) {
   o << "digraph {\n";

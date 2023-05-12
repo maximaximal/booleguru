@@ -132,7 +132,30 @@ class quanttree {
   uint32_t add(uint32_t left, uint32_t right);
 
   using quantvec = std::vector<uint32_t>;
-  quantvec Eup_Aup(quantvec critical_path);
+
+  template<typename Functor>
+  quantvec prenex(quantvec critical_path, Functor f) {
+    quantvec out;
+    out.reserve(number_of_quantifiers);
+    path* last_critical_path_entry = &v[critical_path[0]].p;
+    for(size_t ci = 0; ci < critical_path.size(); ++ci) {
+      entry& e = v[critical_path[ci]];
+
+      // The critical path has alternating forks and paths. When encountering a
+      // fork, one may decide to "pull in" the sibling.
+
+      if(e.is_fork()) {
+        // Ask the functor for every given path if it should be prenexed at this
+        // position.
+        f(*last_critical_path_entry);
+      } else {
+        path& p = v[critical_path[ci]].p;
+        last_critical_path_entry = &p;
+        out.emplace_back(critical_path[ci]);
+      }
+    }
+    return out;
+  }
 
   quantvec compute_critical_path(uint32_t root);
 

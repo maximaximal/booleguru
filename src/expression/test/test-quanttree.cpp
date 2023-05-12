@@ -27,5 +27,6 @@ TEST_CASE("Build a quanttree and call Eup Aup") {
 
   t.to_dot(cout, critical);
 
-  quanttree::quantvec eup_aup = t.Eup_Aup(critical);
+  quanttree::quantvec eup_aup =
+    t.prenex(critical, [](auto& p) { return false; });
 }
