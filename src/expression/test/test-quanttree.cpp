@@ -1,124 +1,31 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <booleguru/expression/literals.hpp>
-#include <booleguru/expression/quantvec.hpp>
+#include <booleguru/expression/quanttree.hpp>
 
 using namespace booleguru::expression;
 using namespace booleguru::expression::literals;
+using enum op_type;
 
 #include <iostream>
 using std::cout;
 using std::endl;
 
-TEST_CASE("Mark leaves in a quantvec and extract the critical path") {
-  quantvec v;
-  v.add(op_type::Forall, 0, 0);
-  v.add(op_type::Exists, 1, 1);
-  v.add(op_type::Forall, 2, 2);
-  v.add(op_type::Exists, 3, 2);
-  v.add(op_type::Exists, 4, 2);
-  v.add(op_type::Forall, 5, 1);
-  v.mark_leaves();
+TEST_CASE("Build a quanttree and call Eup Aup") {
+  quanttree t;
+  uint32_t a;
+  a = t.add(Exists, 21);
+  a = t.add(Forall, 20, a);
+  uint32_t b = t.add(Exists, 10);
+  uint32_t c = t.add(Exists, 3);
+  c = t.add(Forall, 2, c);
+  uint32_t f = t.add(a, c);
+  f = t.add(f, b);
+  c = t.add(Exists, 1, f);
 
-  REQUIRE(!v.is_leaf(0));
-  REQUIRE(!v.is_leaf(1));
-  REQUIRE(v.is_leaf(2));
-  REQUIRE(v.is_leaf(3));
-  REQUIRE(v.is_leaf(4));
-  REQUIRE(v.is_leaf(5));
+  quanttree::quantvec critical = t.compute_critical_path(c);
 
-  quantvec c{ v.extract_critical_path(true) };
+  t.to_dot(cout, critical);
 
-  REQUIRE(c.size() == 3);
-  REQUIRE(c.type(0) == op_type::Forall);
-  REQUIRE(c.type(1) == op_type::Exists);
-  REQUIRE(c.type(2) == op_type::Forall);
-
-  // When keeping the critical path, the size should stay at 6. Otherwise, the
-  // elements are removed.
-  REQUIRE(v.size() == 6);
-  v.extract_critical_path();
-  REQUIRE(v.size() == 3);
-
-  REQUIRE(v.type(0) == op_type::Exists);
-  REQUIRE(v.type(1) == op_type::Exists);
-  REQUIRE(v.type(2) == op_type::Forall);
-}
-
-TEST_CASE(
-  "Extract the critical path from a quanttree against other sub-trees") {
-  quantvec v;
-  v.add(op_type::Forall, 0 /* var */, 0 /* nesting */);
-  v.add(op_type::Exists, 1, 1);
-  v.add(op_type::Forall, 2, 2);
-  v.add(op_type::Exists, 2, 3);
-  v.add(op_type::Exists, 3, 2);
-  v.add(op_type::Forall, 3, 3);
-  v.add(op_type::Exists, 3, 4);
-  v.add(op_type::Exists, 4, 2);
-  v.add(op_type::Forall, 5, 1);
-
-  quantvec c{ v.extract_critical_path() };
-
-  REQUIRE(c.size() == 5);
-  REQUIRE(c.type(0) == op_type::Forall);
-  REQUIRE(c.type(1) == op_type::Exists);
-  REQUIRE(c.type(2) == op_type::Exists);
-  REQUIRE(c.type(3) == op_type::Forall);
-  REQUIRE(c.type(4) == op_type::Exists);
-}
-
-TEST_CASE("Insert quantifiers into with flipping contexts") {
-  quantvec v;
-  v.add(op_type::Forall, 0, 0);
-  {
-    quantvec::flip_ctx ctx{ v.open_flip_ctx() };
-    v.add(op_type::Exists, 0, 0);
-
-    quantvec::flip_ctx ctx_{ v.open_flip_ctx() };
-    v.add(op_type::Forall, 0, 0);
-  }
-  v.add(op_type::Exists, 0, 0);
-
-  REQUIRE(v.type(0) == op_type::Forall);
-  REQUIRE(v.type(1) == op_type::Forall);
-  REQUIRE(v.type(2) == op_type::Forall);
-  REQUIRE(v.type(3) == op_type::Exists);
-}
-
-TEST_CASE("Merge two quantvecs using EupAup") {
-  quantvec critical, rem;
-  critical.add(op_type::Exists, 1, 0);
-  critical.add(op_type::Forall, 2, 1);
-  critical.add(op_type::Exists, 3, 2);
-  critical.add(op_type::Forall, 4, 3);
-  critical.add(op_type::Exists, 5, 4);
-  critical.add(op_type::Forall, 6, 5);
-
-  rem.add(op_type::Exists, 10, 1);
-
-  rem.add(op_type::Forall, 20, 1);
-  rem.add(op_type::Forall, 21, 2);
-  rem.add(op_type::Forall, 22, 3);
-  rem.add(op_type::Exists, 23, 4);
-
-  quantvec merged = quantvec::merge<quantvec::EupAup>(critical, rem);
-
-  cout << merged << endl;
-}
-
-TEST_CASE("Merge two quantvecs using EupAup 2") {
-  quantvec critical, rem;
-  critical.add(op_type::Exists, 1, 0);
-  critical.add(op_type::Forall, 2, 1);
-  critical.add(op_type::Exists, 3, 2);
-
-  rem.add(op_type::Exists, 10, 1);
-
-  rem.add(op_type::Forall, 20, 1);
-  rem.add(op_type::Exists, 21, 2);
-
-  quantvec merged = quantvec::merge<quantvec::EupAup>(critical, rem);
-
-  cout << merged << endl;
+  quanttree::quantvec eup_aup = t.Eup_Aup(critical);
 }

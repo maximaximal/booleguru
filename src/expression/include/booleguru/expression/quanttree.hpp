@@ -1,70 +1,81 @@
 #pragma once
 
+#include <ostream>
 #include <vector>
 
 #include "op.hpp"
 
 namespace booleguru::expression {
-/** Toolkit for manipulating quantifier trees that have been collapsed into a
- * prefix.
- */
+/** Toolkit for manipulating quantifier trees */
 class quanttree {
   public:
-  enum class quant_type : uint8_t { Exists = 0, Forall = 1 };
-
-  static inline constexpr quant_type op_type_to_quant_type(op_type op) {
-    assert(op == op_type::Forall || op == op_type::Exists);
-    return static_cast<quant_type>(static_cast<unsigned int>(op) - 1);
-  }
-  static inline constexpr op_type quant_type_to_op_type(quant_type quant) {
-    return static_cast<op_type>(static_cast<unsigned int>(quant) + 1);
-  }
-
-  struct entry {
+  struct path {
     uint32_t var;
-    int32_t tree_depth : 29;
-    quant_type quant : 1;
-    bool subtree_leaf : 1 = false;
-    bool marked : 1 = false;
+    uint32_t next;
+    uint32_t parent = std::numeric_limits<uint32_t>::max();
+    bool is_fork = false;
+    bool marked = false;
+    op_type type;
 
-    [[nodiscard]] bool consteval inline is_exists() const noexcept {
-      return quant == quant_type::Exists;
-    }
-    [[nodiscard]] bool consteval inline is_forall() const noexcept {
-      return quant == quant_type::Forall;
-    }
-
-    inline void constexpr mark() noexcept { marked = true; }
-
-    explicit entry(op_type op_type, uint32_t var, int32_t tree_depth) noexcept
+    explicit path(op_type op, uint32_t var, uint32_t next) noexcept
       : var(var)
-      , tree_depth(tree_depth)
-      , quant(op_type_to_quant_type(op_type)) {}
-    explicit entry() noexcept
-      : var(0)
-      , tree_depth(0)
-      , quant(quant_type::Forall)
-      , subtree_leaf(false) {}
+      , next(next)
+      , type(op) {}
+  };
+  struct fork {
+    uint32_t left;
+    uint32_t right;
+    uint32_t parent = std::numeric_limits<uint32_t>::max();
+    bool is_fork = true;
+    bool marked = false;
+    op_type type;
+
+    explicit fork(uint32_t left, uint32_t right) noexcept
+      : left(left)
+      , right(right)
+      , is_fork(true) {}
+  };
+
+  union entry {
+    path p;
+    fork f;
+
+    [[nodiscard]] constexpr inline bool is_fork() const noexcept {
+      return p.is_fork;
+    }
+
+    [[nodiscard]] bool constexpr inline is_exists() const noexcept {
+      assert(!is_fork());
+      return p.type == op_type::Exists;
+    }
+    [[nodiscard]] bool constexpr inline is_forall() const noexcept {
+      assert(!is_fork());
+      return p.type == op_type::Forall;
+    }
+    [[nodiscard]] bool constexpr inline has_next() const noexcept {
+      assert(!is_fork());
+      return p.next != std::numeric_limits<uint32_t>::max();
+    }
+    [[nodiscard]] bool constexpr inline has_parent() const noexcept {
+      assert(!is_fork());
+      return p.next != std::numeric_limits<uint32_t>::max();
+    }
+
+    inline void constexpr mark() noexcept { p.marked = true; }
+
+    explicit entry(op_type op_type, uint32_t var, uint32_t next) noexcept
+      : p(op_type, var, next) {}
+    explicit entry(uint32_t left, uint32_t right) noexcept
+      : f(left, right) {}
+
+    std::ostream& stream(std::ostream&) const;
   };
 
   private:
-  /** While a vector is in theory a bad datastructure for this kind of
-   * restructuring, the adavntage is that indices stay constant and erases
-   * should not cost too much. We keep the implementation of a quantvec fully
-   * private though, so if this becomes an issue at some point for huge
-   * prefixes, we could swap it against a linked list. The main issue is
-   * extracting the critical path and destructively searching, which is n^2 in
-   * the worst case. */
   using qvec_t = std::vector<entry>;
   qvec_t v;
 
-  int32_t deepest_quantifier_nesting = 0;
-
-  /** The end of a critical path is the end of the deepest sub-tree. Multiple
-   * trees may branch off this tree and must be filtered out when looking at the
-   * critical path. */
-  int32_t critical_path_end = 0;
-
+  uint32_t number_of_quantifiers = 0;
   int flip_ctx_count = 0;
 
   [[nodiscard]] inline bool should_flip() const noexcept {
@@ -105,60 +116,30 @@ class quanttree {
 
   constexpr quanttree(size_t reserve = 256) { v.reserve(reserve); }
 
-  void mark_leaves();
-
-  quanttree extract_critical_path(bool keep = false);
-
   [[nodiscard]] inline constexpr size_t size() const noexcept {
     return v.size();
   }
-  size_t add(op_type quant_type, uint32_t var, int32_t tree_depth);
-  inline constexpr void add(const entry& e) { v.emplace_back(e); }
-
-  [[nodiscard]] inline constexpr bool is_leaf(size_t i) const noexcept {
-    assert(i < v.size());
-    return v[i].subtree_leaf;
-  }
-  [[nodiscard]] inline constexpr int32_t tree_depth(size_t i) const noexcept {
-    assert(i < v.size());
-    return v[i].tree_depth;
-  }
-  [[nodiscard]] inline constexpr int32_t var(size_t i) const noexcept {
-    assert(i < v.size());
-    return v[i].var;
-  }
-  [[nodiscard]] inline constexpr quant_type quant(size_t i) const noexcept {
-    assert(i < v.size());
-    return v[i].quant;
-  }
-  [[nodiscard]] inline constexpr op_type type(size_t i) const noexcept {
-    assert(i < v.size());
-    op_type op = quant_type_to_op_type(v[i].quant);
-    assert(op == op_type::Forall || op == op_type::Exists);
-    return op;
-  }
-  [[nodiscard]] inline constexpr entry& operator[](size_t i) noexcept {
-    assert(i < v.size());
+  [[nodiscard]] inline constexpr entry& operator[](uint32_t i) noexcept {
     return v[i];
   }
   [[nodiscard]] inline constexpr const entry& operator[](
-    size_t i) const noexcept {
+    uint32_t i) const noexcept {
     return const_cast<quanttree&>(*this)[i];
   }
 
-  struct EupAup;
-  struct EdownAdown;
+  uint32_t add(op_type quant_type, uint32_t var, uint32_t next);
+  uint32_t add(op_type quant_type, uint32_t var);
+  uint32_t add(uint32_t left, uint32_t right);
 
-  /** @brief Combine two quantvecs according to their nestings.
-   *
-   */
-  template<typename Merger>
-  static quanttree merge(quanttree& tgt, quanttree& src);
+  using quantvec = std::vector<uint32_t>;
+  quantvec Eup_Aup(quantvec critical_path);
+
+  quantvec compute_critical_path(uint32_t root);
+
+  std::ostream& to_dot(std::ostream& o);
+  std::ostream& to_dot(std::ostream& o, quantvec v);
 };
 }
-
-std::ostream&
-operator<<(std::ostream& o, const booleguru::expression::quanttree::entry& e);
 
 std::ostream&
 operator<<(std::ostream& o, const booleguru::expression::quanttree& q);

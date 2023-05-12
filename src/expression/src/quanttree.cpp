@@ -1,152 +1,16 @@
-#include <booleguru/expression/quantvec.hpp>
-
 #include <algorithm>
+#include <iostream>
 #include <limits>
 #include <ranges>
+#include <stack>
 
-#include <iostream>
+#include <booleguru/expression/quanttree.hpp>
+
 using std::cout;
 using std::endl;
 
-namespace booleguru::expression {
-void
-quantvec::mark_leaves() {
-  // Only putting this here as quantvec::entry is private. The entry should be
-  // very compact, otherwise the std::vector becomes even worse.
-  static_assert(sizeof(entry) == 8);
-  static_assert(static_cast<unsigned int>(op_type::Forall) - 1 ==
-                static_cast<unsigned int>(quant_type::Forall));
-  static_assert(static_cast<unsigned int>(op_type::Exists) - 1 ==
-                static_cast<unsigned int>(quant_type::Exists));
-  static_assert(op_type_to_quant_type(op_type::Forall) == quant_type::Forall);
-  static_assert(op_type_to_quant_type(op_type::Exists) == quant_type::Exists);
-  static_assert(quant_type_to_op_type(quant_type::Forall) == op_type::Forall);
-  static_assert(quant_type_to_op_type(quant_type::Exists) == op_type::Exists);
-
-  size_t last_i = v.size() - 1;
-  for(size_t i = 0; i != v.size(); ++i) {
-    if(last_i != v.size() - 1) {
-      auto& last_i_obj = v[last_i];
-      last_i_obj.subtree_leaf = last_i_obj.tree_depth >= v[i].tree_depth;
-
-      // Same element on the leaf must also be a leaf. So, once a leaf is
-      // found, walk backwards on the same sub-tree until there is some other
-      // element with a different op_type, which is when the backwards-walk
-      // ends.
-      if(last_i_obj.subtree_leaf) {
-        ssize_t ri = last_i;
-        while(ri >= 0 && v[ri].quant == last_i_obj.quant &&
-              v[ri].tree_depth + 1 == last_i_obj.tree_depth) {
-          v[ri].subtree_leaf = true;
-          --ri;
-        }
-      }
-    }
-    last_i = i;
-  }
-  // Last entry MUST be a leaf.
-  v[v.size() - 1].subtree_leaf = true;
-}
-
-size_t
-quantvec::add(op_type quant_type, uint32_t var, int32_t nesting) {
-  size_t s = v.size();
-
-  if(deepest_quantifier_nesting < nesting) {
-    critical_path_end = s;
-    deepest_quantifier_nesting = nesting;
-  }
-
-  op_type t = should_flip() ? op_type_flip_quantifier(quant_type) : quant_type;
-  v.emplace_back(t, var, nesting);
-  return s;
-}
-
-quantvec
-quantvec::extract_critical_path(bool keep) {
-  quantvec c(deepest_quantifier_nesting + 1);
-  c.v.resize(deepest_quantifier_nesting + 1);
-  for(ssize_t i = critical_path_end, j = deepest_quantifier_nesting; i >= 0;
-      --i) {
-    if(v[i].tree_depth == j) {
-      c.v[j] = v[i];
-      if(!keep) {
-        v.erase(v.begin() + i);
-      }
-      if(j == 0) {
-        break;
-      } else {
-        --j;
-      }
-    }
-  }
-  if(!keep) {
-    deepest_quantifier_nesting = 0;
-    critical_path_end = 0;
-  }
-  return c;
-}
-
-/** @brief Combine two quantvecs according to their nestings.
- *
- */
-template<class Merger>
-quantvec
-quantvec::merge(quantvec& tgt, quantvec& src) {
-  quantvec r(tgt.size() + src.size());
-  uint32_t tgt_idx = 0;
-  uint32_t src_idx = 0;
-  while(r.size() != tgt.size() + src.size() && tgt_idx < tgt.size()) {
-    // Start with the current reference entry.
-    entry& e = tgt[tgt_idx++];
-
-    // Always has to be inserted to the result.
-    cout << "Adding Critical: " << e.var << endl;
-    r.add(e), e.mark();
-
-    // Now, we search for elements in the src quantvec that can be inserted.
-    for(uint32_t i = src_idx; i < src.size(); ++i) {
-      cout << "I: " << i << endl;
-      entry& subtree_start = src[i];
-      if(subtree_start.marked)
-        continue;
-
-      auto pred = [&i, &src, &e]() {
-        return i < src.size() && src[i].quant == e.quant &&
-               src[i].tree_depth >= e.tree_depth;
-      };
-
-      if(pred()) {
-        while(pred()) {
-          entry& s = src[i];
-          r.add(s), s.mark(), ++i;
-          cout << "Adding : " << s.var << endl;
-        }
-      } else {
-        // Ignore this sub-tree
-        break;
-      }
-    }
-  }
-  return r;
-}
-
-template quantvec
-quantvec::merge<quantvec::EupAup>(quantvec& tgt, quantvec& src);
-template quantvec
-quantvec::merge<quantvec::EdownAdown>(quantvec& tgt, quantvec& src);
-}
-
 std::ostream&
-operator<<(std::ostream& o, const booleguru::expression::quantvec::entry& e) {
-  char inner = e.subtree_leaf ? 'L' : 'I';
-  return o << e.var << "/" << e.tree_depth << "/"
-           << booleguru::expression::quantvec::quant_type_to_op_type(e.quant)
-           << "/" << inner;
-}
-
-std::ostream&
-operator<<(std::ostream& o, const booleguru::expression::quantvec& q) {
+operator<<(std::ostream& o, const booleguru::expression::quanttree& q) {
   bool first = true;
   for(size_t i = 0; i < q.size(); ++i) {
     if(first)
@@ -154,7 +18,165 @@ operator<<(std::ostream& o, const booleguru::expression::quantvec& q) {
     else
       o << ", ";
 
-    o << q[i];
+    q[i].stream(o);
   }
   return o;
+}
+
+namespace booleguru::expression {
+std::ostream&
+booleguru::expression::quanttree::entry::stream(std::ostream& o) const {
+  if(is_fork()) {
+    o << f.left << ":" << f.right;
+  } else {
+    o << p.type << ":" << p.var;
+    if(has_next())
+      o << "." << p.next;
+  }
+  return o;
+}
+
+static_assert(sizeof(quanttree::entry) == 16);
+
+uint32_t
+quanttree::add(op_type quant_type, uint32_t var, uint32_t next) {
+  size_t s = v.size();
+
+  ++number_of_quantifiers;
+
+  op_type t = should_flip() ? op_type_flip_quantifier(quant_type) : quant_type;
+  if(v.emplace_back(t, var, next).has_next()) {
+    assert(next < v.size());
+    v[next].p.parent = s;
+  }
+
+  return s;
+}
+
+uint32_t
+quanttree::add(op_type quant_type, uint32_t var) {
+  return add(quant_type, var, std::numeric_limits<uint32_t>::max());
+}
+
+uint32_t
+quanttree::add(uint32_t left, uint32_t right) {
+  size_t s = v.size();
+  v.emplace_back(left, right);
+  assert(left < v.size());
+  assert(right < v.size());
+  v[left].f.parent = s;
+  v[right].f.parent = s;
+  return s;
+}
+
+quanttree::quantvec
+quanttree::compute_critical_path(uint32_t root) {
+  assert(root < v.size());
+  quantvec qv;
+  struct st {
+    uint32_t i;
+    uint32_t logical_depth;
+    uint32_t syntactical_depth;
+
+    st(uint32_t i, uint32_t l, uint32_t s)
+      : i(i)
+      , logical_depth(l)
+      , syntactical_depth(s) {}
+  };
+  std::stack<st> s;
+
+  s.emplace(root, 1, 1);
+
+  uint32_t deepest_log = 0;
+  uint32_t deepest_syn = 0;
+  uint32_t deepest_entry_i = 0;
+
+  while(!s.empty()) {
+    uint32_t entry_i = s.top().i;
+    uint32_t logical_depth = s.top().logical_depth;
+    uint32_t syntactical_depth = s.top().syntactical_depth;
+    const entry& entry = v[entry_i];
+    s.pop();
+
+    if(entry.is_fork()) {
+      s.emplace(entry.f.left, logical_depth, syntactical_depth + 1);
+      s.emplace(entry.f.right, logical_depth, syntactical_depth + 1);
+    } else if(entry.has_next()) {
+      s.emplace(entry.f.right, logical_depth + 1, syntactical_depth + 1);
+    } else if(deepest_log < logical_depth) {
+      deepest_log = logical_depth;
+      deepest_syn = syntactical_depth;
+      deepest_entry_i = entry_i;
+    }
+  }
+
+  assert(deepest_syn > 0);
+
+  qv.resize(deepest_syn);
+  for(uint32_t i = deepest_syn; i > 0; --i) {
+    qv[i - 1] = deepest_entry_i;
+    deepest_entry_i = v[deepest_entry_i].p.parent;
+  }
+
+  return qv;
+}
+
+quanttree::quantvec
+quanttree::Eup_Aup(quantvec critical_path) {
+  quantvec out;
+  out.reserve(number_of_quantifiers);
+  for(size_t ci = 0; ci < critical_path.size(); ++ci) {
+    const path& p = v[critical_path[ci]].p;
+
+    // The critical path has alternating forks and paths. When encountering a
+    // fork, one may decide to "pull in" the sibling.
+
+    if(p.is_fork) {
+
+    }
+  }
+  return out;
+}
+
+std::ostream&
+quanttree::to_dot(std::ostream& o) {
+  o << "digraph {\n";
+  for(size_t i = 0; i < v.size(); ++i) {
+    const entry& e = v[i];
+    o << i << " [ label=\"";
+    e.stream(o) << "\"];\n";
+
+    if(e.is_fork()) {
+      o << i << "->" << e.f.left << ";\n";
+      o << i << "->" << e.f.right << ";\n";
+    } else if(e.has_next()) {
+      o << i << "->" << e.p.next << ";\n";
+    }
+  }
+  o << "}\n";
+  return o;
+}
+
+std::ostream&
+quanttree::to_dot(std::ostream& o, quantvec vec) {
+  o << "digraph {\n";
+  for(size_t vec_i = 0; vec_i < vec.size(); ++vec_i) {
+    size_t i = vec[vec_i];
+    const entry& e = v[i];
+    o << i << " [ label=\"";
+    e.stream(o) << "\"];\n";
+
+    if(e.is_fork()) {
+      if(std::find(vec.begin(), vec.end(), e.f.left) != vec.end())
+        o << i << "->" << e.f.left << ";\n";
+      if(std::find(vec.begin(), vec.end(), e.f.right) != vec.end())
+        o << i << "->" << e.f.right << ";\n";
+    } else if(e.has_next()) {
+      if(std::find(vec.begin(), vec.end(), e.p.next) != vec.end())
+        o << i << "->" << e.p.next << ";\n";
+    }
+  }
+  o << "}\n";
+  return o;
+}
 }
