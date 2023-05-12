@@ -8,7 +8,7 @@ namespace booleguru::expression {
 /** Toolkit for manipulating quantifier trees that have been collapsed into a
  * prefix.
  */
-class quantvec {
+class quanttree {
   public:
   enum class quant_type : uint8_t { Exists = 0, Forall = 1 };
 
@@ -78,7 +78,7 @@ class quantvec {
 
   public:
   struct flip_ctx {
-    inline constexpr explicit flip_ctx(quantvec& v) noexcept
+    inline constexpr explicit flip_ctx(quanttree& v) noexcept
       : v_(v) {}
     inline constexpr ~flip_ctx() noexcept { v_.close_flip_ctx(); }
 
@@ -86,7 +86,7 @@ class quantvec {
     inline constexpr flip_ctx(flip_ctx&&) = delete;
 
     private:
-    quantvec& v_;
+    quanttree& v_;
   };
 
   flip_ctx open_flip_ctx() {
@@ -103,11 +103,11 @@ class quantvec {
     return e.is_forall();
   }
 
-  constexpr quantvec(size_t reserve = 256) { v.reserve(reserve); }
+  constexpr quanttree(size_t reserve = 256) { v.reserve(reserve); }
 
   void mark_leaves();
 
-  quantvec extract_critical_path(bool keep = false);
+  quanttree extract_critical_path(bool keep = false);
 
   [[nodiscard]] inline constexpr size_t size() const noexcept {
     return v.size();
@@ -143,7 +143,7 @@ class quantvec {
   }
   [[nodiscard]] inline constexpr const entry& operator[](
     size_t i) const noexcept {
-    return const_cast<quantvec&>(*this)[i];
+    return const_cast<quanttree&>(*this)[i];
   }
 
   struct EupAup;
@@ -153,12 +153,12 @@ class quantvec {
    *
    */
   template<typename Merger>
-  static quantvec merge(quantvec& tgt, quantvec& src);
+  static quanttree merge(quanttree& tgt, quanttree& src);
 };
 }
 
 std::ostream&
-operator<<(std::ostream& o, const booleguru::expression::quantvec::entry& e);
+operator<<(std::ostream& o, const booleguru::expression::quanttree::entry& e);
 
 std::ostream&
-operator<<(std::ostream& o, const booleguru::expression::quantvec& q);
+operator<<(std::ostream& o, const booleguru::expression::quanttree& q);

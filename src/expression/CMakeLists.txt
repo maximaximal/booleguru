@@ -4,7 +4,7 @@ set(SRCS
   src/var_manager.cpp
   src/script_manager.cpp
   src/literals.cpp
-  src/quantvec.cpp
+  src/quanttree.cpp
 )
 
 add_library(booleguru-expression STATIC ${SRCS})
