@@ -69,11 +69,9 @@ class output_to_op {
     }
   }
 
-  inline ref not_op(ref r) {
-    return mgr.get_id(expression::op(
-      expression::op_type::Var,
-      tseitin_id,
-      mgr.get_id(expression::op(expression::op_type::Not, r, 0))));
+  inline ref not_op(ref id) {
+    return mgr.get_id(
+      expression::op(expression::op_type::Not, id, 0));
   }
 };
 }
