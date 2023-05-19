@@ -91,6 +91,10 @@ class output_to_qdimacs {
 
   TransformResult get_out() const {}
 
+  void insert_mapping_comment(ref id, std::string_view name) {
+    o << "c " << id << " " << name << "\n";
+  }
+
   inline constexpr ref op_ref_to_ref(const expression::op& o,
                                      expression::op_ref::ref id) {
     (void)id;
