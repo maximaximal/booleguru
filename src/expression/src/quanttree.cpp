@@ -23,6 +23,19 @@ operator<<(std::ostream& o, const booleguru::expression::quanttree& q) {
   return o;
 }
 
+std::ostream&
+operator<<(std::ostream& o, const booleguru::expression::quanttree::entry& e) {
+  return e.stream(o);
+}
+
+std::ostream&
+operator<<(std::ostream& o, const booleguru::expression::quanttree::path& p) {
+  o << p.type << ":" << p.var;
+  if(p.has_next())
+    o << "." << p.next;
+  return o;
+}
+
 namespace booleguru::expression {
 std::ostream&
 booleguru::expression::quanttree::entry::stream(std::ostream& o) const {
@@ -58,14 +71,61 @@ quanttree::add(op_type quant_type, uint32_t var) {
   return add(quant_type, var, std::numeric_limits<uint32_t>::max());
 }
 
+void
+quanttree::splice_path_into_fork(uint32_t path, uint32_t fork) {
+  assert(v[path].is_path());
+  assert(v[fork].is_fork());
+  remove_entry(fork, path);
+}
+
+void
+quanttree::remove_entry(uint32_t entry, uint32_t next) {
+  quanttree::entry& e = v[entry];
+  quanttree::entry& parent = v[e.p.parent];
+  quanttree::entry& n = v[next];
+  assert(e.has_parent());
+
+  if(parent.is_fork()) {
+    if(parent.f.left == entry) {
+      parent.f.left = next;
+    }
+    if(parent.f.right == entry) {
+      parent.f.right = next;
+    }
+    n.f.parent = e.p.parent;
+  } else {
+    parent.p.next = next;
+    n.p.parent = e.p.parent;
+  }
+}
+
+void
+quanttree::remove_entry(uint32_t entry) {
+  quanttree::entry& e = v[entry];
+  quanttree::entry& parent = v[e.p.parent];
+  assert(e.has_parent());
+
+  if(parent.is_fork()) {
+    parent.p.is_fork = false;
+    if(parent.f.left == entry) {
+      remove_entry(e.p.parent, parent.f.right);
+    }
+    if(parent.f.right == entry) {
+      remove_entry(e.p.parent, parent.f.left);
+    }
+  } else {
+    parent.void_next();
+  }
+}
+
 uint32_t
 quanttree::add(uint32_t left, uint32_t right) {
   size_t s = v.size();
   v.emplace_back(left, right);
   assert(left < v.size());
   assert(right < v.size());
-  v[left].f.parent = s;
-  v[right].f.parent = s;
+  v[left].p.parent = s;
+  v[right].p.parent = s;
   return s;
 }
 
@@ -138,6 +198,39 @@ quanttree::to_dot(std::ostream& o) {
   }
   o << "}\n";
   return o;
+}
+
+std::ostream&
+quanttree::to_dot(std::ostream& o, uint32_t root) {
+  std::stack<uint32_t> unvisited;
+  unvisited.emplace(root);
+
+  o << "digraph {\n";
+  while(!unvisited.empty()) {
+    uint32_t i = unvisited.top();
+    unvisited.pop();
+    const entry& e = v[i];
+    o << i << " [ label=\"";
+    e.stream(o) << "\"];\n";
+
+    if(e.is_fork()) {
+      o << i << "->" << e.f.left << ";\n";
+      o << i << "->" << e.f.right << ";\n";
+      unvisited.emplace(e.f.left);
+      unvisited.emplace(e.f.right);
+    } else if(e.has_next()) {
+      o << i << "->" << e.p.next << ";\n";
+      unvisited.emplace(e.p.next);
+    }
+  }
+  o << "}\n";
+  return o;
+}
+
+bool
+quanttree::should_inline_EupAup(quanttree::path& pos,
+                                quanttree::path& possible_inline) {
+  return pos.type == possible_inline.type;
 }
 
 std::ostream&

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <ostream>
 #include <vector>
 
@@ -21,6 +22,10 @@ class quanttree {
       : var(var)
       , next(next)
       , type(op) {}
+
+    [[nodiscard]] bool constexpr inline has_next() const noexcept {
+      return next != std::numeric_limits<uint32_t>::max();
+    }
   };
   struct fork {
     uint32_t left;
@@ -43,22 +48,28 @@ class quanttree {
     [[nodiscard]] constexpr inline bool is_fork() const noexcept {
       return p.is_fork;
     }
+    [[nodiscard]] constexpr inline bool is_path() const noexcept {
+      return !p.is_fork;
+    }
 
     [[nodiscard]] bool constexpr inline is_exists() const noexcept {
-      assert(!is_fork());
+      assert(is_path());
       return p.type == op_type::Exists;
     }
     [[nodiscard]] bool constexpr inline is_forall() const noexcept {
-      assert(!is_fork());
+      assert(is_path());
       return p.type == op_type::Forall;
     }
     [[nodiscard]] bool constexpr inline has_next() const noexcept {
-      assert(!is_fork());
-      return p.next != std::numeric_limits<uint32_t>::max();
+      assert(is_path());
+      return p.has_next();
     }
     [[nodiscard]] bool constexpr inline has_parent() const noexcept {
-      assert(!is_fork());
-      return p.next != std::numeric_limits<uint32_t>::max();
+      return p.parent != std::numeric_limits<uint32_t>::max();
+    }
+
+    void constexpr inline void_next() noexcept {
+      p.next = std::numeric_limits<uint32_t>::max();
     }
 
     inline void constexpr mark() noexcept { p.marked = true; }
@@ -67,6 +78,8 @@ class quanttree {
       : p(op_type, var, next) {}
     explicit entry(uint32_t left, uint32_t right) noexcept
       : f(left, right) {}
+
+    constexpr uint32_t index(const entry* arr) const { return this - arr; }
 
     std::ostream& stream(std::ostream&) const;
   };
@@ -114,7 +127,7 @@ class quanttree {
     return e.is_forall();
   }
 
-  constexpr quanttree(size_t reserve = 256) { v.reserve(reserve); }
+  quanttree(size_t reserve = 256) { v.reserve(reserve); }
 
   [[nodiscard]] inline constexpr size_t size() const noexcept {
     return v.size();
@@ -134,9 +147,38 @@ class quanttree {
   using quantvec = std::vector<uint32_t>;
 
   template<typename Functor>
-  quantvec prenex(quantvec critical_path, Functor f) {
-    quantvec out;
-    out.reserve(number_of_quantifiers);
+  void walk_next_paths(entry& e, Functor f) {
+    if(e.is_fork()) {
+      walk_next_paths(v[e.f.left], f);
+      walk_next_paths(v[e.f.right], f);
+    } else {
+      f(e);
+    }
+  }
+
+  /** @brief Remove a path and insert it into a fork.
+
+      The parent fork of the path is destructed.
+
+      The path to be inserted is inserted before the target fork.
+
+      If the target fork and the path's parent fork are the same, the target
+      fork is effectively replaced entirely with the path.
+   */
+  void splice_path_into_fork(uint32_t path, uint32_t fork);
+
+  /** @brief Removes the entry, replacing its parent's next with next.
+   */
+  void remove_entry(uint32_t entry, uint32_t next);
+  /** @brief Removes the entry.
+
+      If the parent was a fork, the fork is destructed into a path going to the
+     other direction.
+   */
+  void remove_entry(uint32_t entry);
+
+  template<typename Functor>
+  void prenex(const quantvec& critical_path, Functor f) {
     path* last_critical_path_entry = &v[critical_path[0]].p;
     for(size_t ci = 0; ci < critical_path.size(); ++ci) {
       entry& e = v[critical_path[ci]];
@@ -147,22 +189,47 @@ class quanttree {
       if(e.is_fork()) {
         // Ask the functor for every given path if it should be prenexed at this
         // position.
-        f(*last_critical_path_entry);
+        entry& next =
+          v[e.f.left == critical_path[ci + 1] ? e.f.right : e.f.left];
+        uint32_t next_in_critical_path =
+          e.f.left == critical_path[ci + 1] ? e.f.left : e.f.right;
+        walk_next_paths(
+          next,
+          [this, &f, &e, next_in_critical_path, &last_critical_path_entry](
+            entry& check) {
+            if(f(*last_critical_path_entry, check.p)) {
+              assert(e.has_parent());
+              assert(!check.is_fork());
+              v[e.f.parent].p.next = index(check);
+
+              splice_path_into_fork(index(check), index(e));
+            }
+          });
       } else {
         path& p = v[critical_path[ci]].p;
         last_critical_path_entry = &p;
-        out.emplace_back(critical_path[ci]);
       }
     }
-    return out;
   }
 
   quantvec compute_critical_path(uint32_t root);
 
+  uint32_t index(const entry& e) const { return e.index(v.data()); }
+
+  static bool should_inline_EupAup(quanttree::path& pos,
+                                   quanttree::path& possible_inline);
+
   std::ostream& to_dot(std::ostream& o);
+  std::ostream& to_dot(std::ostream& o, uint32_t root);
   std::ostream& to_dot(std::ostream& o, quantvec v);
 };
 }
+
+std::ostream&
+operator<<(std::ostream& o, const booleguru::expression::quanttree::path& p);
+
+std::ostream&
+operator<<(std::ostream& o, const booleguru::expression::quanttree::entry& e);
 
 std::ostream&
 operator<<(std::ostream& o, const booleguru::expression::quanttree& q);

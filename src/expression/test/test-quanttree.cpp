@@ -16,6 +16,10 @@ TEST_CASE("Build a quanttree and call Eup Aup") {
   uint32_t a;
   a = t.add(Exists, 21);
   a = t.add(Forall, 20, a);
+
+  quanttree::entry& entry = t[a];
+  REQUIRE(t.index(entry) == a);
+
   uint32_t b = t.add(Exists, 10);
   uint32_t c = t.add(Exists, 3);
   c = t.add(Forall, 2, c);
@@ -25,8 +29,28 @@ TEST_CASE("Build a quanttree and call Eup Aup") {
 
   quanttree::quantvec critical = t.compute_critical_path(c);
 
-  t.to_dot(cout, critical);
+  // t.to_dot(cout);
 
-  quanttree::quantvec eup_aup =
-    t.prenex(critical, [](auto& p) { return false; });
+  t.prenex(critical, &quanttree::should_inline_EupAup);
+
+  // t.to_dot(cout);
+}
+
+TEST_CASE("Build a quanttree and erase a path below a fork") {
+  quanttree t;
+  uint32_t a, b, f, c;
+  a = t.add(Exists, 21);
+  b = t.add(Forall, 31);
+  f = t.add(a, b);
+  c = t.add(Exists, 11, f);
+
+  t.to_dot(cout);
+
+  t.remove_entry(b);
+
+  REQUIRE(t[c].is_path());
+  REQUIRE(t[t[c].p.next].is_path());
+  REQUIRE(t[t[c].p.next].p.var == 21);
+
+  t.to_dot(cout, c);
 }
