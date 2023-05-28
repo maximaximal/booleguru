@@ -2,4 +2,5 @@
 
 for d in *.dot; do
     dot $d -Tpng -o $(basename $d .dot).png;
+    rm $d;
 done

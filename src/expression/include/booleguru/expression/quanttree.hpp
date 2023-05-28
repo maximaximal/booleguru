@@ -12,6 +12,8 @@ namespace booleguru::expression {
 /** Toolkit for manipulating quantifier trees */
 class quanttree {
   public:
+  enum class direction { upwards, downwards };
+
   struct path {
     uint32_t var;
     uint32_t next;
@@ -166,6 +168,7 @@ class quanttree {
   }
 
   void splice_path_after_path(uint32_t path, uint32_t insert);
+  void splice_path_before_path(uint32_t path, uint32_t insert);
 
   /** @brief Removes the entry, replacing its parent's next with next.
    */
@@ -221,6 +224,15 @@ class quanttree {
     }
     return i;
   }
+  uint32_t next_path(uint32_t i) {
+    assert(i < size());
+    assert(v[i].is_fork_ || v[i].has_next());
+    do {
+      i = next_marked(i);
+      assert(i < size());
+    } while(v[i].is_fork_);
+    return i;
+  }
 
   uint32_t last_entry_on_critical_path(uint32_t i) {
     while(v[i].is_fork_ || v[i].has_next())
@@ -232,31 +244,66 @@ class quanttree {
 
   template<typename Functor>
   void prenex(uint32_t root, Functor should_inline) {
+    mark_critical_path(root);
     if(animate)
       create_animation_step(root);
-    mark_critical_path(root);
+
+    uint32_t bottom = 0;
     for(uint32_t c = root; c < size(); c = next_marked(c)) {
       entry& e = v[c];
       if(e.is_fork())
         continue;
 
-      bool is_before = true;
-      for(uint32_t f = root; is_before || (f < size() && last_path(f) == c);
+      bool is_above = true;
+      for(uint32_t f = root; is_above || (f < size() && last_path(f) == c);
           f = next_marked(f)) {
 
         if(f == c)
-          is_before = false;
+          is_above = false;
         if(!v[f].is_fork_)
           continue;
 
         walk_next_paths(v[f],
                         [this, f, root, &should_inline, &e, c](entry& check) {
-                          if(should_inline(e, check)) {
+                          if(should_inline(direction::downwards, e, check)) {
                             splice_path_after_path(c, index(check));
                             if(animate)
                               create_animation_step(root);
                           }
                         });
+      }
+      bottom = c;
+    }
+
+    if(marked_contains_forks(root)) {
+      for(;;) {
+        entry& e = v[bottom];
+        if(e.is_fork())
+          continue;
+
+        bool is_below = true;
+
+        for(uint32_t f = root;
+            f < size() && (is_below || last_path(f) == bottom);
+            f = next_marked(f)) {
+          if(f == bottom)
+            is_below = false;
+          if(!v[f].is_fork_)
+            continue;
+
+          walk_next_paths(
+            v[f], [this, f, root, &should_inline, &e, bottom](entry& check) {
+              if(should_inline(direction::upwards, e, check)) {
+                splice_path_before_path(bottom, index(check));
+                if(animate)
+                  create_animation_step(root);
+              }
+            });
+        }
+        if(e.has_parent())
+          bottom = e.parent_;
+        else
+          break;
       }
     }
   }
@@ -265,12 +312,14 @@ class quanttree {
 
   uint32_t index(const entry& e) const { return e.index(v.data()); }
 
-  static bool should_inline_EupAup(const quanttree::entry& pos,
+  static bool should_inline_EupAup(direction dir,
+                                   const quanttree::entry& pos,
                                    const quanttree::entry& possible_inline);
+  static bool should_inline_EdownAdown(direction dir,
+                                       const quanttree::entry& pos,
+                                       const quanttree::entry& possible_inline);
 
-  std::ostream& to_dot(std::string_view name, std::ostream& o);
   std::ostream& to_dot(std::string_view name, std::ostream& o, uint32_t root);
-  std::ostream& to_dot(std::string_view name, std::ostream& o, quantvec v);
 };
 }
 

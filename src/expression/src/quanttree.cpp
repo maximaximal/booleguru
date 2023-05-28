@@ -87,6 +87,25 @@ quanttree::splice_path_after_path(uint32_t path, uint32_t insert) {
 }
 
 void
+quanttree::splice_path_before_path(uint32_t path, uint32_t insert) {
+  assert(v[path].is_path());
+  assert(v[insert].is_path());
+  assert(v[v[insert].parent_].is_fork());
+
+  remove_entry(insert);
+
+  mark_critical_path(insert);
+
+  uint32_t last = last_entry_on_critical_path(insert);
+
+  v[last].p.next = v[path].p.next;
+  if(v[path].has_next())
+    v[v[path].p.next].parent_ = last;
+  v[insert].parent_ = path;
+  v[path].p.next = insert;
+}
+
+void
 quanttree::remove_entry(uint32_t entry, uint32_t next) {
   quanttree::entry& e = v[entry];
   quanttree::entry& parent = v[e.parent_];
@@ -199,25 +218,6 @@ quanttree::mark_critical_path(uint32_t root) {
 }
 
 std::ostream&
-quanttree::to_dot(std::string_view name, std::ostream& o) {
-  o << "digraph " << name << " {\n";
-  for(size_t i = 0; i < v.size(); ++i) {
-    const entry& e = v[i];
-    o << i << " [ label=\"";
-    e.stream(o) << "\"];\n";
-
-    if(e.is_fork()) {
-      o << i << "->" << e.f.left << ";\n";
-      o << i << "->" << e.f.right << ";\n";
-    } else if(e.has_next()) {
-      o << i << "->" << e.p.next << ";\n";
-    }
-  }
-  o << "}\n";
-  return o;
-}
-
-std::ostream&
 quanttree::to_dot(std::string_view name, std::ostream& o, uint32_t root) {
   std::stack<uint32_t> unvisited;
   unvisited.emplace(root);
@@ -228,7 +228,11 @@ quanttree::to_dot(std::string_view name, std::ostream& o, uint32_t root) {
     unvisited.pop();
     const entry& e = v[i];
     o << i << " [ label=\"";
-    e.stream(o) << "\"];\n";
+    e.stream(o) << "\"";
+    if(e.marked_) {
+      o << ", color=\"red\"";
+    }
+    o << "];\n";
 
     if(e.is_fork()) {
       o << i << "->" << e.f.left << ";\n";
@@ -245,13 +249,32 @@ quanttree::to_dot(std::string_view name, std::ostream& o, uint32_t root) {
 }
 
 bool
-quanttree::should_inline_EupAup(const quanttree::entry& pos,
+quanttree::should_inline_EupAup(direction dir,
+                                const quanttree::entry& pos,
                                 const quanttree::entry& possible_inline) {
   assert(pos.is_path());
   assert(possible_inline.is_path());
 
-  return pos.p.type == possible_inline.p.type;
+  if(dir == direction::downwards)
+    return pos.p.type == possible_inline.p.type;
+  if(dir == direction::upwards)
+    return false;
+  return false;
 }
+bool
+quanttree::should_inline_EdownAdown(direction dir,
+                                    const quanttree::entry& pos,
+                                    const quanttree::entry& possible_inline) {
+  assert(pos.is_path());
+  assert(possible_inline.is_path());
+
+  if(dir == direction::downwards)
+    return false;
+  if(dir == direction::upwards)
+    return pos.p.type == possible_inline.p.type;
+  return false;
+}
+
 void
 quanttree::activate_animation(const std::string& path) {
   animation_path = path;
@@ -264,28 +287,5 @@ quanttree::create_animation_step(uint32_t root) {
   ++animate_step;
   std::ofstream f(animation_path + "_" + name + ".dot");
   to_dot(name, f, root);
-}
-
-std::ostream&
-quanttree::to_dot(std::string_view name, std::ostream& o, quantvec vec) {
-  o << "digraph " << name << " {\n";
-  for(size_t vec_i = 0; vec_i < vec.size(); ++vec_i) {
-    size_t i = vec[vec_i];
-    const entry& e = v[i];
-    o << i << " [ label=\"";
-    e.stream(o) << "\"];\n";
-
-    if(e.is_fork()) {
-      if(std::find(vec.begin(), vec.end(), e.f.left) != vec.end())
-        o << i << "->" << e.f.left << ";\n";
-      if(std::find(vec.begin(), vec.end(), e.f.right) != vec.end())
-        o << i << "->" << e.f.right << ";\n";
-    } else if(e.has_next()) {
-      if(std::find(vec.begin(), vec.end(), e.p.next) != vec.end())
-        o << i << "->" << e.p.next << ";\n";
-    }
-  }
-  o << "}\n";
-  return o;
 }
 }
