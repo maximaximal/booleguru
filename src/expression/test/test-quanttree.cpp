@@ -1,3 +1,5 @@
+#include <fstream>
+
 #include <catch2/catch_test_macros.hpp>
 
 #include <booleguru/expression/literals.hpp>
@@ -27,13 +29,9 @@ TEST_CASE("Build a quanttree and call Eup Aup") {
   f = t.add(f, b);
   c = t.add(Exists, 1, f);
 
-  quanttree::quantvec critical = t.compute_critical_path(c);
+  t.activate_animation("EupAup");
 
-  // t.to_dot(cout);
-
-  t.prenex(critical, &quanttree::should_inline_EupAup);
-
-  // t.to_dot(cout);
+  t.prenex(c, &quanttree::should_inline_EupAup);
 }
 
 TEST_CASE("Build a quanttree and erase a path below a fork") {
@@ -44,13 +42,9 @@ TEST_CASE("Build a quanttree and erase a path below a fork") {
   f = t.add(a, b);
   c = t.add(Exists, 11, f);
 
-  t.to_dot(cout);
-
   t.remove_entry(b);
 
   REQUIRE(t[c].is_path());
   REQUIRE(t[t[c].p.next].is_path());
   REQUIRE(t[t[c].p.next].p.var == 21);
-
-  t.to_dot(cout, c);
 }
