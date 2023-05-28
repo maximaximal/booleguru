@@ -86,7 +86,7 @@ quanttree::splice_path_after_path(uint32_t path, uint32_t insert) {
   v[path].p.next = insert;
 }
 
-void
+uint32_t
 quanttree::splice_path_before_path(uint32_t path, uint32_t insert) {
   assert(v[path].is_path());
   assert(v[insert].is_path());
@@ -103,6 +103,8 @@ quanttree::splice_path_before_path(uint32_t path, uint32_t insert) {
     v[v[path].p.next].parent_ = last;
   v[insert].parent_ = path;
   v[path].p.next = insert;
+
+  return last;
 }
 
 void
@@ -272,6 +274,32 @@ quanttree::should_inline_EdownAdown(direction dir,
     return false;
   if(dir == direction::upwards)
     return pos.p.type == possible_inline.p.type;
+  return false;
+}
+bool
+quanttree::should_inline_EupAdown(direction dir,
+                                  const quanttree::entry& pos,
+                                  const quanttree::entry& possible_inline) {
+  assert(pos.is_path());
+  assert(possible_inline.is_path());
+
+  if(dir == direction::downwards)
+    return pos.p.type == op_type::Exists && pos.p.type == possible_inline.p.type;
+  if(dir == direction::upwards)
+    return pos.p.type == op_type::Forall && pos.p.type == possible_inline.p.type;
+  return false;
+}
+bool
+quanttree::should_inline_EdownAup(direction dir,
+                                  const quanttree::entry& pos,
+                                  const quanttree::entry& possible_inline) {
+  assert(pos.is_path());
+  assert(possible_inline.is_path());
+
+  if(dir == direction::downwards)
+    return pos.p.type == op_type::Forall && pos.p.type == possible_inline.p.type;
+  if(dir == direction::upwards)
+    return pos.p.type == op_type::Exists && pos.p.type == possible_inline.p.type;
   return false;
 }
 

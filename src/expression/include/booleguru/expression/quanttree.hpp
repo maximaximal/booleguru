@@ -168,7 +168,7 @@ class quanttree {
   }
 
   void splice_path_after_path(uint32_t path, uint32_t insert);
-  void splice_path_before_path(uint32_t path, uint32_t insert);
+  uint32_t splice_path_before_path(uint32_t path, uint32_t insert);
 
   /** @brief Removes the entry, replacing its parent's next with next.
    */
@@ -292,9 +292,9 @@ class quanttree {
             continue;
 
           walk_next_paths(
-            v[f], [this, f, root, &should_inline, &e, bottom](entry& check) {
+            v[f], [this, f, root, &should_inline, &e, &bottom](entry& check) {
               if(should_inline(direction::upwards, e, check)) {
-                splice_path_before_path(bottom, index(check));
+                bottom = splice_path_before_path(bottom, index(check));
                 if(animate)
                   create_animation_step(root);
               }
@@ -318,6 +318,12 @@ class quanttree {
   static bool should_inline_EdownAdown(direction dir,
                                        const quanttree::entry& pos,
                                        const quanttree::entry& possible_inline);
+  static bool should_inline_EupAdown(direction dir,
+                                     const quanttree::entry& pos,
+                                     const quanttree::entry& possible_inline);
+  static bool should_inline_EdownAup(direction dir,
+                                     const quanttree::entry& pos,
+                                     const quanttree::entry& possible_inline);
 
   std::ostream& to_dot(std::string_view name, std::ostream& o, uint32_t root);
 };

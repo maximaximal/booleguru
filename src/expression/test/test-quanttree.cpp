@@ -29,9 +29,9 @@ TEST_CASE("Build a quanttree and call Eup Aup") {
   f = t.add(f, b);
   c = t.add(Exists, 1, f);
 
-  t.activate_animation("EupAup");
+  t.activate_animation("EupAdown");
 
-  t.prenex(c, &quanttree::should_inline_EupAup);
+  t.prenex(c, &quanttree::should_inline_EupAdown);
 }
 
 TEST_CASE("Build a quanttree and erase a path below a fork") {
