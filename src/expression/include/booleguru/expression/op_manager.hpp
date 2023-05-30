@@ -3,6 +3,7 @@
 #include <cassert>
 #include <functional>
 #include <memory>
+#include <type_traits>
 
 #include "manager.hpp"
 #include "op.hpp"
@@ -52,33 +53,78 @@ class op_manager : public manager<op_ref, op_manager> {
     std::function<void(uint32_t, const op&)> visit);
   void reset_op_user_vars();
 
+  /** @brief Traverse the expression tree in postorder and provide a facility to
+   * return a changed tree.
+   *
+   * If visit(op_manager*,ref) returns a non-0 result that is different from the
+   * ref it was given, the parent node that is traversed later will get the
+   * replaced node in the correct child slot. This makes ad-hoc changes of the
+   * tree without recursion more elegant.
+   */
   template<typename Visitor>
-  void traverse_postorder_with_stack(ref root, Visitor visit) {
-    std::stack<ref> s;
+  std::invoke_result_t<Visitor, op_manager*, ref> traverse_postorder_with_stack(
+    ref root,
+    Visitor visit) {
+    enum class dir { left, right, none };
+    std::vector<std::pair<ref, dir>> s;
+
+    uint32_t r = 0;
 
     do {
       while(root) {
         auto right = getobj(root).right();
         if(right)
-          s.push(right);
-        s.push(root);
+          s.emplace_back(std::make_pair(right, dir::right));
+        s.emplace_back(std::make_pair(root, s.empty() ? dir::none : dir::left));
         auto left = getobj(root).left();
         root = left;
       }
 
-      root = s.top();
-      s.pop();
+      root = s.back().first;
+      dir d = s.back().second;
+      s.pop_back();
 
       auto right = getobj(root).right();
-      if(right && s.top() == right) {
-        s.pop();
-        s.push(root);
+      if(right && s.back().first == right) {
+        s.pop_back();
+        s.emplace_back(std::make_pair(root, d));
         root = right;
+        d = dir::right;
       } else {
-        visit(this, root);
+        if constexpr(std::is_same<
+                       std::invoke_result_t<Visitor, op_manager*, ref>,
+                       ref>()) {
+          uint32_t new_root = visit(this, root);
+          if(new_root && new_root != root) {
+            // Change the old entry and modify the parent in the tree to have
+            // the new child node.
+            switch(d) {
+              case dir::left:
+                assert(s.size() >= 2);
+                assert(getobj(s[s.size() - 2].first).left() == root);
+                break;
+              case dir::right:
+                assert(s.size() >= 1);
+                assert(getobj(s[s.size() - 1].first).right() == root);
+                break;
+              case dir::none:
+                break;
+            }
+          } else {
+            new_root = root;
+          }
+          r = new_root;
+        } else {
+          visit(this, root);
+        }
         root = 0;
       }
     } while(!s.empty());
+
+    if constexpr(std::is_same<std::invoke_result_t<Visitor, op_manager*, ref>,
+                              ref>()) {
+      return r;
+    }
   }
 };
 

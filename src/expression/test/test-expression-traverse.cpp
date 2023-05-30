@@ -33,3 +33,31 @@ TEST_CASE("Stackful Postorder expression tree traversal") {
 
   REQUIRE_THAT(log, Equals(expected));
 }
+
+TEST_CASE("Stackful Postorder expression tree traversal with modification") {
+  std::vector<uint32_t> log;
+
+  op_manager ops;
+
+  op_ref a = "a"_var(ops);
+  op_ref b = "b"_var(ops);
+  op_ref c = "c"_var(ops);
+
+  op_ref i = impl(a, b);
+
+  op_ref n = !i;
+
+  uint32_t root = ops.traverse_postorder_with_stack(
+    n.get_id(), [&log, &b, &c](op_manager* ops, uint32_t i) -> uint32_t {
+      (void)ops;
+
+      if(i == b.get_id()) {
+        return c.get_id();
+      }
+      return 0;
+    });
+
+  CAPTURE(log);
+
+  REQUIRE(ops[root].to_string() == "!(a -> c)");
+}

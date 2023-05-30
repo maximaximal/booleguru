@@ -42,6 +42,12 @@ prenex_quantifier::operator()(op_ref o) {
   // I want to postorder traverse the tree and remove all quantifiers in the
   // process. In the end, the collected quantifiers are used from the quanttree.
 
+  o.get_mgr().traverse_postorder_with_stack(
+    o.get_id(), [](expression::op_manager* ops, uint32_t o) -> void {
+      (void)ops;
+      (void)o;
+    });
+
   struct e {
     op_ref o;
     uint32_t e;
