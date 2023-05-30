@@ -51,6 +51,35 @@ class op_manager : public manager<op_ref, op_manager> {
     uint32_t root,
     std::function<void(uint32_t, const op&)> visit);
   void reset_op_user_vars();
+
+  template<typename Visitor>
+  void traverse_postorder_with_stack(ref root, Visitor visit) {
+    std::stack<ref> s;
+
+    do {
+      while(root) {
+        auto right = getobj(root).right();
+        if(right)
+          s.push(right);
+        s.push(root);
+        auto left = getobj(root).left();
+        root = left;
+      }
+
+      root = s.top();
+      s.pop();
+
+      auto right = getobj(root).right();
+      if(right && s.top() == right) {
+        s.pop();
+        s.push(root);
+        root = right;
+      } else {
+        visit(this, root);
+        root = 0;
+      }
+    } while(!s.empty());
+  }
 };
 
 op_ref inline

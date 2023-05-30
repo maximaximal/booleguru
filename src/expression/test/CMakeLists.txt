@@ -2,6 +2,7 @@ set(TEST_SRCS
   test-expression-and-inside.cpp
   test-user-defined-literals.cpp
   test-quanttree.cpp
+  test-expression-traverse.cpp
 )
 
 add_executable(booleguru-expression-test ${TEST_SRCS})
