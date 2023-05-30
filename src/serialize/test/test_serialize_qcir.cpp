@@ -5,8 +5,8 @@
 
 #include <booleguru/serialize/qcir.hpp>
 
-#include <booleguru/expression/var_manager.hpp>
 #include <booleguru/expression/literals.hpp>
+#include <booleguru/expression/var_manager.hpp>
 
 using namespace booleguru::serialize;
 using namespace booleguru::expression;
@@ -180,7 +180,7 @@ TEST_CASE("Non prenex non CNF to QCIR") {
 
   auto formula = forall(z, formula_1 && formula_2);
 
-    std::stringstream o;
+  std::stringstream o;
   booleguru::serialize::qcir serializer(o);
   serializer(formula);
 
@@ -188,7 +188,7 @@ TEST_CASE("Non prenex non CNF to QCIR") {
   // REQUIRE(false);
   CAPTURE(o.str());
 
-   const char* expected = R"(#QCIR-G14 6
+  const char* expected = R"(#QCIR-G14 6
 forall(2)
 output(6)
 3 = xor(1, 2)
@@ -198,12 +198,10 @@ output(6)
 )";
 
   REQUIRE(o.str() == expected);
-
 }
 
 TEST_CASE("Formula with equivalence to QCIR") {
   op_manager ops;
-
 
   op_ref a = "a"_var(ops);
   op_ref b = "b"_var(ops);
@@ -212,7 +210,7 @@ TEST_CASE("Formula with equivalence to QCIR") {
 
   auto formula = (x || !a || !b || !c) && (!x || a) && (!x || b) && (!x || c);
 
-    std::stringstream o;
+  std::stringstream o;
   booleguru::serialize::qcir serializer(o);
   serializer(formula);
 
@@ -220,7 +218,7 @@ TEST_CASE("Formula with equivalence to QCIR") {
   // REQUIRE(false);
   CAPTURE(o.str());
 
-   const char* expected = R"(#QCIR-G14 9
+  const char* expected = R"(#QCIR-G14 9
 free(1, 2, 3, 4)
 output(17)
 10 = or(4, -1, -2, -3)
@@ -231,5 +229,36 @@ output(17)
 )";
 
   REQUIRE(o.str() == expected);
+}
 
+TEST_CASE("Formula with similar or sub-trees converted to QCIR") {
+  op_manager ops;
+
+  op_ref a = "a"_var(ops);
+  op_ref b = "b"_var(ops);
+  op_ref c = "c"_var(ops);
+
+  op_ref l = impl(a, c);
+  op_ref r = impl(b, c);
+
+  op_ref f = equi(l, r);
+
+  std::stringstream o;
+  booleguru::serialize::qcir serializer(o);
+  serializer(f);
+
+  CAPTURE(f);
+  CAPTURE(o.str());
+
+  const char* expected = R"(#QCIR-G14 8
+free(1, 2, 3)
+output(20)
+15 = or(-2, 3)
+17 = or(-1, 3, -15)
+13 = or(-1, 3)
+19 = or(-13, -2, 3)
+20 = and(17, 19)
+)";
+
+  REQUIRE(o.str() == expected);
 }
