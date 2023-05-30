@@ -5,6 +5,8 @@
 #include <memory>
 #include <type_traits>
 
+#include <iostream>
+
 #include "manager.hpp"
 #include "op.hpp"
 #include "reference.hpp"
@@ -63,28 +65,73 @@ class op_manager : public manager<op_ref, op_manager> {
    */
   template<typename Visitor>
   std::invoke_result_t<Visitor, op_manager*, ref> traverse_postorder_with_stack(
-    ref root,
+    ref orig_root,
     Visitor visit) {
     enum class dir { left, right, none };
     std::vector<std::pair<ref, dir>> s;
 
+    auto propagate = [this, &s](ref old_ref, ref new_ref, dir d) -> void {
+      ssize_t i = s.size() - 1;
+
+      while(old_ref != new_ref && i >= 0) {
+        switch(d) {
+          case dir::left: {
+            // The stack entry above the current one could already be the
+            // parent, if there was no right entry. Check the direction of the
+            // parent first.
+
+            dir immediate_parent_dir = s[i].second;
+            ssize_t dist = immediate_parent_dir == dir::right ? 1 : 0;
+
+            assert(i >= dist);
+            ref& parent = s[i - dist].first;
+            d = s[i - dist].second;
+            auto& parent_obj = getobj(parent);
+            assert(parent_obj.left() == old_ref);
+            old_ref = parent;
+            new_ref = get_id(op(parent_obj.type, new_ref, parent_obj.right()));
+            parent = new_ref;
+            i = i - 1 - dist;
+            break;
+          }
+          case dir::right: {
+            assert(i >= 1);
+            ref& parent = s[i].first;
+            d = s[i].second;
+            auto& parent_obj = getobj(parent);
+            assert(parent_obj.right() == old_ref);
+            old_ref = parent;
+            new_ref = get_id(op(parent_obj.type, parent_obj.left(), new_ref));
+            parent = new_ref;
+            i -= 1;
+            break;
+          }
+          case dir::none:
+            break;
+        }
+      }
+    };
+
+    ref root = orig_root;
     uint32_t r = 0;
+    dir d = dir::none;
 
     do {
       while(root) {
         auto right = getobj(root).right();
         if(right)
           s.emplace_back(std::make_pair(right, dir::right));
-        s.emplace_back(std::make_pair(root, s.empty() ? dir::none : dir::left));
+        s.emplace_back(std::make_pair(root, d));
         auto left = getobj(root).left();
         root = left;
+        d = dir::left;
       }
 
       root = s.back().first;
-      dir d = s.back().second;
+      d = s.back().second;
       s.pop_back();
 
-      auto right = getobj(root).right();
+      ref right = getobj(root).right();
       if(right && s.back().first == right) {
         s.pop_back();
         s.emplace_back(std::make_pair(root, d));
@@ -98,18 +145,7 @@ class op_manager : public manager<op_ref, op_manager> {
           if(new_root && new_root != root) {
             // Change the old entry and modify the parent in the tree to have
             // the new child node.
-            switch(d) {
-              case dir::left:
-                assert(s.size() >= 2);
-                assert(getobj(s[s.size() - 2].first).left() == root);
-                break;
-              case dir::right:
-                assert(s.size() >= 1);
-                assert(getobj(s[s.size() - 1].first).right() == root);
-                break;
-              case dir::none:
-                break;
-            }
+            propagate(root, new_root, d);
           } else {
             new_root = root;
           }
@@ -118,6 +154,7 @@ class op_manager : public manager<op_ref, op_manager> {
           visit(this, root);
         }
         root = 0;
+        d = dir::none;
       }
     } while(!s.empty());
 

@@ -6,37 +6,38 @@
 
 namespace booleguru::transform {
 struct prenex_quantifier {
-  enum {
+  enum kind {
     Eup_Aup,
     Eup_Adown,
     Edown_Aup,
     Edown_Adown,
   };
 
-  prenex_quantifier();
+  prenex_quantifier(kind k = Eup_Aup);
+  ~prenex_quantifier();
 
-  inline expression::op_ref operator()(expression::op_ref o);
+  expression::op_ref operator()(expression::op_ref o);
 
   private:
   struct inner;
   std::unique_ptr<inner> i_;
 
-  struct walker_action;
+  expression::op_ref walk(expression::op_ref o);
 
-  walker_action post_action(expression::op_ref o);
+  expression::op_ref walk_quant(expression::op_ref o);
 
-  walker_action walk_quant(expression::op_ref o);
+  expression::op_ref walk_var(expression::op_ref o);
 
-  walker_action walk_exists(expression::op_ref o);
+  expression::op_ref walk_not(expression::op_ref o);
 
-  walker_action walk_forall(expression::op_ref o);
+  expression::op_ref walk_impl(expression::op_ref o);
 
-  walker_action walk_var(expression::op_ref o);
+  expression::op_ref walk_lpmi(expression::op_ref o);
 
-  walker_action walk_not(expression::op_ref o);
+  expression::op_ref walk_equi(expression::op_ref o);
 
-  walker_action walk_impl(expression::op_ref o);
+  expression::op_ref walk_bin(expression::op_ref o);
 
-  walker_action walk_lpmi(expression::op_ref o);
+  expression::op_ref walk_xor(expression::op_ref o);
 };
 }

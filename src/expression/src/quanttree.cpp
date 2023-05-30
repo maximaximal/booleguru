@@ -1,3 +1,4 @@
+#include "booleguru/expression/op.hpp"
 #include <fstream>
 #include <limits>
 #include <stack>
@@ -61,6 +62,25 @@ quanttree::add(op_type quant_type, uint32_t var, uint32_t next) {
 uint32_t
 quanttree::add(op_type quant_type, uint32_t var) {
   return add(quant_type, var, std::numeric_limits<uint32_t>::max());
+}
+
+void
+quanttree::flip_downwards(uint32_t start) {
+  std::stack<uint32_t> unvisited;
+  unvisited.emplace(start);
+
+  while(!unvisited.empty()) {
+    uint32_t i = unvisited.top();
+    unvisited.pop();
+
+    entry& e = v[i];
+    if(e.is_fork_) {
+      unvisited.emplace(e.f.left);
+      unvisited.emplace(e.f.right);
+    } else {
+      e.p.type = op_type_flip_quantifier(e.p.type);
+    }
+  }
 }
 
 void
@@ -157,6 +177,18 @@ quanttree::marked_contains_forks(uint32_t i) {
 
 uint32_t
 quanttree::add(uint32_t left, uint32_t right) {
+  if(left == std::numeric_limits<uint32_t>::max() &&
+     right == std::numeric_limits<uint32_t>::max()) {
+    return std::numeric_limits<uint32_t>::max();
+  }
+  if(left != std::numeric_limits<uint32_t>::max() &&
+     right == std::numeric_limits<uint32_t>::max()) {
+    return left;
+  }
+  if(left == std::numeric_limits<uint32_t>::max() &&
+     right != std::numeric_limits<uint32_t>::max()) {
+    return right;
+  }
   size_t s = v.size();
   v.emplace_back(left, right);
   assert(left < v.size());

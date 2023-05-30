@@ -126,6 +126,8 @@ class quanttree {
     quanttree& v_;
   };
 
+  void flip_downwards(uint32_t start);
+
   flip_ctx open_flip_ctx() {
     ++flip_ctx_count;
     return flip_ctx(*this);
@@ -276,7 +278,7 @@ class quanttree {
           continue;
 
         walk_next_paths(v[f],
-                        [this, f, root, &should_inline, &e, c](entry& check) {
+                        [this, root, &should_inline, &e, c](entry& check) {
                           if(should_inline(direction::downwards, e, check)) {
                             splice_path_after_path(c, index(check));
                             if(animate)
@@ -304,7 +306,7 @@ class quanttree {
             continue;
 
           walk_next_paths(
-            v[f], [this, f, root, &should_inline, &e, &bottom](entry& check) {
+            v[f], [this, root, &should_inline, &e, &bottom](entry& check) {
               if(should_inline(direction::upwards, e, check)) {
                 bottom = splice_path_before_path(bottom, index(check));
                 if(animate)

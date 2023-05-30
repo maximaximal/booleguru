@@ -48,3 +48,22 @@ TEST_CASE("Build a quanttree and erase a path below a fork") {
   REQUIRE(t[t[c].p.next].is_path());
   REQUIRE(t[t[c].p.next].p.var == 21);
 }
+
+TEST_CASE("Build a quanttree and flip a part of its quantifiers") {
+  quanttree t;
+  uint32_t a, b, f, c;
+  a = t.add(Exists, 21);
+  b = t.add(Forall, 31);
+  f = t.add(a, b);
+  c = t.add(Exists, 11, f);
+
+  REQUIRE(t[a].p.type == Exists);
+  REQUIRE(t[b].p.type == Forall);
+  REQUIRE(t[c].p.type == Exists);
+
+  t.flip_downwards(f);
+
+  REQUIRE(t[a].p.type == Forall);
+  REQUIRE(t[b].p.type == Exists);
+  REQUIRE(t[c].p.type == Exists);
+}

@@ -50,28 +50,18 @@ TEST_CASE("Transform a simple Non-Prenex formula into prenex formula") {
   CAPTURE(serialized.str());
 
   prenex_quantifier p;
-  p(op_g8);
+  op_ref prenexed = p(op_g8);
+
+  CAPTURE(op_g8.to_string());
 
   std::stringstream transformed;
-  transformed << p(op_g8);
+  transformed << prenexed;
 
   const char* expected =
     R"(?p[1] ?r[3] #q[2] #q[3] ?r[2] ((p[1] | q[2] | r[2]) & (!p[1] | q[3] | r[3])))";
 
   REQUIRE(transformed.str() == expected);
 }
-
-struct prenex_test_variant {
-  using F = std::function<op_ref(op_ref)>;
-  F transform;
-  std::string match_result;
-  std::string name;
-
-  template<class T>
-  static prenex_test_variant gen(std::string name, std::string match_result) {
-    return prenex_test_variant{ prenex_quantifier<T>(), match_result, name };
-  }
-};
 
 op_ref
 build_formula_to_be_prenexed(std::shared_ptr<op_manager> ops) {
@@ -103,7 +93,7 @@ TEST_CASE("Transform a simple Non-Prenex cleansed formula into prenex formula "
                          "((p | q | r | s | t) & (p | q' | r') & "
                          "!(p | q'' | r''))";
 
-  prenex_quantifier<prenex_quantifier_Eup_Aup> p;
+  prenex_quantifier p(prenex_quantifier::Eup_Aup);
   op_ref prenexed = p(formula);
 
   REQUIRE(prenexed.to_string() == expected);
@@ -120,7 +110,7 @@ TEST_CASE("Transform a simple Non-Prenex cleansed formula into prenex formula "
                          "((p | q | r | s | t) & (p | q' | r') & "
                          "!(p | q'' | r''))";
 
-  prenex_quantifier<prenex_quantifier_Edown_Aup> p;
+  prenex_quantifier p(prenex_quantifier::Edown_Aup);
   op_ref prenexed = p(formula);
 
   REQUIRE(prenexed.to_string() == expected);
@@ -137,7 +127,7 @@ TEST_CASE("Transform a simple Non-Prenex cleansed formula into prenex formula "
                          "((p | q | r | s | t) & (p | q' | r') & "
                          "!(p | q'' | r''))";
 
-  prenex_quantifier<prenex_quantifier_Eup_Adown> p;
+  prenex_quantifier p(prenex_quantifier::Eup_Adown);
   op_ref prenexed = p(formula);
 
   REQUIRE(prenexed.to_string() == expected);
@@ -154,7 +144,7 @@ TEST_CASE("Transform a simple Non-Prenex cleansed formula into prenex formula "
                          "((p | q | r | s | t) & (p | q' | r') & "
                          "!(p | q'' | r''))";
 
-  prenex_quantifier<prenex_quantifier_Edown_Adown> p;
+  prenex_quantifier p(prenex_quantifier::Edown_Adown);
   op_ref prenexed = p(formula);
 
   REQUIRE(prenexed.to_string() == expected);
@@ -172,7 +162,7 @@ TEST_CASE("Prenex a formula with multiple sub-trees with quantified variables "
 
   op_ref formula = sub_tree_1 && sub_tree_2 && sub_tree_3;
 
-  prenex_quantifier<prenex_quantifier_Edown_Aup> prenexer;
+  prenex_quantifier prenexer(prenex_quantifier::Edown_Aup);
   op_ref prenexed = prenexer(formula);
 
   CAPTURE(prenexed.to_string());
@@ -321,7 +311,7 @@ TEST_CASE("QBF Prenex K3 Edown Adown") {
   REQUIRE(result);
   op_ref k3_root = *result;
 
-  prenex_quantifier<prenex_quantifier_Edown_Adown> prenexer;
+  prenex_quantifier prenexer(prenex_quantifier::Edown_Adown);
   op_ref k3_prenexed = prenexer(k3_root);
 
   std::string quantifiers =
@@ -461,7 +451,7 @@ TEST_CASE("QBF Prenex K3 Eup Adown") {
   REQUIRE(result);
   op_ref k3_root = *result;
 
-  prenex_quantifier<prenex_quantifier_Eup_Adown> prenexer;
+  prenex_quantifier prenexer(prenex_quantifier::Eup_Adown);
   op_ref k3_prenexed = prenexer(k3_root);
 
   std::string quantifiers = "?s_1_0 ?v1 ?v2 ?v3 ?v4 ?v5 ?s_2_0 ?s_3_0 #s_1_1 "

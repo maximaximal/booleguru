@@ -34,7 +34,7 @@ TEST_CASE("Stackful Postorder expression tree traversal") {
   REQUIRE_THAT(log, Equals(expected));
 }
 
-TEST_CASE("Stackful Postorder expression tree traversal with modification") {
+TEST_CASE("Stackful Postorder expression tree traversal with modification 1") {
   std::vector<uint32_t> log;
 
   op_manager ops;
@@ -60,4 +60,30 @@ TEST_CASE("Stackful Postorder expression tree traversal with modification") {
   CAPTURE(log);
 
   REQUIRE(ops[root].to_string() == "!(a -> c)");
+}
+
+TEST_CASE("Stackful Postorder expression tree traversal with modification 2") {
+  std::vector<uint32_t> log;
+
+  op_manager ops;
+
+  op_ref a = "a"_var(ops);
+  op_ref b = "b"_var(ops);
+
+  op_ref i = lpmi(a, b);
+
+  op_ref n = !i;
+
+  uint32_t root = ops.traverse_postorder_with_stack(
+    n.get_id(), [&log, &b](op_manager* ops, uint32_t i) -> uint32_t {
+      op_ref r = (*ops)[i];
+      if(r->type == op_type::Lpmi) {
+        return ops->get_id(op(op_type::Impl, r->left(), r->right()));
+      }
+      return 0;
+    });
+
+  CAPTURE(log);
+
+  REQUIRE(ops[root].to_string() == "!(a -> b)");
 }

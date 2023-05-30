@@ -4,7 +4,7 @@
 #include <memory>
 
 namespace booleguru::expression {
-enum class op_type;
+enum class op_type : uint8_t;
 class op_ref;
 class var_manager;
 class op_manager;

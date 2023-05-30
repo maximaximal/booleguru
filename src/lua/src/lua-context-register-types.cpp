@@ -110,6 +110,12 @@ transform_op(op_ref& o) {
   return Transformer()(o);
 }
 
+template<class Transformer, transform::prenex_quantifier::kind k>
+static op_ref
+transform_prenex(op_ref& o) {
+  return Transformer(k)(o);
+}
+
 static op_ref
 get_variable_from_manager(const std::string& name, op_manager& mgr) {
   auto varref = mgr.vars().get(variable{ name });
@@ -117,7 +123,7 @@ get_variable_from_manager(const std::string& name, op_manager& mgr) {
 }
 
 auto
-fennel_s(sol::state& s, const std::string& fennel) -> auto{
+fennel_s(sol::state& s, const std::string& fennel) -> auto {
   const std::string name = s["fennel"]["mangle"](fennel);
   return s[name];
 }
@@ -186,30 +192,26 @@ lua_context::register_booleguru_types() {
     return transform::tseitin<transform::output_to_op>(*ops_);
   }());
 
-  set_to_state(
-    s,
-    "prenex_quantifier_Eup_Aup",
-    "prenex-quantifier-Eup-Aup",
-    &transform_op<
-      transform::prenex_quantifier<transform::prenex_quantifier_Eup_Aup>>);
-  set_to_state(
-    s,
-    "prenex_quantifier_Edown_Adown",
-    "prenex-quantifier-Edown-Adown",
-    &transform_op<
-      transform::prenex_quantifier<transform::prenex_quantifier_Edown_Adown>>);
-  set_to_state(
-    s,
-    "prenex_quantifier_Eup_Adown",
-    "prenex-quantifier-Eup-Adown",
-    &transform_op<
-      transform::prenex_quantifier<transform::prenex_quantifier_Eup_Adown>>);
-  set_to_state(
-    s,
-    "prenex_quantifier_Edown_Aup",
-    "prenex-quantifier-Edown-Aup",
-    &transform_op<
-      transform::prenex_quantifier<transform::prenex_quantifier_Edown_Aup>>);
+  set_to_state(s,
+               "prenex_quantifier_Eup_Aup",
+               "prenex-quantifier-Eup-Aup",
+               &transform_prenex<transform::prenex_quantifier,
+                                 transform::prenex_quantifier::Eup_Aup>);
+  set_to_state(s,
+               "prenex_quantifier_Edown_Adown",
+               "prenex-quantifier-Edown-Adown",
+               &transform_prenex<transform::prenex_quantifier,
+                                 transform::prenex_quantifier::Edown_Adown>);
+  set_to_state(s,
+               "prenex_quantifier_Eup_Adown",
+               "prenex-quantifier-Eup-Adown",
+               &transform_prenex<transform::prenex_quantifier,
+                                 transform::prenex_quantifier::Eup_Adown>);
+  set_to_state(s,
+               "prenex_quantifier_Edown_Aup",
+               "prenex-quantifier-Edown-Aup",
+               &transform_prenex<transform::prenex_quantifier,
+                                 transform::prenex_quantifier::Edown_Aup>);
 
   const std::string bvar = s["fennel"]["mangle"]("b-var");
   s.set_function("b_var", &lua_context::get_var, this);
