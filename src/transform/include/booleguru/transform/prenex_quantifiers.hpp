@@ -1,37 +1,42 @@
 #pragma once
 
-#include <booleguru/expression/quantvec.hpp>
+#include <memory>
 
-#include "visitor.hpp"
+#include <booleguru/expression/op_manager.hpp>
 
 namespace booleguru::transform {
-struct prenex_quantifier_Eup_Aup;
-struct prenex_quantifier_Eup_Adown;
-struct prenex_quantifier_Edown_Aup;
-struct prenex_quantifier_Edown_Adown;
-template<class Strategy = prenex_quantifier_Eup_Aup>
-struct prenex_quantifier : public visitor<prenex_quantifier<Strategy>> {
-  std::unordered_map<uint32_t, uint32_t> bounds_map;
-  int32_t quantifier_nesting = 0;
-  int32_t deepest_quantifier_nesting = std::numeric_limits<int32_t>::min();
+struct prenex_quantifier {
+  enum {
+    Eup_Aup,
+    Eup_Adown,
+    Edown_Aup,
+    Edown_Adown,
+  };
 
-  expression::quantlist quants;
-  expression::quantlist::iterator critical_path_end;
+  prenex_quantifier();
 
-  expression::op_ref post_action(expression::op_ref o);
+  inline expression::op_ref operator()(expression::op_ref o);
 
-  expression::op_ref walk_quant(expression::op_ref o);
+  private:
+  struct inner;
+  std::unique_ptr<inner> i_;
 
-  expression::op_ref walk_exists(expression::op_ref o);
+  struct walker_action;
 
-  expression::op_ref walk_forall(expression::op_ref o);
+  walker_action post_action(expression::op_ref o);
 
-  expression::op_ref walk_var(expression::op_ref o);
+  walker_action walk_quant(expression::op_ref o);
 
-  expression::op_ref walk_not(expression::op_ref o);
+  walker_action walk_exists(expression::op_ref o);
 
-  expression::op_ref walk_impl(expression::op_ref o);
+  walker_action walk_forall(expression::op_ref o);
 
-  expression::op_ref walk_lpmi(expression::op_ref o);
+  walker_action walk_var(expression::op_ref o);
+
+  walker_action walk_not(expression::op_ref o);
+
+  walker_action walk_impl(expression::op_ref o);
+
+  walker_action walk_lpmi(expression::op_ref o);
 };
 }

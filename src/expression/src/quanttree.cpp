@@ -1,14 +1,9 @@
-#include <algorithm>
 #include <fstream>
-#include <iostream>
 #include <limits>
-#include <ranges>
 #include <stack>
 
+#include <booleguru/expression/op_manager.hpp>
 #include <booleguru/expression/quanttree.hpp>
-
-using std::cout;
-using std::endl;
 
 std::ostream&
 operator<<(std::ostream& o, const booleguru::expression::quanttree& q) {
@@ -284,9 +279,11 @@ quanttree::should_inline_EupAdown(direction dir,
   assert(possible_inline.is_path());
 
   if(dir == direction::downwards)
-    return pos.p.type == op_type::Exists && pos.p.type == possible_inline.p.type;
+    return pos.p.type == op_type::Exists &&
+           pos.p.type == possible_inline.p.type;
   if(dir == direction::upwards)
-    return pos.p.type == op_type::Forall && pos.p.type == possible_inline.p.type;
+    return pos.p.type == op_type::Forall &&
+           pos.p.type == possible_inline.p.type;
   return false;
 }
 bool
@@ -297,9 +294,11 @@ quanttree::should_inline_EdownAup(direction dir,
   assert(possible_inline.is_path());
 
   if(dir == direction::downwards)
-    return pos.p.type == op_type::Forall && pos.p.type == possible_inline.p.type;
+    return pos.p.type == op_type::Forall &&
+           pos.p.type == possible_inline.p.type;
   if(dir == direction::upwards)
-    return pos.p.type == op_type::Exists && pos.p.type == possible_inline.p.type;
+    return pos.p.type == op_type::Exists &&
+           pos.p.type == possible_inline.p.type;
   return false;
 }
 
@@ -315,5 +314,15 @@ quanttree::create_animation_step(uint32_t root) {
   ++animate_step;
   std::ofstream f(animation_path + "_" + name + ".dot");
   to_dot(name, f, root);
+}
+
+op_ref
+quanttree::prepend_marked_to_op(uint32_t root, op_ref o) {
+  for(uint32_t i = last_path(root); i < size(); i = v[i].parent_) {
+    assert(v[i].is_path());
+    path& p = v[i].p;
+    o = o.get_mgr().get(expression::op(p.type, p.var, o.get_id()));
+  }
+  return o;
 }
 }

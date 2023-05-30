@@ -6,8 +6,6 @@
 
 #include "op.hpp"
 
-#include <iostream>
-
 namespace booleguru::expression {
 /** Toolkit for manipulating quantifier trees */
 class quanttree {
@@ -28,6 +26,7 @@ class quanttree {
       return next != std::numeric_limits<uint32_t>::max();
     }
   };
+
   struct fork {
     uint32_t left;
     uint32_t right;
@@ -88,6 +87,11 @@ class quanttree {
     std::ostream& stream(std::ostream&) const;
   };
 
+  using should_inline_checker =
+    bool (*)(direction dir,
+             const quanttree::entry& pos,
+             const quanttree::entry& possible_inline);
+
   private:
   using qvec_t = std::vector<entry>;
   qvec_t v;
@@ -125,6 +129,12 @@ class quanttree {
   flip_ctx open_flip_ctx() {
     ++flip_ctx_count;
     return flip_ctx(*this);
+  }
+
+  void increment_flip_count() { ++flip_ctx_count; }
+  void decrement_flip_count() {
+    assert(flip_ctx_count > 0);
+    --flip_ctx_count;
   }
 
   [[nodiscard]] static bool consteval inline is_exists(
@@ -241,6 +251,8 @@ class quanttree {
   }
 
   void activate_animation(const std::string& path);
+
+  op_ref prepend_marked_to_op(uint32_t root, op_ref o);
 
   template<typename Functor>
   void prenex(uint32_t root, Functor should_inline) {
