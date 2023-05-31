@@ -252,6 +252,12 @@ class quanttree {
     return i;
   }
 
+  uint32_t last_entry_on_critical_path_with_quantifier(uint32_t i, op_type t) {
+    while(v[i].is_fork_ || (v[i].has_next() && v[next_path(i)].p.type == t))
+      i = next_marked(i);
+    return i;
+  }
+
   void activate_animation(const std::string& path);
 
   op_ref prepend_marked_to_op(uint32_t root, op_ref o);
@@ -263,37 +269,44 @@ class quanttree {
       create_animation_step(root);
 
     uint32_t bottom = 0;
-    for(uint32_t c = root; c < size(); c = next_marked(c)) {
-      entry& e = v[c];
-      if(e.is_fork())
-        continue;
-
-      bool is_above = true;
-      for(uint32_t f = root; is_above || (f < size() && last_path(f) == c);
-          f = next_marked(f)) {
-
-        if(f == c)
-          is_above = false;
-        if(!v[f].is_fork_)
+    bool changing = false;
+    do {
+      changing = false;
+      for(uint32_t c = root; c < size(); c = next_marked(c)) {
+        entry& e = v[c];
+        if(e.is_fork())
           continue;
 
-        walk_next_paths(v[f],
-                        [this, root, &should_inline, &e, c](entry& check) {
-                          if(should_inline(direction::downwards, e, check)) {
-                            splice_path_after_path(c, index(check));
-                            if(animate)
-                              create_animation_step(root);
-                          }
-                        });
+        bool is_above = true;
+        for(uint32_t f = root; f < size() && (is_above || last_path(f) == c);
+            f = next_marked(f)) {
+
+          if(f == c)
+            is_above = false;
+          if(!v[f].is_fork_)
+            continue;
+
+          walk_next_paths(
+            v[f], [this, root, &should_inline, &e, c, &changing](entry& check) {
+              if(should_inline(direction::downwards, e, check)) {
+                splice_path_after_path(c, index(check));
+                if(animate)
+                  create_animation_step(root);
+                changing = true;
+              }
+            });
+        }
+        bottom = c;
       }
-      bottom = c;
-    }
+    } while(changing && marked_contains_forks(root));
 
     if(marked_contains_forks(root)) {
       for(;;) {
         entry& e = v[bottom];
-        if(e.is_fork())
+        if(e.is_fork()) {
+          bottom = e.parent_;
           continue;
+        }
 
         bool is_below = true;
 
@@ -323,6 +336,8 @@ class quanttree {
   }
 
   void mark_critical_path(uint32_t root);
+
+  void unmark(uint32_t root);
 
   uint32_t index(const entry& e) const { return e.index(v.data()); }
 

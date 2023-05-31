@@ -57,91 +57,76 @@ class op_manager : public manager<op_ref, op_manager> {
 
   /** @brief Traverse the expression tree in postorder and provide a facility to
    * return a changed tree.
-   *
-   * If visit(op_manager*,ref) returns a non-0 result that is different from the
-   * ref it was given, the parent node that is traversed later will get the
-   * replaced node in the correct child slot. This makes ad-hoc changes of the
-   * tree without recursion more elegant.
    */
   template<typename Visitor>
   std::invoke_result_t<Visitor, op_manager*, ref> traverse_postorder_with_stack(
     ref orig_root,
     Visitor visit) {
-    enum class dir { left, right, none };
-    std::vector<std::pair<ref, dir>> s;
 
-    auto propagate = [this, &s](ref new_ref, dir d) -> void {
-      ssize_t i = s.size() - 1;
+    // A reference to an op in the op_manager and a reference to the stack
+    // itself to the parent of the currently traversed node.
+    struct entry {
+      ref op;
+      uint32_t parent;
+      bool left;
 
-      switch(d) {
-        case dir::left: {
-          // The stack entry above the current one could already be the
-          // parent, if there was no right entry. Check the direction of the
-          // parent first.
-
-          dir immediate_parent_dir = s[i].second;
-          ssize_t dist = immediate_parent_dir == dir::right ? 1 : 0;
-
-          assert(i >= dist);
-          ref& parent = s[i - dist].first;
-          d = s[i - dist].second;
-          auto& parent_obj = getobj(parent);
-          new_ref = get_id(op(parent_obj.type, new_ref, parent_obj.right()));
-          parent = new_ref;
-          break;
-        }
-        case dir::right: {
-          ref& parent = s[i].first;
-          d = s[i].second;
-          auto& parent_obj = getobj(parent);
-          new_ref = get_id(op(parent_obj.type, parent_obj.left(), new_ref));
-          parent = new_ref;
-          break;
-        }
-        case dir::none:
-          break;
-      }
+      entry(ref op, uint32_t parent, bool left)
+        : op(op)
+        , parent(parent)
+        , left(left) {}
     };
+    std::vector<entry> s;
 
     ref root = orig_root;
     uint32_t r = 0;
-    dir d = dir::none;
+    bool l = false;
+    ref parent = std::numeric_limits<uint32_t>::max();
 
     do {
       while(root) {
         auto right = getobj(root).right();
         if(right)
-          s.emplace_back(std::make_pair(right, dir::right));
-        s.emplace_back(std::make_pair(root, d));
+          s.emplace_back(right, s.size(), false);
+        s.emplace_back(root, parent, l);
         auto left = getobj(root).left();
+        parent = s.size() - 1;
         root = left;
-        d = dir::left;
+        l = true;
       }
 
-      root = s.back().first;
-      d = s.back().second;
+      root = s.back().op;
+      parent = s.back().parent;
+      l = s.back().left;
       s.pop_back();
 
       ref right = getobj(root).right();
-      if(right && s.back().first == right) {
+      if(right && s.back().op == right) {
         s.pop_back();
-        s.emplace_back(std::make_pair(root, d));
+        s.emplace_back(root, parent, l);
+        parent = s.size() - 1;
         root = right;
-        d = dir::right;
+        l = false;
       } else {
         if constexpr(std::is_same<
                        std::invoke_result_t<Visitor, op_manager*, ref>,
                        ref>()) {
           uint32_t new_root = visit(this, root);
-          // Change the old entry and modify the parent in the tree to have
-          // the new child node.
-          propagate(new_root, d);
+          if(parent != std::numeric_limits<uint32_t>::max()) {
+            assert(parent < s.size());
+            if(l) {
+              op_ref o = (*this)[s[parent].op];
+              s[parent].op = get_id(op(o->type, new_root, o->right()));
+            } else {
+              op_ref o = (*this)[s[parent].op];
+              s[parent].op = get_id(op(o->type, o->left(), new_root));
+            }
+          }
           r = new_root;
         } else {
           visit(this, root);
         }
         root = 0;
-        d = dir::none;
+        parent = std::numeric_limits<uint32_t>::max();
       }
     } while(!s.empty());
 

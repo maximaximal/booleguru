@@ -31,12 +31,6 @@ static quanttree::should_inline_checker checkermap[4] = {
 struct prenex_quantifier::inner {
   std::unordered_map<uint32_t, uint32_t> bounds_map;
   expression::quanttree qt;
-  uint32_t qt_root = 0;
-
-  // The stack of quantifiers is seen as in a stackful virtual machine. Binops
-  // take two and produce one, quantops add one for each started quantifier run,
-  // until a .
-  std::stack<uint32_t> qt_stack;
 
   quanttree::should_inline_checker checker;
 
@@ -61,8 +55,24 @@ prenex_quantifier::operator()(op_ref o) {
       return walk((*ops)[o]).get_id();
     });
 
-  i_->qt.prenex(i_->qt_root, i_->checker);
-  return i_->qt.prepend_marked_to_op(i_->qt_root, o.get_mgr()[new_root]);
+  uint32_t qt_root = o.get_mgr().getobj(new_root).user_int32;
+
+  std::cout << "Old O: " << o << std::endl;
+  std::cout << "New O: " << o.get_mgr()[new_root] << std::endl;
+
+  std::cout << "QT Root: " << qt_root << std::endl;
+  i_->qt.to_dot("prenex", std::cout, qt_root);
+
+  i_->qt.prenex(qt_root, i_->checker);
+  op_ref prepended =
+    i_->qt.prepend_marked_to_op(qt_root, o.get_mgr()[new_root]);
+  std::cout << "Prepended New O: " << prepended << std::endl;
+  return prepended;
+}
+
+void
+prenex_quantifier::animate(const std::string& path) {
+  i_->qt.activate_animation(path);
 }
 
 expression::op_ref
@@ -96,6 +106,12 @@ prenex_quantifier::walk(expression::op_ref o) {
 
 expression::op_ref
 prenex_quantifier::walk_quant(expression::op_ref o) {
+  assert(o->type == expression::op_type::Forall ||
+         o->type == expression::op_type::Exists);
+  assert(o.left()->type == expression::op_type::Var);
+
+  std::cout << "Walk Quant " << o << std::endl;
+
   const auto old_v = o.get_mgr()[o->quant.v]->var;
   auto& old_v_obj = o.get_mgr().vars().getobj(old_v.v);
 
@@ -105,11 +121,36 @@ prenex_quantifier::walk_quant(expression::op_ref o) {
 
   auto bound_v =
     o.get_mgr().get(expression::op(expression::op_type::Var, old_v.v, bound));
+  bound_v->user_int32 =
+    static_cast<uint32_t>(std::numeric_limits<uint32_t>::max());
 
   op_ref e = o.right();
   e->user_int32 = i_->qt.add((expression::op_type)o->type,
                              bound_v.get_id(),
                              static_cast<uint32_t>(e->user_int32));
+
+  // Travese all variables downwards again, now that the bound is fixed, if
+  // required.
+  if(bound != 0) {
+    uint32_t new_e = o.get_mgr().traverse_postorder_with_stack(
+      e.get_id(), [old_v, bound](op_manager* ops, uint32_t id) -> uint32_t {
+        op_ref o = (*ops)[id];
+        switch(o->type) {
+          case op_type::Var:
+            if(o->var.v == old_v.v && !o->var.q) {
+              return ops->get_id(
+                expression::op(expression::op_type::Var, old_v.v, bound));
+            }
+            return id;
+          default:
+            return id;
+        }
+      });
+
+    op_ref new_e_op = o.get_mgr()[new_e];
+    new_e_op->user_int32 = e->user_int32;
+    e = new_e_op;
+  }
 
   i_->bounds_map[old_v.v] = outer_bound;
 
@@ -136,7 +177,9 @@ prenex_quantifier::walk_var(expression::op_ref o) {
 expression::op_ref
 prenex_quantifier::walk_not(expression::op_ref o) {
   o->user_int32 = o.get_mgr().getobj(o->un.c).user_int32;
-  i_->qt.flip_downwards(static_cast<uint32_t>(o->user_int32));
+  if(static_cast<uint32_t>(o->user_int32) !=
+     std::numeric_limits<uint32_t>::max())
+    i_->qt.flip_downwards(static_cast<uint32_t>(o->user_int32));
   return o;
 }
 
@@ -172,6 +215,7 @@ prenex_quantifier::walk_lpmi(expression::op_ref o) {
 
 expression::op_ref
 prenex_quantifier::walk_equi(expression::op_ref o) {
+  assert(false);
   return o;
 }
 
@@ -184,6 +228,7 @@ prenex_quantifier::walk_bin(expression::op_ref o) {
 
 expression::op_ref
 prenex_quantifier::walk_xor(expression::op_ref o) {
+  assert(false);
   return o;
 }
 }

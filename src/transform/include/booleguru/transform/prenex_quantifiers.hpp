@@ -18,6 +18,8 @@ struct prenex_quantifier {
 
   expression::op_ref operator()(expression::op_ref o);
 
+  void animate(const std::string& path);
+
   private:
   struct inner;
   std::unique_ptr<inner> i_;

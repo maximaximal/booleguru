@@ -89,14 +89,47 @@ quanttree::splice_path_after_path(uint32_t path, uint32_t insert) {
   assert(v[insert].is_path());
   assert(v[v[insert].parent_].is_fork());
 
-  remove_entry(insert);
-
   mark_critical_path(insert);
 
-  uint32_t last = last_entry_on_critical_path(insert);
+  op_type t = v[insert].p.type;
 
-  v[last].p.next = v[path].p.next;
-  v[v[path].p.next].parent_ = last;
+  uint32_t last = last_entry_on_critical_path_with_quantifier(insert, t);
+
+  if(v[last].has_next()) {
+    // Move the fork that we got our insert from to the position right after the
+    // insert, i.e. after last.
+    uint32_t fork = v[insert].parent_;
+    assert(v[fork].is_fork_);
+
+    remove_entry(insert);
+
+    uint32_t next_r = v[last].p.next;
+    uint32_t next_l = v[path].p.next;
+
+    if(next_l == std::numeric_limits<uint32_t>::max()) {
+      // Don't continue anymore, as there is nothing else to continue to! Just
+      // insert there.
+      v[last].p.next = next_r;
+      v[next_r].parent_ = last;
+    } else {
+      unmark(next_r);
+      v[last].p.next = fork;
+      v[fork].parent_ = last;
+      v[fork].f.left = next_l;
+      v[fork].f.right = next_r;
+      v[fork].marked_ = true;
+      assert(!v[next_r].marked_);
+      v[next_l].parent_ = fork;
+      v[next_r].parent_ = fork;
+    }
+  } else {
+    remove_entry(insert);
+
+    v[last].p.next = v[path].p.next;
+    if(v[path].has_next()) {
+      v[v[path].p.next].parent_ = last;
+    }
+  }
   v[insert].parent_ = path;
   v[path].p.next = insert;
 }
@@ -246,6 +279,13 @@ quanttree::mark_critical_path(uint32_t root) {
   }
 }
 
+void
+quanttree::unmark(uint32_t root) {
+  for(uint32_t i = root; i < size(); i = next_marked(root)) {
+    v[i].marked_ = false;
+  }
+}
+
 std::ostream&
 quanttree::to_dot(std::string_view name, std::ostream& o, uint32_t root) {
   std::stack<uint32_t> unvisited;
@@ -350,7 +390,8 @@ quanttree::create_animation_step(uint32_t root) {
 
 op_ref
 quanttree::prepend_marked_to_op(uint32_t root, op_ref o) {
-  for(uint32_t i = last_path(root); i < size(); i = v[i].parent_) {
+  for(uint32_t i = last_entry_on_critical_path(root); i < size();
+      i = v[i].parent_) {
     assert(v[i].is_path());
     path& p = v[i].p;
     o = o.get_mgr().get(expression::op(p.type, p.var, o.get_id()));
