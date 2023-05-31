@@ -59,7 +59,7 @@ TEST_CASE("Transform a simple Non-Prenex formula into prenex formula") {
   transformed << prenexed;
 
   const char* expected =
-    R"(?p[1] ?r[3] #q[2] #q[3] ?r[2] ((p[1] | q[2] | r[2]) & (!p[1] | q[3] | r[3])))";
+    R"(?p ?r[1] #q[1] #q ?r ((p | q | r) & (!p | q[1] | r[1])))";
 
   REQUIRE(transformed.str() == expected);
 }
@@ -90,9 +90,9 @@ TEST_CASE("Transform a simple Non-Prenex cleansed formula into prenex formula "
 
   auto formula = build_formula_to_be_prenexed(ops);
 
-  const char* expected = "?p ?q'' #q #q' #r'' ?r ?r' #s ?t "
-                         "((p | q | r | s | t) & (p | q' | r') & "
-                         "!(p | q'' | r''))";
+  const char* expected =
+    "?p ?q'' #q #r'' #q' ?r ?r' #s ?t ((p | q | r | s | t) & (p | q' | r') & "
+    "!(p | q'' | r''))";
 
   prenex_quantifier p(prenex_quantifier::Eup_Aup);
   p.animate("test_EupAup");
@@ -113,6 +113,7 @@ TEST_CASE("Transform a simple Non-Prenex cleansed formula into prenex formula "
                          "!(p | q'' | r''))";
 
   prenex_quantifier p(prenex_quantifier::Edown_Aup);
+  p.animate("test_EdownAup");
   op_ref prenexed = p(formula);
 
   REQUIRE(prenexed.to_string() == expected);
@@ -130,6 +131,7 @@ TEST_CASE("Transform a simple Non-Prenex cleansed formula into prenex formula "
                          "!(p | q'' | r''))";
 
   prenex_quantifier p(prenex_quantifier::Eup_Adown);
+  p.animate("test_EupAdown");
   op_ref prenexed = p(formula);
 
   REQUIRE(prenexed.to_string() == expected);
@@ -147,6 +149,7 @@ TEST_CASE("Transform a simple Non-Prenex cleansed formula into prenex formula "
                          "!(p | q'' | r''))";
 
   prenex_quantifier p(prenex_quantifier::Edown_Adown);
+  p.animate("test_EdownAdown");
   op_ref prenexed = p(formula);
 
   REQUIRE(prenexed.to_string() == expected);

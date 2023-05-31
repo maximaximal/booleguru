@@ -113,6 +113,7 @@ quanttree::splice_path_after_path(uint32_t path, uint32_t insert) {
       v[next_r].parent_ = last;
     } else {
       unmark(next_r);
+      v[fork].is_fork_ = true;
       v[last].p.next = fork;
       v[fork].parent_ = last;
       v[fork].f.left = next_l;
