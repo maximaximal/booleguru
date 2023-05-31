@@ -54,7 +54,7 @@ TEST_CASE("Stackful Postorder expression tree traversal with modification 1") {
       if(i == b.get_id()) {
         return c.get_id();
       }
-      return 0;
+      return i;
     });
 
   CAPTURE(log);
@@ -80,7 +80,7 @@ TEST_CASE("Stackful Postorder expression tree traversal with modification 2") {
       if(r->type == op_type::Lpmi) {
         return ops->get_id(op(op_type::Impl, r->left(), r->right()));
       }
-      return 0;
+      return i;
     });
 
   CAPTURE(log);

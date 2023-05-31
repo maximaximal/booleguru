@@ -70,45 +70,36 @@ class op_manager : public manager<op_ref, op_manager> {
     enum class dir { left, right, none };
     std::vector<std::pair<ref, dir>> s;
 
-    auto propagate = [this, &s](ref old_ref, ref new_ref, dir d) -> void {
+    auto propagate = [this, &s](ref new_ref, dir d) -> void {
       ssize_t i = s.size() - 1;
 
-      while(old_ref != new_ref && i >= 0) {
-        switch(d) {
-          case dir::left: {
-            // The stack entry above the current one could already be the
-            // parent, if there was no right entry. Check the direction of the
-            // parent first.
+      switch(d) {
+        case dir::left: {
+          // The stack entry above the current one could already be the
+          // parent, if there was no right entry. Check the direction of the
+          // parent first.
 
-            dir immediate_parent_dir = s[i].second;
-            ssize_t dist = immediate_parent_dir == dir::right ? 1 : 0;
+          dir immediate_parent_dir = s[i].second;
+          ssize_t dist = immediate_parent_dir == dir::right ? 1 : 0;
 
-            assert(i >= dist);
-            ref& parent = s[i - dist].first;
-            d = s[i - dist].second;
-            auto& parent_obj = getobj(parent);
-            assert(parent_obj.left() == old_ref);
-            old_ref = parent;
-            new_ref = get_id(op(parent_obj.type, new_ref, parent_obj.right()));
-            parent = new_ref;
-            i = i - 1 - dist;
-            break;
-          }
-          case dir::right: {
-            assert(i >= 1);
-            ref& parent = s[i].first;
-            d = s[i].second;
-            auto& parent_obj = getobj(parent);
-            assert(parent_obj.right() == old_ref);
-            old_ref = parent;
-            new_ref = get_id(op(parent_obj.type, parent_obj.left(), new_ref));
-            parent = new_ref;
-            i -= 1;
-            break;
-          }
-          case dir::none:
-            break;
+          assert(i >= dist);
+          ref& parent = s[i - dist].first;
+          d = s[i - dist].second;
+          auto& parent_obj = getobj(parent);
+          new_ref = get_id(op(parent_obj.type, new_ref, parent_obj.right()));
+          parent = new_ref;
+          break;
         }
+        case dir::right: {
+          ref& parent = s[i].first;
+          d = s[i].second;
+          auto& parent_obj = getobj(parent);
+          new_ref = get_id(op(parent_obj.type, parent_obj.left(), new_ref));
+          parent = new_ref;
+          break;
+        }
+        case dir::none:
+          break;
       }
     };
 
@@ -142,13 +133,9 @@ class op_manager : public manager<op_ref, op_manager> {
                        std::invoke_result_t<Visitor, op_manager*, ref>,
                        ref>()) {
           uint32_t new_root = visit(this, root);
-          if(new_root && new_root != root) {
-            // Change the old entry and modify the parent in the tree to have
-            // the new child node.
-            propagate(root, new_root, d);
-          } else {
-            new_root = root;
-          }
+          // Change the old entry and modify the parent in the tree to have
+          // the new child node.
+          propagate(new_root, d);
           r = new_root;
         } else {
           visit(this, root);
