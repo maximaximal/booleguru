@@ -201,48 +201,16 @@ class quanttree {
 
   uint32_t marked_contains_forks(uint32_t root);
 
-  uint32_t next_marked(uint32_t i) {
-    const entry& e = v[i];
+  uint32_t next_highest_QAs(uint32_t i);
 
-    if(e.is_path()) {
-      return e.p.next;
-    }
+  uint32_t next_marked(uint32_t i);
 
-    uint32_t left_ = e.f.left;
-    const entry& left = v[left_];
-    uint32_t right_ = e.f.right;
-    const entry& right = v[right_];
-    if(left.marked_) {
-      return left_;
-    } else if(right.marked_) {
-      return right_;
-    } else {
-      assert(false);
-    }
-  }
+  uint32_t next_unmarked(const entry& e);
 
-  uint32_t next_unmarked(const entry& e) {
-    assert(e.is_fork_);
-    uint32_t left_ = e.f.left;
-    const entry& left = v[left_];
-    uint32_t right_ = e.f.right;
-    const entry& right = v[right_];
-    if(!left.marked_) {
-      return left_;
-    } else if(!right.marked_) {
-      return right_;
-    } else {
-      assert(false);
-    }
-  }
+  uint32_t last_path(uint32_t i);
 
-  uint32_t last_path(uint32_t i) {
-    assert(i < size());
-    while(v[i].is_fork_) {
-      i = v[i].parent_;
-    }
-    return i;
-  }
+  void correct_QA_diff(uint32_t path, uint32_t insert, uint32_t last);
+
   uint32_t next_path(uint32_t i) {
     assert(i < size());
     assert(v[i].is_fork_ || v[i].has_next());
@@ -277,6 +245,8 @@ class quanttree {
 
     uint32_t bottom = 0;
     bool changing = false;
+    bool ignore_QAs = false;
+
     do {
       changing = false;
       for(uint32_t c = root; c < size(); c = next_marked(c)) {
@@ -325,23 +295,27 @@ class quanttree {
             if(!v[f].is_fork_)
               continue;
 
-            walk_next_paths(v[f],
-                            [this,
-                             root,
-                             &should_inline,
-                             &e,
-                             &bottom,
-                             &next_override,
-                             &changing](entry& check) {
-                              if(should_inline(direction::upwards, e, check)) {
-                                next_override =
-                                  splice_path_before_path(bottom, index(check));
-                                if(animate)
-                                  create_animation_step(root);
-                                changing = true;
-                                e = v[next_override];
-                              }
-                            });
+            walk_next_paths(
+              v[f],
+              [this,
+               root,
+               &should_inline,
+               &e,
+               &bottom,
+               &next_override,
+               &changing,
+               ignore_QAs](entry& check) {
+                if(!ignore_QAs && e.get().alternations < check.alternations)
+                  return;
+
+                if(should_inline(direction::upwards, e, check)) {
+                  next_override = splice_path_before_path(bottom, index(check));
+                  if(animate)
+                    create_animation_step(root);
+                  changing = true;
+                  e = v[next_override];
+                }
+              });
 
             if(next_override != std::numeric_limits<uint32_t>::max()) {
               break;
@@ -355,7 +329,11 @@ class quanttree {
             break;
         }
       }
-    } while(changing && marked_contains_forks(root));
+      ignore_QAs = false;
+      if(!changing) {
+        ignore_QAs = true;
+      }
+    } while((changing || ignore_QAs) && marked_contains_forks(root));
   }
 
   void mark_critical_path(uint32_t root);

@@ -41,6 +41,7 @@ booleguru::expression::quanttree::entry::stream(std::ostream& o) const {
   } else {
     o << p.type << ":" << p.var;
   }
+  o << " (" << alternations << " QAs)";
   return o;
 }
 
@@ -54,6 +55,36 @@ quanttree::add(op_type quant_type, uint32_t var, uint32_t next) {
   if(v.emplace_back(t, var, next).has_next()) {
     assert(next < v.size());
     v[next].parent_ = s;
+
+    bool increment = false;
+    if(v[next].is_fork()) {
+      std::stack<uint32_t> unvisited;
+      unvisited.emplace(next);
+      while(!unvisited.empty() && !increment) {
+        uint32_t i = unvisited.top();
+        entry& e = v[i];
+        unvisited.pop();
+        if(e.is_fork_) {
+          entry& l = v[e.f.left];
+          entry& r = v[e.f.right];
+          if(l.alternations >= r.alternations) {
+            unvisited.emplace(e.f.left);
+          }
+          if(l.alternations <= r.alternations) {
+            unvisited.emplace(e.f.right);
+          }
+        } else {
+          increment = t != e.p.type;
+        }
+      }
+    } else {
+      increment = t != v[next].p.type;
+    }
+    if(increment) {
+      v[s].alternations = v[next].alternations + 1;
+    } else {
+      v[s].alternations = v[next].alternations;
+    }
   }
 
   return s;
@@ -64,8 +95,35 @@ quanttree::add(op_type quant_type, uint32_t var) {
   return add(quant_type, var, std::numeric_limits<uint32_t>::max());
 }
 
+uint32_t
+quanttree::add(uint32_t left, uint32_t right) {
+  if(left == std::numeric_limits<uint32_t>::max() &&
+     right == std::numeric_limits<uint32_t>::max()) {
+    return std::numeric_limits<uint32_t>::max();
+  }
+  if(left != std::numeric_limits<uint32_t>::max() &&
+     right == std::numeric_limits<uint32_t>::max()) {
+    return left;
+  }
+  if(left == std::numeric_limits<uint32_t>::max() &&
+     right != std::numeric_limits<uint32_t>::max()) {
+    return right;
+  }
+  size_t s = v.size();
+  v.emplace_back(left, right);
+  assert(left < v.size());
+  assert(right < v.size());
+  v[left].parent_ = s;
+  v[right].parent_ = s;
+
+  v[s].alternations = std::max(v[left].alternations, v[right].alternations);
+
+  return s;
+}
+
 void
 quanttree::flip_downwards(uint32_t start) {
+  assert(start != std::numeric_limits<uint32_t>::max());
   std::stack<uint32_t> unvisited;
   unvisited.emplace(start);
 
@@ -79,6 +137,20 @@ quanttree::flip_downwards(uint32_t start) {
       unvisited.emplace(e.f.right);
     } else {
       e.p.type = op_type_flip_quantifier(e.p.type);
+      if(e.has_next())
+        unvisited.emplace(e.p.next);
+    }
+  }
+}
+
+void
+quanttree::correct_QA_diff(uint32_t path, uint32_t insert, uint32_t last) {
+  // Update the number of quantifier alternations between insert->path to match
+  // the level at path.
+  uint32_t qa_diff = v[path].alternations - v[insert].alternations;
+  if(qa_diff > 0) {
+    for(uint32_t i = insert; i != v[last].p.next; i = next_marked(i)) {
+      v[i].alternations += qa_diff;
     }
   }
 }
@@ -94,6 +166,8 @@ quanttree::splice_path_after_path(uint32_t path, uint32_t insert) {
   op_type t = v[insert].p.type;
 
   uint32_t last = last_entry_on_critical_path_with_quantifier(insert, t);
+
+  correct_QA_diff(path, insert, last);
 
   if(v[last].has_next()) {
     // Move the fork that we got our insert from to the position right after the
@@ -147,6 +221,8 @@ quanttree::splice_path_before_path(uint32_t path, uint32_t insert) {
 
   uint32_t last = last_entry_on_critical_path_with_quantifier(insert, t);
   uint32_t returned = last;
+
+  correct_QA_diff(path, insert, last);
 
   if(v[last].has_next()) {
     // Move the fork that we got our insert from to the position right after the
@@ -244,80 +320,89 @@ quanttree::marked_contains_forks(uint32_t i) {
 }
 
 uint32_t
-quanttree::add(uint32_t left, uint32_t right) {
-  if(left == std::numeric_limits<uint32_t>::max() &&
-     right == std::numeric_limits<uint32_t>::max()) {
-    return std::numeric_limits<uint32_t>::max();
+quanttree::next_highest_QAs(uint32_t i) {
+  const entry& e = v[i];
+
+  if(e.is_path()) {
+    return e.p.next;
   }
-  if(left != std::numeric_limits<uint32_t>::max() &&
-     right == std::numeric_limits<uint32_t>::max()) {
-    return left;
+
+  uint32_t left_ = e.f.left;
+  const entry& left = v[left_];
+  uint32_t right_ = e.f.right;
+  const entry& right = v[right_];
+  if(left.alternations > right.alternations) {
+    return left_;
+  } else {
+    return right_;
   }
-  if(left == std::numeric_limits<uint32_t>::max() &&
-     right != std::numeric_limits<uint32_t>::max()) {
-    return right;
+}
+
+uint32_t
+quanttree::next_marked(uint32_t i) {
+  const entry& e = v[i];
+
+  if(e.is_path()) {
+    uint32_t next = e.p.next;
+    return next;
   }
-  size_t s = v.size();
-  v.emplace_back(left, right);
-  assert(left < v.size());
-  assert(right < v.size());
-  v[left].parent_ = s;
-  v[right].parent_ = s;
-  return s;
+
+  uint32_t left_ = e.f.left;
+  const entry& left = v[left_];
+  uint32_t right_ = e.f.right;
+  const entry& right = v[right_];
+  if(left.marked_) {
+    return left_;
+  } else if(right.marked_) {
+    return right_;
+  } else {
+    assert(false);
+  }
+}
+
+uint32_t
+quanttree::next_unmarked(const entry& e) {
+  assert(e.is_fork_);
+  uint32_t left_ = e.f.left;
+  const entry& left = v[left_];
+  uint32_t right_ = e.f.right;
+  const entry& right = v[right_];
+  if(!left.marked_) {
+    return left_;
+  } else if(!right.marked_) {
+    return right_;
+  } else {
+    assert(false);
+  }
+}
+
+uint32_t
+quanttree::last_path(uint32_t i) {
+  assert(i < size());
+  while(v[i].is_fork_) {
+    i = v[i].parent_;
+  }
+  return i;
 }
 
 void
 quanttree::mark_critical_path(uint32_t root) {
   assert(root < v.size());
-  struct st {
-    uint32_t i;
-    uint32_t logical_depth;
-    uint32_t syntactical_depth;
 
-    st(uint32_t i, uint32_t l, uint32_t s)
-      : i(i)
-      , logical_depth(l)
-      , syntactical_depth(s) {}
-  };
-  std::stack<st> s;
+  uint32_t i = root;
 
-  s.emplace(root, 1, 1);
-
-  uint32_t deepest_log = 0;
-  uint32_t deepest_syn = 0;
-  uint32_t deepest_entry_i = 0;
-
-  while(!s.empty()) {
-    uint32_t entry_i = s.top().i;
-    uint32_t logical_depth = s.top().logical_depth;
-    uint32_t syntactical_depth = s.top().syntactical_depth;
-    const entry& entry = v[entry_i];
-    s.pop();
-
-    if(entry.is_fork()) {
-      s.emplace(entry.f.left, logical_depth, syntactical_depth + 1);
-      s.emplace(entry.f.right, logical_depth, syntactical_depth + 1);
-    } else if(entry.has_next()) {
-      s.emplace(entry.f.right, logical_depth + 1, syntactical_depth + 1);
-    } else if(deepest_log < logical_depth) {
-      deepest_log = logical_depth;
-      deepest_syn = syntactical_depth;
-      deepest_entry_i = entry_i;
-    }
-  }
-
-  assert(deepest_syn > 0);
-
-  for(uint32_t i = deepest_syn; i > 0; --i) {
-    v[deepest_entry_i].mark();
-    deepest_entry_i = v[deepest_entry_i].parent_;
+  std::cout << "MARKING " << std::endl;
+  while(i != std::numeric_limits<uint32_t>::max()) {
+    v[i].stream(std::cout) << std::endl;
+    v[i].mark();
+    i = next_highest_QAs(i);
   }
 
   if(v[root].is_fork_) {
     uint32_t next = next_path(root);
-    v[root].is_fork_ = false;
     uint32_t left = v[root].f.left;
     uint32_t right = v[root].f.right;
+    v[root].is_fork_ = false;
     if(v[left].marked_) {
       v[root].p.next = left;
       left = next_marked(left);
@@ -337,7 +422,7 @@ quanttree::mark_critical_path(uint32_t root) {
 
 void
 quanttree::unmark(uint32_t root) {
-  for(uint32_t i = root; i < size(); i = next_marked(root)) {
+  for(uint32_t i = root; i < size(); i = next_marked(i)) {
     v[i].marked_ = false;
   }
 }

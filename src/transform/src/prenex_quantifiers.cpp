@@ -176,7 +176,10 @@ expression::op_ref
 prenex_quantifier::walk_impl(expression::op_ref o) {
   op_ref left =
     o.get_mgr().get(expression::op(expression::op_type::Not, o->left(), 0));
-  i_->qt.flip_downwards(static_cast<uint32_t>(o.left()->user_int32));
+
+  if(static_cast<uint32_t>(o.left()->user_int32) !=
+     std::numeric_limits<uint32_t>::max())
+    i_->qt.flip_downwards(static_cast<uint32_t>(o.left()->user_int32));
 
   op_ref impl = o.get_mgr().get(
     expression::op(expression::op_type::Or, left.get_id(), o->right()));
@@ -190,7 +193,10 @@ expression::op_ref
 prenex_quantifier::walk_lpmi(expression::op_ref o) {
   op_ref right =
     o.get_mgr().get(expression::op(expression::op_type::Not, o->right(), 0));
-  i_->qt.flip_downwards(static_cast<uint32_t>(o.right()->user_int32));
+
+  if(static_cast<uint32_t>(o.right()->user_int32) !=
+     std::numeric_limits<uint32_t>::max())
+    i_->qt.flip_downwards(static_cast<uint32_t>(o.right()->user_int32));
 
   op_ref impl = o.get_mgr().get(
     expression::op(expression::op_type::Or, o->left(), right.get_id()));

@@ -78,7 +78,7 @@ build_formula_to_be_prenexed(std::shared_ptr<op_manager> ops) {
   auto formula_1 =
     forall(q, exists(r, forall(s, exists(t, p || q || r || s || t))));
   auto formula_2 = forall(q_, exists(r_, (p || q_ || r_)));
-  auto formula_3 = forall(q__, forall(r__, (p || q__ || r__)));
+  auto formula_3 = forall(q__, exists(r__, (p || q__ || r__)));
   auto formula = exists(p, formula_1 && formula_2 && !(formula_3));
   return formula;
 }
@@ -318,6 +318,7 @@ TEST_CASE("QBF Prenex K3 Edown Adown") {
   op_ref k3_root = *result;
 
   prenex_quantifier prenexer(prenex_quantifier::Edown_Adown);
+  prenexer.animate("K3_Edown_Adown");
   op_ref k3_prenexed = prenexer(k3_root);
 
   std::string quantifiers =
