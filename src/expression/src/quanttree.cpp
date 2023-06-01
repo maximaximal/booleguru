@@ -146,6 +146,7 @@ quanttree::splice_path_before_path(uint32_t path, uint32_t insert) {
   op_type t = v[insert].p.type;
 
   uint32_t last = last_entry_on_critical_path_with_quantifier(insert, t);
+  uint32_t returned = last;
 
   if(v[last].has_next()) {
     // Move the fork that we got our insert from to the position right after the
@@ -163,6 +164,7 @@ quanttree::splice_path_before_path(uint32_t path, uint32_t insert) {
       // insert there.
       v[last].p.next = next_r;
       v[next_r].parent_ = last;
+      returned = last_entry_on_critical_path(insert);
     } else {
       unmark(next_r);
       v[fork].is_fork_ = true;
@@ -185,7 +187,7 @@ quanttree::splice_path_before_path(uint32_t path, uint32_t insert) {
   v[insert].parent_ = path;
   v[path].p.next = insert;
 
-  return last;
+  return returned;
 }
 
 void

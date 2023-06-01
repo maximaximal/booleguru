@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cassert>
+#include <limits>
 #include <ostream>
 #include <vector>
 
@@ -301,9 +302,10 @@ class quanttree {
 
       if(marked_contains_forks(root)) {
         for(;;) {
-          entry& e = v[bottom];
-          if(e.is_fork()) {
-            bottom = e.parent_;
+          uint32_t next_override = std::numeric_limits<uint32_t>::max();
+          std::reference_wrapper<entry> e = v[bottom];
+          if(e.get().is_fork()) {
+            bottom = e.get().parent_;
             continue;
           }
 
@@ -317,20 +319,32 @@ class quanttree {
             if(!v[f].is_fork_)
               continue;
 
-            walk_next_paths(
-              v[f],
-              [this, root, &should_inline, &e, &bottom, &changing](
-                entry& check) {
-                if(should_inline(direction::upwards, e, check)) {
-                  bottom = splice_path_before_path(bottom, index(check));
-                  if(animate)
-                    create_animation_step(root);
-                  changing = true;
-                }
-              });
+            walk_next_paths(v[f],
+                            [this,
+                             root,
+                             &should_inline,
+                             &e,
+                             &bottom,
+                             &next_override,
+                             &changing](entry& check) {
+                              if(should_inline(direction::upwards, e, check)) {
+                                next_override =
+                                  splice_path_before_path(bottom, index(check));
+                                if(animate)
+                                  create_animation_step(root);
+                                changing = true;
+                                e = v[next_override];
+                              }
+                            });
+
+            if(next_override != std::numeric_limits<uint32_t>::max()) {
+              break;
+            }
           }
-          if(e.has_parent())
-            bottom = e.parent_;
+          if(next_override != std::numeric_limits<uint32_t>::max()) {
+            bottom = next_override;
+          } else if(e.get().has_parent())
+            bottom = e.get().parent_;
           else
             break;
         }
