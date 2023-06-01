@@ -312,6 +312,27 @@ quanttree::mark_critical_path(uint32_t root) {
     v[deepest_entry_i].mark();
     deepest_entry_i = v[deepest_entry_i].parent_;
   }
+
+  if(v[root].is_fork_) {
+    uint32_t next = next_path(root);
+    v[root].is_fork_ = false;
+    uint32_t left = v[root].f.left;
+    uint32_t right = v[root].f.right;
+    if(v[left].marked_) {
+      v[root].p.next = left;
+      left = next_marked(left);
+      v[right].parent_ = next;
+    } else {
+      v[root].p.next = right;
+      right = next_marked(right);
+      v[left].parent_ = next;
+    }
+    v[root].p.var = v[next].p.var;
+    v[root].p.type = v[next].p.type;
+    v[next].is_fork_ = true;
+    v[next].f.left = left;
+    v[next].f.right = right;
+  }
 }
 
 void

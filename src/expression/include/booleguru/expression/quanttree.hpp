@@ -45,6 +45,7 @@ class quanttree {
     };
 
     uint32_t parent_ = std::numeric_limits<uint32_t>::max();
+    uint32_t alternations = 0;
     bool is_fork_ : 1 = true;
     bool marked_ : 1 = false;
 
@@ -149,7 +150,12 @@ class quanttree {
     return e.is_forall();
   }
 
-  quanttree(size_t reserve = 256) { v.reserve(reserve); }
+  quanttree(size_t reserve = 256) {
+    v.reserve(reserve);
+    v.emplace_back(op_type::Exists,
+                   std::numeric_limits<uint32_t>::max(),
+                   std::numeric_limits<uint32_t>::max());
+  }
 
   [[nodiscard]] inline constexpr size_t size() const noexcept {
     return v.size();

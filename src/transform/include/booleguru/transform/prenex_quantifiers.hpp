@@ -28,8 +28,6 @@ struct prenex_quantifier {
 
   expression::op_ref walk_quant(expression::op_ref o);
 
-  expression::op_ref walk_var(expression::op_ref o);
-
   expression::op_ref walk_not(expression::op_ref o);
 
   expression::op_ref walk_impl(expression::op_ref o);

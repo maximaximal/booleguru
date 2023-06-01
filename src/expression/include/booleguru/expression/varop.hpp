@@ -5,8 +5,8 @@
 
 namespace booleguru::expression {
 struct varop {
-  uint32_t v = 0;// Reference to variable in vars manager.
-  uint32_t q = 0;// Some number that binds the variable into some other namespace that has no true meaning.
+  uint32_t v = 0;/// Reference to variable in vars manager.
+  uint32_t q = 0;/// Some number that binds the variable to some namespace/quantifier.
 
   inline constexpr size_t hash() const {
     return 4017271 * static_cast<size_t>(v) + 70200511 * static_cast<size_t>(q);

@@ -168,6 +168,7 @@ TEST_CASE("Prenex a formula with multiple sub-trees with quantified variables "
   op_ref formula = sub_tree_1 && sub_tree_2 && sub_tree_3;
 
   prenex_quantifier prenexer(prenex_quantifier::Edown_Aup);
+  prenexer.animate("multiple_subtrees_Edown_Aup");
   op_ref prenexed = prenexer(formula);
 
   CAPTURE(prenexed.to_string());
