@@ -298,41 +298,44 @@ class quanttree {
         }
         bottom = c;
       }
-    } while(changing && marked_contains_forks(root));
 
-    if(marked_contains_forks(root)) {
-      for(;;) {
-        entry& e = v[bottom];
-        if(e.is_fork()) {
-          bottom = e.parent_;
-          continue;
-        }
-
-        bool is_below = true;
-
-        for(uint32_t f = root;
-            f < size() && (is_below || last_path(f) == bottom);
-            f = next_marked(f)) {
-          if(f == bottom)
-            is_below = false;
-          if(!v[f].is_fork_)
+      if(marked_contains_forks(root)) {
+        for(;;) {
+          entry& e = v[bottom];
+          if(e.is_fork()) {
+            bottom = e.parent_;
             continue;
+          }
 
-          walk_next_paths(
-            v[f], [this, root, &should_inline, &e, &bottom](entry& check) {
-              if(should_inline(direction::upwards, e, check)) {
-                bottom = splice_path_before_path(bottom, index(check));
-                if(animate)
-                  create_animation_step(root);
-              }
-            });
+          bool is_below = true;
+
+          for(uint32_t f = root;
+              f < size() && (is_below || last_path(f) == bottom);
+              f = next_marked(f)) {
+            if(f == bottom)
+              is_below = false;
+            if(!v[f].is_fork_)
+              continue;
+
+            walk_next_paths(
+              v[f],
+              [this, root, &should_inline, &e, &bottom, &changing](
+                entry& check) {
+                if(should_inline(direction::upwards, e, check)) {
+                  bottom = splice_path_before_path(bottom, index(check));
+                  if(animate)
+                    create_animation_step(root);
+                  changing = true;
+                }
+              });
+          }
+          if(e.has_parent())
+            bottom = e.parent_;
+          else
+            break;
         }
-        if(e.has_parent())
-          bottom = e.parent_;
-        else
-          break;
       }
-    }
+    } while(changing && marked_contains_forks(root));
   }
 
   void mark_critical_path(uint32_t root);
