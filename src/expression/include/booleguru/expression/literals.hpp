@@ -9,12 +9,16 @@ namespace booleguru::expression::literals {
 class handle {
   static std::unique_ptr<handle> instance_;
 
-  std::shared_ptr<op_manager> ops_ = std::make_shared<op_manager>();
+  std::shared_ptr<op_manager> ops_;
 
   public:
-  static handle& global() {
+  handle(std::shared_ptr<op_manager> ops)
+  : ops_(ops) {}
+
+  static handle& global(
+    std::shared_ptr<op_manager> ops = std::make_shared<op_manager>()) {
     if(!instance_)
-      instance_ = std::make_unique<handle>();
+      instance_ = std::make_unique<handle>(ops);
     return *instance_;
   }
 

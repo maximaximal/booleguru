@@ -53,7 +53,6 @@ lua_context::lua_context(std::shared_ptr<expression::op_manager> ops)
                          sol::lib::table,
                          sol::lib::math,
                          sol::lib::io);
-
   // Later, this could be handled as autoloads, as described here:
   // https://www.lua.org/pil/15.5.html
   prepare_state(*state_);

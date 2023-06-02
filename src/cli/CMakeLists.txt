@@ -8,6 +8,10 @@ add_library(booleguru-cli ${SRCS})
 target_include_directories(booleguru-cli PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(booleguru-cli PUBLIC booleguru-expression booleguru-parse booleguru-transform booleguru-serialize booleguru-lua)
 
+if(TARGET booleguru-py-embed)
+  target_link_libraries(booleguru-cli PUBLIC booleguru-py-embed)
+endif()
+
 add_executable(booleguru ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)
 target_link_libraries(booleguru PUBLIC booleguru-cli)
 

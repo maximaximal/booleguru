@@ -35,6 +35,7 @@ endfunction()
 set(SRCS
   src/lua-context.cpp
   src/lua-context-register-types.cpp
+  src/binding-helpers.cpp
 )
 
 add_library(booleguru-lua STATIC ${SRCS})

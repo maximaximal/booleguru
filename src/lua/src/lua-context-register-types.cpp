@@ -3,133 +3,17 @@
 
 #include <set>
 
-#include <booleguru/solve/result.hpp>
-
+#include <booleguru/lua/binding-helpers.hpp>
 #include <booleguru/lua/lua-context.hpp>
 
-#include <booleguru/expression/op.hpp>
-#include <booleguru/expression/op_manager.hpp>
-#include <booleguru/expression/var_manager.hpp>
-
-#include <booleguru/transform/cnf.hpp>
-#include <booleguru/transform/distribute_nots.hpp>
-#include <booleguru/transform/distribute_ors.hpp>
-#include <booleguru/transform/eliminate_equivalence.hpp>
-#include <booleguru/transform/eliminate_implication.hpp>
-#include <booleguru/transform/hash_variables.hpp>
-#include <booleguru/transform/output_to_op.hpp>
-#include <booleguru/transform/prenex_quantifiers.hpp>
-#include <booleguru/transform/tseitin.hpp>
-#include <booleguru/transform/variable_extend.hpp>
-#include <booleguru/transform/variable_rename.hpp>
-
 using namespace booleguru::expression;
+using namespace booleguru::lua::helpers;
 
 namespace booleguru::lua {
 
-static op_type
-get_op_ref_type(const op_ref& r) {
-  return r->type;
-}
-
-static std::optional<op_ref>
-get_op_left(const op_ref& r) {
-  auto ref = r->left();
-  if(ref == 0)
-    return std::nullopt;
-  return r.get_mgr()[ref];
-}
-
-static std::optional<op_ref>
-get_op_right(const op_ref& r) {
-  auto ref = r->right();
-  if(ref == 0)
-    return std::nullopt;
-  return r.get_mgr()[ref];
-}
-
-static bool
-get_op_and_inside(const op_ref& r) {
-  return r->and_inside;
-}
-
-static bool
-get_op_is_ors(const op_ref& r) {
-  return r->is_ors;
-}
-
-static uint32_t
-get_op_varop_v(const op_ref& op) {
-  return op->var.v;
-}
-
-static uint32_t
-get_op_varop_q(const op_ref& op) {
-  return op->var.q;
-}
-
-static bool
-get_op_is_cnf(const op_ref& r) {
-  return r->is_cnf;
-}
-
-static size_t
-compute_variables_hash(const op_ref& r) {
-  std::set<int32_t> vars;
-  transform::hash_variables hasher(vars);
-  hasher(r);
-  return hasher.hash();
-}
-
-static op_ref
-rename(op_ref& r, const std::string& oldname, const std::string& newname) {
-  return transform::variable_rename(r.get_mgr().vars(),
-                                    { std::make_pair(oldname, newname) })(r);
-}
-
-static op_ref
-rename_map(op_ref& r, const std::unordered_map<std::string, std::string>& map) {
-  return transform::variable_rename(r.get_mgr().vars(), map)(r);
-}
-
-template<op_type type>
-static op_ref
-binop(op_ref& l, op_ref& r) {
-  return l.get_mgr().get(op(type, l.get_id(), r.get_id()));
-}
-
-template<op_type type>
-static op_ref
-unop(op_ref& l) {
-  return l.get_mgr().get(op(type, l.get_id(), 0));
-}
-
-template<class Transformer>
-static op_ref
-transform_op(op_ref& o) {
-  return Transformer()(o);
-}
-
-template<class Transformer, transform::prenex_quantifier::kind k>
-static op_ref
-transform_prenex_animated(op_ref& o, std::string animate = "") {
-  auto t = Transformer(k);
-  if(animate != "") {
-    t.animate(animate);
-  }
-  return t(o);
-}
-
-template<class Transformer, transform::prenex_quantifier::kind k>
-static op_ref
-transform_prenex(op_ref& o) {
-  return Transformer(k)(o);
-}
-
-static op_ref
-get_variable_from_manager(const std::string& name, op_manager& mgr) {
-  auto varref = mgr.vars().get(variable{ name });
-  return mgr.get(op(op_type::Var, varref.get_id(), 0));
+expression::op_ref
+lua_context::get_var(const std::string& name) {
+  return get_variable_from_manager(name, *ops_);
 }
 
 auto
@@ -150,11 +34,6 @@ set_to_state(sol::state& s,
 void
 set_to_state(sol::state& s, const std::string& both, auto&& f) {
   set_to_state(s, both, both, f);
-}
-
-expression::op_ref
-lua_context::get_var(const std::string& name) {
-  return get_variable_from_manager(name, *ops_);
 }
 
 void
@@ -197,7 +76,7 @@ lua_context::register_booleguru_types() {
   set_to_state(
     s, "distribute_to_cnf", "distribute-to-cnf", &transform::distribute_to_cnf);
   set_to_state(s, "vars_hash", "vars-hash", &compute_variables_hash);
-  set_to_state(s, "b_var_rename", "b-var-rename", &rename);
+  set_to_state(s, "b_var_rename", "b-var-rename", &helpers::rename);
   set_to_state(s, "tseitin", "tseitin", [this]() {
     return transform::tseitin<transform::output_to_op>(*ops_);
   }());
@@ -247,23 +126,23 @@ lua_context::register_booleguru_types() {
 
   auto op_type = s.new_usertype<op>("op");
 
-  set_to_state(s, "exists", &binop<op_type::Exists>);
-  set_to_state(s, "forall", &binop<op_type::Forall>);
-  set_to_state(s, "equi", &binop<op_type::Equi>);
-  set_to_state(s, "impl", &binop<op_type::Impl>);
-  set_to_state(s, "lpmi", &binop<op_type::Lpmi>);
-  set_to_state(s, "xor", &binop<op_type::Xor>);
-  set_to_state(s, "b_and", "b-and", &binop<op_type::And>);
-  set_to_state(s, "b_or", "b-or", &binop<op_type::Or>);
-  set_to_state(s, "b_not", "b-not", &unop<op_type::Not>);
+  set_to_state(s, "exists", &helpers::binop<op_type::Exists>);
+  set_to_state(s, "forall", &helpers::binop<op_type::Forall>);
+  set_to_state(s, "equi", &helpers::binop<op_type::Equi>);
+  set_to_state(s, "impl", &helpers::binop<op_type::Impl>);
+  set_to_state(s, "lpmi", &helpers::binop<op_type::Lpmi>);
+  set_to_state(s, "xor", &helpers::binop<op_type::Xor>);
+  set_to_state(s, "b_and", "b-and", &helpers::binop<op_type::And>);
+  set_to_state(s, "b_or", "b-or", &helpers::binop<op_type::Or>);
+  set_to_state(s, "b_not", "b-not", &helpers::unop<op_type::Not>);
 
   using namespace booleguru::transform;
   auto reftype = s.new_usertype<op_ref>(
     "opref",
     "rename",
-    rename,
+    &helpers::rename,
     "rename_map",
-    rename_map,
+    &helpers::rename_map,
     sol::meta_function::bitwise_and,
     sol::resolve<op_ref(op_ref, op_ref)>(operator&&),
     sol::meta_function::bitwise_or,
