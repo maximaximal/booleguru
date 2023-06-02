@@ -1,5 +1,10 @@
-find_package(Doxygen REQUIRED)
-find_package(Sphinx REQUIRED)
+find_package(Doxygen)
+find_package(Sphinx)
+
+if(NOT DOXYGEN_FOUND OR NOT SPHINX_FOUND)
+  message(STATUS "Documentation cannot be built, both Sphinx and Doxygen are required.")
+  return()
+endif()
 
 # Find all headers
 file(GLOB_RECURSE BOOLGURU_PUBLIC_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/../src/ *.hpp)
