@@ -1,5 +1,6 @@
 #include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
 #include <booleguru/py/python-context.hpp>
 
@@ -17,6 +18,12 @@ PYBIND11_MODULE(pybooleguru, m) {
     .value("SAT", solve::result::SAT)
     .value("UNSAT", solve::result::UNSAT)
     .value("UNKNOWN", solve::result::UNKNOWN);
+
+  pybind11::enum_<transform::prenex_quantifier::kind>(m, "prenex_kind")
+    .value("Eup_Aup", transform::prenex_quantifier::Eup_Aup)
+    .value("Eup_Adown", transform::prenex_quantifier::Eup_Adown)
+    .value("Edown_Aup", transform::prenex_quantifier::Edown_Aup)
+    .value("Edown_Adown", transform::prenex_quantifier::Edown_Adown);
 
   pybind11::enum_<op_type>(m, "op_type")
     .value("none", op_type::None)
@@ -75,6 +82,12 @@ PYBIND11_MODULE(pybooleguru, m) {
   m.def("b_and", &helpers::binop<op_type::And>);
   m.def("b_or", &helpers::binop<op_type::Or>);
   m.def("b_not", &helpers::unop<op_type::Not>);
+
+  m.def("prenex",
+        &helpers::prenex,
+        pybind11::arg("op"),
+        pybind11::arg("kind") = transform::prenex_quantifier::Eup_Aup,
+        pybind11::arg("animation_path") = "");
 }
 
 namespace booleguru::py {

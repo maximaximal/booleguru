@@ -87,4 +87,13 @@ expression::op_ref
 get_variable_from_global_handle(const std::string& name) {
   return expression::literals::proxy<expression::op_manager>(name);
 }
+
+expression::op_ref
+prenex(expression::op_ref o,
+       transform::prenex_quantifier::kind kind,
+       const std::string& animation_path) {
+  auto t = transform::prenex_quantifier(kind);
+  t.animate(animation_path);
+  return t(o);
+}
 }

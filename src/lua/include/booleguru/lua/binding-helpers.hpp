@@ -97,4 +97,9 @@ get_variable_from_manager(const std::string& name, expression::op_manager& mgr);
 
 expression::op_ref
 get_variable_from_global_handle(const std::string& name);
+
+expression::op_ref
+prenex(expression::op_ref o,
+       transform::prenex_quantifier::kind kind,
+       const std::string& animation_path = "");
 }
