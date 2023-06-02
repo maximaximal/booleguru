@@ -112,8 +112,12 @@ transform_op(op_ref& o) {
 
 template<class Transformer, transform::prenex_quantifier::kind k>
 static op_ref
-transform_prenex(op_ref& o) {
-  return Transformer(k)(o);
+transform_prenex(op_ref& o, std::string animate = "") {
+  auto t = Transformer(k);
+  if(animate != "") {
+    t.animate(animate);
+  }
+  return t(o);
 }
 
 static op_ref
