@@ -45,6 +45,10 @@ TEST_CASE("Serialize simple example QCIR formula") {
   CAPTURE(o.str());
 
   const char* expected = R"(#QCIR-G14 7
+# 1 z
+# 2 x1
+# 3 x2
+# 4 x3
 free(4)
 forall(1)
 output(7)
@@ -90,6 +94,10 @@ TEST_CASE("Serialize simple example QCIR formula with some NOTs") {
   CAPTURE(o.str());
 
   const char* expected = R"(#QCIR-G14 7
+# 1 z
+# 2 x1
+# 3 x2
+# 4 x3
 free(4)
 forall(1)
 output(-7)
@@ -130,6 +138,9 @@ TEST_CASE("Serialize simple prenex example QCIR formula") {
   CAPTURE(o.str());
 
   const char* expected = R"(#QCIR-G14 6
+# 1 v1
+# 2 v2
+# 4 v3
 forall(1)
 exists(2, 4)
 output(6)
@@ -159,6 +170,9 @@ TEST_CASE("Serialize simple non prenex CNF example to QCIR formula cleansed") {
   CAPTURE(o.str());
 
   const char* expected = R"(#QCIR-G14 6
+# 1 z
+# 2 x
+# 3 y
 forall(1)
 output(6)
 4 = and(2, 3, 1)
@@ -189,6 +203,8 @@ TEST_CASE("Non prenex non CNF to QCIR") {
   CAPTURE(o.str());
 
   const char* expected = R"(#QCIR-G14 6
+# 1 x
+# 2 z
 forall(2)
 output(6)
 3 = xor(1, 2)
@@ -219,6 +235,10 @@ TEST_CASE("Formula with equivalence to QCIR") {
   CAPTURE(o.str());
 
   const char* expected = R"(#QCIR-G14 9
+# 1 x
+# 2 a
+# 3 b
+# 4 c
 free(1, 2, 3, 4)
 output(9)
 5 = or(1, -2, -3, -4)
@@ -251,6 +271,9 @@ TEST_CASE("Formula with similar or sub-trees converted to QCIR") {
   CAPTURE(o.str());
 
   const char* expected = R"(#QCIR-G14 8
+# 1 a
+# 2 c
+# 3 b
 free(1, 2, 3)
 output(8)
 4 = or(-3, 2)

@@ -275,7 +275,16 @@ qcir::operator()(expression::op_ref op) {
 
   o_ << "#QCIR-G14 " << number_of_variables_ << "\n";
 
-  // Make the free variables a bit prettier.
+  // Make the variables a bit prettier.
+  std::sort(vars.begin(), vars.end(), [&op](auto l, auto r) {
+    return op.get_mgr()[l]->user_int32 < op.get_mgr()[r]->user_int32;
+  });
+
+  for(auto v : vars) {
+    o_ << "# " << op.get_mgr()[v]->user_int32 << " "
+       << op.get_mgr().vars()[op.get_mgr()[v]->var.v]->name << "\n";
+  }
+
   std::sort(
     unquantified_vars.begin(), unquantified_vars.end(), [&op](auto l, auto r) {
       return op.get_mgr()[l]->user_int32 < op.get_mgr()[r]->user_int32;
