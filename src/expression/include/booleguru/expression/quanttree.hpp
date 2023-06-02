@@ -110,7 +110,7 @@ class quanttree {
     return flip_ctx_count % 2 == 1;
   }
 
-  void close_flip_ctx() {
+  constexpr void close_flip_ctx() {
     assert(flip_ctx_count > 0);
     --flip_ctx_count;
   }
