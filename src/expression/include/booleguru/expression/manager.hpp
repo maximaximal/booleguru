@@ -11,6 +11,8 @@
 
 #include <ankerl/unordered_dense.h>
 
+#include <booleguru/util/die.hpp>
+
 #include "op.hpp"
 
 namespace booleguru::expression {
@@ -77,6 +79,10 @@ class manager {
     assert(static_cast<int32_t>(counter_) <
            std::numeric_limits<int32_t>::max());
     size_t idx = counter_++;
+    if(idx == std::numeric_limits<uint32_t>::max() - 1) {
+      util::die("Reached limit of manager !! Have " + std::to_string(counter_) +
+                " elements in store. Try GC or something else.");
+    }
     objects_map_.insert(std::make_pair(std::move(obj), idx));
     return idx;
   }
