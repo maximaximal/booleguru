@@ -391,9 +391,7 @@ quanttree::mark_critical_path(uint32_t root) {
 
   uint32_t i = root;
 
-  std::cout << "MARKING " << std::endl;
   while(i != std::numeric_limits<uint32_t>::max()) {
-    v[i].stream(std::cout) << std::endl;
     v[i].mark();
     i = next_highest_QAs(i);
   }

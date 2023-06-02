@@ -59,7 +59,7 @@ TEST_CASE("Transform a simple Non-Prenex formula into prenex formula") {
   transformed << prenexed;
 
   const char* expected =
-    R"(?p ?r[1] #q[1] #q ?r ((p | q | r) & (!p | q[1] | r[1])))";
+    R"(?p[1] ?r[2] #q[2] #q[1] ?r[1] ((p[1] | q[1] | r[1]) & (!p[1] | q[2] | r[2])))";
 
   REQUIRE(transformed.str() == expected);
 }
@@ -90,9 +90,9 @@ TEST_CASE("Transform a simple Non-Prenex cleansed formula into prenex formula "
 
   auto formula = build_formula_to_be_prenexed(ops);
 
-  const char* expected =
-    "?p ?q'' #q #r'' #q' ?r ?r' #s ?t ((p | q | r | s | t) & (p | q' | r') & "
-    "!(p | q'' | r''))";
+  const char* expected = "?p[1] ?q''[1] #q[1] #r''[1] #q'[1] ?r[1] ?r'[1] "
+                         "#s[1] ?t[1] ((p[1] | q[1] | r[1] | s[1] | t[1]) & "
+                         "(p[1] | q'[1] | r'[1]) & !(p[1] | q''[1] | r''[1]))";
 
   prenex_quantifier p(prenex_quantifier::Eup_Aup);
   p.animate("test_EupAup");
@@ -108,9 +108,9 @@ TEST_CASE("Transform a simple Non-Prenex cleansed formula into prenex formula "
 
   auto formula = build_formula_to_be_prenexed(ops);
 
-  const char* expected = "?p #q #q' ?r ?q'' #s #r'' ?r' ?t "
-                         "((p | q | r | s | t) & (p | q' | r') & "
-                         "!(p | q'' | r''))";
+  const char* expected = "?p[1] #q[1] #q'[1] ?r[1] ?q''[1] #s[1] #r''[1] ?t[1] "
+                         "?r'[1] ((p[1] | q[1] | r[1] | s[1] | t[1]) & (p[1] | "
+                         "q'[1] | r'[1]) & !(p[1] | q''[1] | r''[1]))";
 
   prenex_quantifier p(prenex_quantifier::Edown_Aup);
   p.animate("test_EdownAup");
@@ -126,9 +126,9 @@ TEST_CASE("Transform a simple Non-Prenex cleansed formula into prenex formula "
 
   auto formula = build_formula_to_be_prenexed(ops);
 
-  const char* expected = "?p ?q'' #q ?r #s #q' #r'' ?r' ?t "
-                         "((p | q | r | s | t) & (p | q' | r') & "
-                         "!(p | q'' | r''))";
+  const char* expected = "?p[1] ?q''[1] #q[1] ?r[1] #s[1] #r''[1] #q'[1] ?t[1] "
+                         "?r'[1] ((p[1] | q[1] | r[1] | s[1] | t[1]) & (p[1] | "
+                         "q'[1] | r'[1]) & !(p[1] | q''[1] | r''[1]))";
 
   prenex_quantifier p(prenex_quantifier::Eup_Adown);
   p.animate("test_EupAdown");
@@ -144,9 +144,9 @@ TEST_CASE("Transform a simple Non-Prenex cleansed formula into prenex formula "
 
   auto formula = build_formula_to_be_prenexed(ops);
 
-  const char* expected = "?p #q ?q'' ?r #q' #r'' #s ?r' ?t "
-                         "((p | q | r | s | t) & (p | q' | r') & "
-                         "!(p | q'' | r''))";
+  const char* expected = "?p[1] #q[1] ?r[1] ?q''[1] #s[1] #q'[1] #r''[1] ?t[1] "
+                         "?r'[1] ((p[1] | q[1] | r[1] | s[1] | t[1]) & (p[1] | "
+                         "q'[1] | r'[1]) & !(p[1] | q''[1] | r''[1]))";
 
   prenex_quantifier p(prenex_quantifier::Edown_Adown);
   p.animate("test_EdownAdown");
@@ -173,8 +173,8 @@ TEST_CASE("Prenex a formula with multiple sub-trees with quantified variables "
 
   CAPTURE(prenexed.to_string());
 
-  REQUIRE(prenexed.to_string() == "#x #y[2] ?y[1] ?x[2] ?y #x[1] (x & "
-                                  "y & x[1] & y[1] & !(x[2] & y[2]))");
+  REQUIRE(prenexed.to_string() == "#y[3] #x[1] ?x[3] ?y[1] ?y[2] #x[2] (x[1] & "
+                                  "y[1] & x[2] & y[2] & !(x[3] & y[3]))");
 }
 
 TEST_CASE("Transform a Non-Prenex formula into prenex") {
@@ -196,10 +196,10 @@ TEST_CASE("Transform a Non-Prenex formula into prenex") {
   prenex_quantifier pren;
   auto prenexed = pren(formula);
 
-  REQUIRE(prenexed.to_string() ==
-          "?p ?q[2] #q #q[1] #r[2] ?r ?r[1] #s ?t ((p | q "
-          "| r | s | t) & (p | "
-          "q[1] | r[1]) & !(p | q[2] | r[2]))");
+  REQUIRE(
+    prenexed.to_string() ==
+    "?p[1] ?q[3] #q[1] #r[3] #q[2] ?r[1] ?r[2] #s[1] ?t[1] ((p[1] | q[1] | "
+    "r[1] | s[1] | t[1]) & (p[1] | q[2] | r[2]) & !(p[1] | q[3] | r[3]))");
 }
 
 TEST_CASE("QBF Prenex K3 Edown Adown") {
@@ -322,22 +322,16 @@ TEST_CASE("QBF Prenex K3 Edown Adown") {
   op_ref k3_prenexed = prenexer(k3_root);
 
   std::string quantifiers =
-    "?s_1_0 ?s_2_0 ?s_3_0 #s_1_1 #s_2_1 #s_3_1 #s_4_1 "
-    "?s_1_2 ?s_2_2 ?s_3_2 "
-    "?s_4_2 ?s_5_2 #s_1_3 #s_2_3 #s_3_3 #s_4_3 #s_5_3 "
-    "#s_6_3 #v1[6] #v2[6] "
-    "#v3[6] #v4[6] #v1[8] #v2[8] #v3[8] #v4[8] #v5[8] "
-    "#v5[6] #v5[5] #v4[5] "
-    "#v3[5] #v2[5] #v1[5] #u_5_2 #u_4_2 #u_3_2 #u_2_2 "
-    "#u_1_2 #v5[2] #v4[2] "
-    "#v3[2] #v2[2] #v1[2] #v5[1] #v4[1] #v3[1] #v2[1] "
-    "#v1[1] #u_3_0 #u_2_0 "
-    "#u_1_0 ?u_1_3 ?u_2_3 ?u_3_3 ?u_4_3 ?u_5_3 ?u_6_3 "
-    "?v1[7] ?v2[7] ?v3[7] "
-    "?v4[7] ?v5[7] ?v5[4] ?v4[4] ?v3[4] ?v2[4] ?v1[4] "
-    "?v5[3] ?v4[3] ?v3[3] "
-    "?v2[3] ?v1[3] ?u_4_1 ?u_3_1 ?u_2_1 ?u_1_1 ?v5 ?v4 ?v3 "
-    "?v2 ?v1";
+    "?s_1_0[1] ?s_2_0[1] ?s_3_0[1] #s_1_1[1] #s_2_1[1] #s_3_1[1] #s_4_1[1] "
+    "?s_1_2[1] ?s_2_2[1] ?s_3_2[1] ?s_4_2[1] ?s_5_2[1] ?v1[2] ?v2[2] ?v3[2] "
+    "?v4[2] ?v5[2] ?v1[6] ?v2[6] ?v3[6] ?v4[6] ?v5[6] #s_1_3[1] #s_2_3[1] "
+    "#s_3_3[1] #s_4_3[1] #s_5_3[1] #s_6_3[1] #v1[8] #v2[8] #v3[8] #v4[8] "
+    "#v5[8] #v1[4] #v2[4] #v3[4] #v4[4] #v5[4] #v1[9] #v2[9] #v3[9] #v4[9] "
+    "#v5[9] #u_1_2[1] #u_2_2[1] #u_3_2[1] #u_4_2[1] #u_5_2[1] #v1[5] #v2[5] "
+    "#v3[5] #v4[5] #v5[5] #u_1_0[1] #u_2_0[1] #u_3_0[1] #v1[1] #v2[1] #v3[1] "
+    "#v4[1] #v5[1] ?u_1_3[1] ?u_2_3[1] ?u_3_3[1] ?u_4_3[1] ?u_5_3[1] ?u_6_3[1] "
+    "?v1[7] ?v2[7] ?v3[7] ?v4[7] ?v5[7] ?u_1_1[1] ?u_2_1[1] ?u_3_1[1] "
+    "?u_4_1[1] ?v1[3] ?v2[3] ?v3[3] ?v4[3] ?v5[3]";
 
   auto match_expression = Catch::Matchers::StartsWith(quantifiers);
   REQUIRE_THAT(k3_prenexed.to_string(), match_expression);
@@ -461,21 +455,17 @@ TEST_CASE("QBF Prenex K3 Eup Adown") {
   prenex_quantifier prenexer(prenex_quantifier::Eup_Adown);
   op_ref k3_prenexed = prenexer(k3_root);
 
-  std::string quantifiers = "?s_1_0 ?v1 ?v2 ?v3 ?v4 ?v5 ?s_2_0 ?s_3_0 #s_1_1 "
-                            "#s_2_1 #s_3_1 #s_4_1 ?s_1_2 "
-                            "?u_1_1 ?u_2_1 ?u_3_1 ?u_4_1 ?v1[3] ?v2[3] ?v3[3] "
-                            "?v4[3] ?v5[3] ?v1[4] ?v2[4] "
-                            "?v3[4] ?v4[4] ?v5[4] ?s_2_2 ?s_3_2 ?s_4_2 ?s_5_2 "
-                            "#s_1_3 #s_2_3 #s_3_3 #s_4_3 "
-                            "#s_5_3 #s_6_3 #v1[6] #v2[6] #v3[6] #v4[6] #u_1_0 "
-                            "#u_2_0 #u_3_0 #v1[1] #v2[1] "
-                            "#v3[1] #v4[1] #v5[1] #v1[2] #v2[2] #v3[2] #v4[2] "
-                            "#v5[2] #u_1_2 #u_2_2 #u_3_2 "
-                            "#u_4_2 #u_5_2 #v1[5] #v5[6] #v2[5] #v3[5] #v4[5] "
-                            "#v5[5] #v1[8] #v2[8] #v3[8] "
-                            "#v4[8] #v5[8] ?u_1_3 ?u_2_3 ?u_3_3 ?u_4_3 ?u_5_3 "
-                            "?u_6_3 ?v1[7] ?v2[7] ?v3[7] "
-                            "?v4[7] ?v5[7] ";
+  std::string quantifiers =
+    "?s_1_0[1] ?s_2_0[1] ?s_3_0[1] ?v1[2] ?v2[2] ?v3[2] ?v4[2] ?v5[2] "
+    "#s_1_1[1] #s_2_1[1] #s_3_1[1] #s_4_1[1] ?s_1_2[1] ?s_2_2[1] ?s_3_2[1] "
+    "?s_4_2[1] ?s_5_2[1] ?v1[6] ?v2[6] ?v3[6] ?v4[6] ?v5[6] #s_1_3[1] "
+    "#s_2_3[1] #s_3_3[1] #s_4_3[1] #s_5_3[1] #s_6_3[1] #v1[8] #v2[8] #v3[8] "
+    "#v4[8] #v5[8] #u_1_0[1] #u_2_0[1] #u_3_0[1] #v1[1] #v2[1] #v3[1] #v4[1] "
+    "#v5[1] #v1[4] #v2[4] #v3[4] #v4[4] #v5[4] #u_1_2[1] #u_2_2[1] #u_3_2[1] "
+    "#u_4_2[1] #u_5_2[1] #v1[5] #v2[5] #v3[5] #v4[5] #v5[5] #v1[9] #v2[9] "
+    "#v3[9] #v4[9] #v5[9] ?u_1_3[1] ?u_1_1[1] ?u_2_1[1] ?u_3_1[1] ?u_4_1[1] "
+    "?v1[3] ?v2[3] ?v3[3] ?v4[3] ?v5[3] ?u_2_3[1] ?u_3_3[1] ?u_4_3[1] "
+    "?u_5_3[1] ?u_6_3[1] ?v1[7] ?v2[7] ?v3[7] ?v4[7] ?v5[7]";
 
   auto match_expression = Catch::Matchers::StartsWith(quantifiers);
   REQUIRE_THAT(k3_prenexed.to_string(), match_expression);

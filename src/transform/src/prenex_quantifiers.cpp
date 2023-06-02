@@ -12,9 +12,6 @@
 #include <iterator>
 #include <limits>
 
-using std::cout;
-using std::endl;
-
 namespace booleguru::transform {
 
 #define IT(I) ops[I->var] << ":" << *I
@@ -57,16 +54,9 @@ prenex_quantifier::operator()(op_ref o) {
 
   uint32_t qt_root = o.get_mgr().getobj(new_root).user_int32;
 
-  std::cout << "Old O: " << o << std::endl;
-  std::cout << "New O: " << o.get_mgr()[new_root] << std::endl;
-
-  std::cout << "QT Root: " << qt_root << std::endl;
-  i_->qt.to_dot("prenex", std::cout, qt_root);
-
   i_->qt.prenex(qt_root, i_->checker);
   op_ref prepended =
     i_->qt.prepend_marked_to_op(qt_root, o.get_mgr()[new_root]);
-  std::cout << "Prepended New O: " << prepended << std::endl;
   return prepended;
 }
 
@@ -110,8 +100,6 @@ prenex_quantifier::walk_quant(expression::op_ref o) {
   assert(o->type == expression::op_type::Forall ||
          o->type == expression::op_type::Exists);
   assert(o.left()->type == expression::op_type::Var);
-
-  std::cout << "Walk Quant with id " << o.get_id() << ": " << o << std::endl;
 
   const auto old_v = o.get_mgr()[o->quant.v]->var;
   auto& old_v_obj = o.get_mgr().vars().getobj(old_v.v);
