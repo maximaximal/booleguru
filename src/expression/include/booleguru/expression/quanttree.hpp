@@ -158,9 +158,7 @@ class quanttree {
   }
 
   [[nodiscard]] inline size_t size() const noexcept { return v.size(); }
-  [[nodiscard]] inline entry& operator[](uint32_t i) noexcept {
-    return v[i];
-  }
+  [[nodiscard]] inline entry& operator[](uint32_t i) noexcept { return v[i]; }
   [[nodiscard]] inline const entry& operator[](uint32_t i) const noexcept {
     return const_cast<quanttree&>(*this)[i];
   }
@@ -330,14 +328,16 @@ class quanttree {
       }
       if(!changing && ignore_QAs) {
         ignore_QAs = false;
-        // Nothing helped! We have to splice the remaining fork at the very bottom.
+        // Nothing helped! We have to splice the remaining fork at the very
+        // bottom.
         if(uint32_t f = marked_contains_forks(root)) {
           uint32_t last = last_entry_on_critical_path(root);
           splice_path_after_path(last, next_unmarked_path(f));
+          if(animate)
+            create_animation_step(root);
           changing = true;
         }
-      }
-      else if(!changing) {
+      } else if(!changing) {
         ignore_QAs = true;
       }
     } while((changing || ignore_QAs) && marked_contains_forks(root));
