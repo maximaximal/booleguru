@@ -281,8 +281,7 @@ qcir::operator()(expression::op_ref op) {
   });
 
   for(auto v : vars) {
-    o_ << "# " << op.get_mgr()[v]->user_int32 << " "
-       << op.get_mgr().vars()[op.get_mgr()[v]->var.v]->name << "\n";
+    o_ << "# " << op.get_mgr()[v]->user_int32 << " " << op.get_mgr()[v] << "\n";
   }
 
   std::sort(
