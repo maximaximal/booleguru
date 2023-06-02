@@ -45,12 +45,12 @@ TEST_CASE("Serialize simple example QCIR formula") {
   CAPTURE(o.str());
 
   const char* expected = R"(#QCIR-G14 7
-free(3)
-forall(4)
-output(9)
-6 = and(1, 2, 3)
-8 = exists(1, 2; 6)
-9 = and(4, 8)
+free(4)
+forall(1)
+output(7)
+5 = and(2, 3, 4)
+6 = exists(2, 3; 5)
+7 = and(1, 6)
 )";
 
   REQUIRE(o.str() == expected);
@@ -90,12 +90,12 @@ TEST_CASE("Serialize simple example QCIR formula with some NOTs") {
   CAPTURE(o.str());
 
   const char* expected = R"(#QCIR-G14 7
-free(3)
-forall(4)
-output(-10)
-6 = and(1, 2, 3)
-8 = exists(1, 2; 6)
-10 = and(4, -8)
+free(4)
+forall(1)
+output(-7)
+5 = and(2, 3, 4)
+6 = exists(2, 3; 5)
+7 = and(1, -6)
 )";
 
   REQUIRE(o.str() == expected);
@@ -131,11 +131,11 @@ TEST_CASE("Serialize simple prenex example QCIR formula") {
 
   const char* expected = R"(#QCIR-G14 6
 forall(1)
-exists(2, 3)
-output(9)
-4 = and(1, 2)
-8 = and(-1, -2, 3)
-9 = or(4, 8)
+exists(2, 4)
+output(6)
+3 = and(1, 2)
+5 = and(-1, -2, 4)
+6 = or(3, 5)
 )";
 
   REQUIRE(o.str() == expected);
@@ -159,11 +159,11 @@ TEST_CASE("Serialize simple non prenex CNF example to QCIR formula cleansed") {
   CAPTURE(o.str());
 
   const char* expected = R"(#QCIR-G14 6
-forall(3)
-output(8)
-5 = and(1, 2, 3)
-7 = exists(1, 2; 5)
-8 = or(3, 7)
+forall(1)
+output(6)
+4 = and(2, 3, 1)
+5 = exists(2, 3; 4)
+6 = or(1, 5)
 )";
 
   REQUIRE(o.str() == expected);
@@ -220,12 +220,12 @@ TEST_CASE("Formula with equivalence to QCIR") {
 
   const char* expected = R"(#QCIR-G14 9
 free(1, 2, 3, 4)
-output(17)
-10 = or(4, -1, -2, -3)
-12 = or(-4, 1)
-14 = or(-4, 2)
-16 = or(-4, 3)
-17 = and(10, 12, 14, 16)
+output(9)
+5 = or(1, -2, -3, -4)
+6 = or(-1, 2)
+7 = or(-1, 3)
+8 = or(-1, 4)
+9 = and(5, 6, 7, 8)
 )";
 
   REQUIRE(o.str() == expected);
@@ -252,12 +252,12 @@ TEST_CASE("Formula with similar or sub-trees converted to QCIR") {
 
   const char* expected = R"(#QCIR-G14 8
 free(1, 2, 3)
-output(20)
-15 = or(-2, 3)
-17 = or(-1, 3, -15)
-13 = or(-1, 3)
-19 = or(-13, -2, 3)
-20 = and(17, 19)
+output(8)
+4 = or(-3, 2)
+5 = or(-1, 2, -4)
+6 = or(-1, 2)
+7 = or(-6, -3, 2)
+8 = and(5, 7)
 )";
 
   REQUIRE(o.str() == expected);

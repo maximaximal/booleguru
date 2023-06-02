@@ -31,20 +31,20 @@ qcir::walk_quant(op_ref o) {
     walk(after_this_quant);
 
     if(!dry_walk_) {
-      o_ << o.get_id() << " = ";
+      o_ << o->user_int32 << " = ";
     } else {
-      ++number_of_variables_;
+      o->user_int32 = ++number_of_variables_;
     }
   }
   while(o->type == t) {
     auto v = o->quant.v;
     if(first) {
       if(!dry_walk_)
-        o_ << qtext << "(" << v;
+        o_ << qtext << "(" << o.get_mgr()[v]->user_int32;
       first = false;
     } else {
       if(!dry_walk_)
-        o_ << ", " << v;
+        o_ << ", " << o.get_mgr()[v]->user_int32;
     }
     o = o.get_mgr()[o->quant.e];
   }
@@ -56,7 +56,7 @@ qcir::walk_quant(op_ref o) {
   }
   if(!on_quant_prefix_) {
     if(!dry_walk_)
-      o_ << "; " << (invert ? "-" : "") << o.get_id();
+      o_ << "; " << (invert ? "-" : "") << o->user_int32;
   }
   if(!dry_walk_)
     o_ << ")\n";
@@ -65,7 +65,7 @@ qcir::walk_quant(op_ref o) {
   if(on_quant_prefix_) {
     if(o->type != op_type::Forall && o->type != op_type::Exists) {
       on_quant_prefix_ = false;
-      int32_t id = o.get_id();
+      int32_t id = o->user_int32;
       if(invert) {
         id = -id;
       }
@@ -97,7 +97,7 @@ qcir::walk_nargsop(std::string_view gatetype, op_ref o, bool last) {
       left = left.left();
       invert = !invert;
     }
-    int32_t id = left.get_id();
+    int32_t id = left->user_int32;
     if(invert)
       id = -id;
     ops.push_back(id);
@@ -113,7 +113,7 @@ qcir::walk_nargsop(std::string_view gatetype, op_ref o, bool last) {
       right = right.left();
       invert = !invert;
     }
-    int32_t id = right.get_id();
+    int32_t id = right->user_int32;
     if(invert)
       id = -id;
     ops.push_back(id);
@@ -122,11 +122,11 @@ qcir::walk_nargsop(std::string_view gatetype, op_ref o, bool last) {
 
   if(last) {
     if(dry_walk_) {
-      ++number_of_variables_;
+      o->user_int32 = ++number_of_variables_;
       return {};
     } else {
       assert(ops.size() > 1);
-      o_ << o.get_id() << " = " << gatetype << "(" << ops.front();
+      o_ << o->user_int32 << " = " << gatetype << "(" << ops.front();
       for(size_t i = 1; i < ops.size(); ++i) {
         o_ << ", " << ops[i];
       }
@@ -149,7 +149,7 @@ qcir::walk_not(op_ref o) {
 
   if(on_quant_prefix_ && !dry_walk_) {
     on_quant_prefix_ = false;
-    int32_t id = o.get_id();
+    int32_t id = o->user_int32;
     if(invert)
       id = -id;
     o_ << "output(" << id << ")\n";
@@ -179,7 +179,7 @@ void
 qcir::walk_and(op_ref o) {
   if(on_quant_prefix_ && !dry_walk_) {
     on_quant_prefix_ = false;
-    o_ << "output(" << o.get_id() << ")\n";
+    o_ << "output(" << o->user_int32 << ")\n";
   }
   walk_nargsop("and", o);
 }
@@ -187,7 +187,7 @@ void
 qcir::walk_or(op_ref o) {
   if(on_quant_prefix_ && !dry_walk_) {
     on_quant_prefix_ = false;
-    o_ << "output(" << o.get_id() << ")\n";
+    o_ << "output(" << o->user_int32 << ")\n";
   }
   walk_nargsop("or", o);
 }
@@ -203,7 +203,7 @@ qcir::walk_xor(op_ref o) {
       side = side.left();
       invert = !invert;
     }
-    int32_t id = side.get_id();
+    int32_t id = side->user_int32;
     if(invert)
       id = -id;
     walk(side);
@@ -212,16 +212,16 @@ qcir::walk_xor(op_ref o) {
   int32_t left = w(o.left());
   int32_t right = w(o.right());
   if(dry_walk_)
-    ++number_of_variables_;
+    o->user_int32 = ++number_of_variables_;
   else
-    o_ << o.get_id() << " = xor(" << left << ", " << right << ")\n";
+    o_ << o->user_int32 << " = xor(" << left << ", " << right << ")\n";
 }
 void
 qcir::walk_var(op_ref o) {
   (void)o;
   if(dry_walk_ && !o->mark) {
     o->mark = true;
-    ++number_of_variables_;
+    o->user_int32 = ++number_of_variables_;
   }
 }
 
@@ -275,13 +275,19 @@ qcir::operator()(expression::op_ref op) {
 
   o_ << "#QCIR-G14 " << number_of_variables_ << "\n";
 
+  // Make the free variables a bit prettier.
+  std::sort(
+    unquantified_vars.begin(), unquantified_vars.end(), [&op](auto l, auto r) {
+      return op.get_mgr()[l]->user_int32 < op.get_mgr()[r]->user_int32;
+    });
+
   if(!unquantified_vars.empty()) {
     o_ << "free(";
     auto v = unquantified_vars.begin();
-    o_ << *v;
+    o_ << op.get_mgr()[*v]->user_int32;
     ++v;
     for(; v != unquantified_vars.end(); ++v) {
-      o_ << ", " << *v;
+      o_ << ", " << op.get_mgr()[*v]->user_int32;
     }
     o_ << ")\n";
   }
