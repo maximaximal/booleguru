@@ -1,29 +1,31 @@
 -- Get all variables that were not quantified
 function unquantified(op)
-  local quantified_vars = {}
+  function shallow_copy(t)
+    local t2 = {}
+    for k,v in pairs(t) do
+      t2[k] = v
+    end
+    return t2
+  end
 
-  local visited = {}
-  local unvisited = {op}
+  local s = { { op, {} } }
 
-  while #unvisited > 0 do
-    local top = table.remove(unvisited, #unvisited)
-    visited[top.id] = true
+  while #s > 0 do
+    local top_pair = table.remove(s, #s)
+    local top = top_pair[1]
+    local quantified = top_pair[2]
 
-    if top.t == optype.var and quantified_vars[top.v] == nil then
+    if top.t == optype.var and quantified[top.v] == nil then
       print(tostring(top))
     elseif top.t == optype.forall or top.t == optype.exists then
-      quantified_vars[top.l.v] = true
+      quantified[top.l.v] = true
     end
 
     if top.r ~= nil then
-      if visited[top.r.id] ~= true then
-        table.insert(unvisited, top.r)
-      end
+      table.insert(s, { top.r, shallow_copy(quantified) })
     end
     if top.l ~= nil then
-      if visited[top.l.id] ~= true then
-        table.insert(unvisited, top.l)
-      end
+      table.insert(s, { top.l, shallow_copy(quantified) })
     end
   end
   print("")
