@@ -97,8 +97,8 @@ tseitin<O>::operator()(expression::op_ref o) {
   while(q->is_quant()) {
     assert(q.left()->type == expression::op_type::Var);
     const expression::op& q_ = q.get_obj();
-    const expression::op& left = q.left().get_obj();
-    const expression::op_ref::ref left_id = q_.left();
+    uint32_t left_id = q_.left();
+    const expression::op& left = q.get_mgr().getobj(left_id);
     assert(left_id != 0);
     assert(left.type == expression::op_type::Var);
     if(q->type == expression::op_type::Exists) {

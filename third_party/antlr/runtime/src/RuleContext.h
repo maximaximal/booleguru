@@ -132,7 +132,9 @@ namespace antlr4 {
 
     virtual std::string toString(const std::vector<std::string> &ruleNames, RuleContext *stop);
 
-    bool operator == (const RuleContext &other) { return this == &other; } // Simple address comparison.
+    // Silence a warning by GCC 13
+    virtual bool operator == (const ParseTree &other) const override { return this == &other; } // Simple address comparison.
+    virtual bool operator == (const RuleContext &other) const { return this == &other; } // Simple address comparison.
 
   private:
     void InitializeInstanceFields();
