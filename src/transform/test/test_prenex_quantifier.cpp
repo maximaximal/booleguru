@@ -20,6 +20,8 @@ using namespace booleguru::parse;
 using namespace booleguru::transform;
 using namespace booleguru::expression::literals;
 
+static bool activate_animations = false;
+
 TEST_CASE("Transform a simple Non-Prenex formula into prenex formula") {
   std::shared_ptr<op_manager> ops =
     std::make_shared<op_manager>(std::make_shared<var_manager>());
@@ -50,7 +52,8 @@ TEST_CASE("Transform a simple Non-Prenex formula into prenex formula") {
   CAPTURE(serialized.str());
 
   prenex_quantifier p;
-  p.animate("test_simple");
+  if(activate_animations)
+    p.animate("test_simple");
   op_ref prenexed = p(op_g8);
 
   CAPTURE(prenexed.to_string());
@@ -95,7 +98,8 @@ TEST_CASE("Transform a simple Non-Prenex cleansed formula into prenex formula "
                          "(p[1] | q'[1] | r'[1]) & !(p[1] | q''[1] | r''[1]))";
 
   prenex_quantifier p(prenex_quantifier::Eup_Aup);
-  p.animate("test_EupAup");
+  if(activate_animations)
+    p.animate("test_EupAup");
   op_ref prenexed = p(formula);
 
   REQUIRE(prenexed.to_string() == expected);
@@ -113,7 +117,8 @@ TEST_CASE("Transform a simple Non-Prenex cleansed formula into prenex formula "
                          "q'[1] | r'[1]) & !(p[1] | q''[1] | r''[1]))";
 
   prenex_quantifier p(prenex_quantifier::Edown_Aup);
-  p.animate("test_EdownAup");
+  if(activate_animations)
+    p.animate("test_EdownAup");
   op_ref prenexed = p(formula);
 
   REQUIRE(prenexed.to_string() == expected);
@@ -131,7 +136,8 @@ TEST_CASE("Transform a simple Non-Prenex cleansed formula into prenex formula "
                          "q'[1] | r'[1]) & !(p[1] | q''[1] | r''[1]))";
 
   prenex_quantifier p(prenex_quantifier::Eup_Adown);
-  p.animate("test_EupAdown");
+  if(activate_animations)
+    p.animate("test_EupAdown");
   op_ref prenexed = p(formula);
 
   REQUIRE(prenexed.to_string() == expected);
@@ -149,7 +155,8 @@ TEST_CASE("Transform a simple Non-Prenex cleansed formula into prenex formula "
                          "q'[1] | r'[1]) & !(p[1] | q''[1] | r''[1]))";
 
   prenex_quantifier p(prenex_quantifier::Edown_Adown);
-  p.animate("test_EdownAdown");
+  if(activate_animations)
+    p.animate("test_EdownAdown");
   op_ref prenexed = p(formula);
 
   REQUIRE(prenexed.to_string() == expected);
@@ -168,7 +175,8 @@ TEST_CASE("Prenex a formula with multiple sub-trees with quantified variables "
   op_ref formula = sub_tree_1 && sub_tree_2 && sub_tree_3;
 
   prenex_quantifier prenexer(prenex_quantifier::Edown_Aup);
-  prenexer.animate("multiple_subtrees_Edown_Aup");
+  if(activate_animations)
+    prenexer.animate("multiple_subtrees_Edown_Aup");
   op_ref prenexed = prenexer(formula);
 
   CAPTURE(prenexed.to_string());
@@ -318,7 +326,8 @@ TEST_CASE("QBF Prenex K3 Edown Adown") {
   op_ref k3_root = *result;
 
   prenex_quantifier prenexer(prenex_quantifier::Edown_Adown);
-  prenexer.animate("K3_Edown_Adown");
+  if(activate_animations)
+    prenexer.animate("K3_Edown_Adown");
   op_ref k3_prenexed = prenexer(k3_root);
 
   std::string quantifiers =
