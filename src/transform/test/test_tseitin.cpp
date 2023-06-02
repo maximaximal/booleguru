@@ -25,7 +25,10 @@ TEST_CASE("Tseitin-transform a simple formula to QDIMACS") {
   tseitin<output_to_qdimacs> tseitin_transformer(output);
   tseitin_transformer(formula);
 
-  const char* expected = R"(p cnf 5 7
+  const char* expected = R"(c 1 a
+c 2 b
+c 3 c
+p cnf 5 7
 e 1 0
 a 2 0
 e 3 4 5 0

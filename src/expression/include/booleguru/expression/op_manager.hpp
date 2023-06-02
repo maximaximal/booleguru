@@ -37,7 +37,7 @@ class op_manager : public manager<op_ref, op_manager> {
   op_manager();
   op_manager(std::shared_ptr<var_manager> vars);
 
-  base::objref insert(T&& obj);
+  base::ref insert_id(T&& obj);
 
   inline var_manager& vars() { return *vars_; }
   inline std::shared_ptr<var_manager> vars_ptr() { return vars_; }

@@ -193,8 +193,8 @@ op_manager::op_manager()
 op_manager::op_manager(std::shared_ptr<var_manager> vars)
   : vars_(vars) {}
 
-op_manager::base::objref
-op_manager::insert(T&& obj) {
+op_manager::base::ref
+op_manager::insert_id(T&& obj) {
   switch(obj.type) {
     case op_type::And: {
       const auto& l = getobj(obj.left());
@@ -210,7 +210,7 @@ op_manager::insert(T&& obj) {
     }
     case op_type::Or:
       obj.is_ors = getobj(obj.left()).is_ors && getobj(obj.right()).is_ors;
-      [[fallthrough]];
+      obj.is_cnf = obj.is_ors;
     case op_type::Lpmi:
       [[fallthrough]];
     case op_type::Impl:
@@ -230,6 +230,7 @@ op_manager::insert(T&& obj) {
       obj.and_inside = l.and_inside;
       obj.is_prenex = l.is_prenex && !l.is_quant();
       obj.is_ors = l.type == op_type::Var;
+      obj.is_cnf = obj.is_ors;
       break;
     }
     case op_type::Exists:
@@ -244,12 +245,14 @@ op_manager::insert(T&& obj) {
     }
     case op_type::Var:
       assert(obj.var.v - 1 < vars().size());
+      obj.is_ors = true;
+      obj.is_cnf = true;
       break;
     case op_type::None:
       break;
   }
 
-  return base::insert(std::move(obj));
+  return base::insert_id(std::move(obj));
 }
 void
 op_manager::modify_ops(modifier&& mod) {

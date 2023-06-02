@@ -10,7 +10,7 @@
 
 namespace booleguru::expression {
 enum class op_type : uint8_t {
-  None,
+  None = 0,
   Exists,
   Forall,
   Equi,

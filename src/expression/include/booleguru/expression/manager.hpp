@@ -70,8 +70,7 @@ class manager {
   constexpr inline R insert(T&& obj) {
     assert(static_cast<int32_t>(counter_) <
            std::numeric_limits<int32_t>::max());
-    size_t idx = counter_++;
-    objects_map_.insert(std::make_pair(std::move(obj), idx));
+    ref idx = static_cast<C*>(this)->insert_id(std::move(obj));
     return (*this)[idx];
   }
   constexpr inline ref insert_id(T&& obj) {
