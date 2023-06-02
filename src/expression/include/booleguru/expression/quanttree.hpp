@@ -204,6 +204,8 @@ class quanttree {
 
   uint32_t next_unmarked(const entry& e);
 
+  uint32_t next_unmarked_path(uint32_t i);
+
   uint32_t last_path(uint32_t i);
 
   void correct_QA_diff(uint32_t path, uint32_t insert, uint32_t last);
@@ -331,7 +333,7 @@ class quanttree {
         // Nothing helped! We have to splice the remaining fork at the very bottom.
         if(uint32_t f = marked_contains_forks(root)) {
           uint32_t last = last_entry_on_critical_path(root);
-          splice_path_after_path(last, f);
+          splice_path_after_path(last, next_unmarked_path(f));
           changing = true;
         }
       }

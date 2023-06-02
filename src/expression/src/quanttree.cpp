@@ -377,6 +377,14 @@ quanttree::next_unmarked(const entry& e) {
 }
 
 uint32_t
+quanttree::next_unmarked_path(uint32_t i) {
+  while(v[i].is_fork_) {
+    i = next_unmarked(v[i]);
+  }
+  return i;
+}
+
+uint32_t
 quanttree::last_path(uint32_t i) {
   assert(i < size());
   while(v[i].is_fork_) {
