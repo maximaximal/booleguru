@@ -158,7 +158,7 @@ class quanttree {
   }
 
   [[nodiscard]] inline size_t size() const noexcept { return v.size(); }
-  [[nodiscard]] inline constexpr entry& operator[](uint32_t i) noexcept {
+  [[nodiscard]] inline entry& operator[](uint32_t i) noexcept {
     return v[i];
   }
   [[nodiscard]] inline const entry& operator[](uint32_t i) const noexcept {
