@@ -157,14 +157,11 @@ class quanttree {
                    std::numeric_limits<uint32_t>::max());
   }
 
-  [[nodiscard]] inline constexpr size_t size() const noexcept {
-    return v.size();
-  }
+  [[nodiscard]] inline size_t size() const noexcept { return v.size(); }
   [[nodiscard]] inline constexpr entry& operator[](uint32_t i) noexcept {
     return v[i];
   }
-  [[nodiscard]] inline constexpr const entry& operator[](
-    uint32_t i) const noexcept {
+  [[nodiscard]] inline const entry& operator[](uint32_t i) const noexcept {
     return const_cast<quanttree&>(*this)[i];
   }
 
