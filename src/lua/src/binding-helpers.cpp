@@ -2,6 +2,8 @@
 
 #include <booleguru/expression/literals.hpp>
 
+#include <booleguru/solve/sat.hpp>
+
 namespace booleguru::lua::helpers {
 uint32_t
 get_op_id(const expression::op_ref& r) {
@@ -95,5 +97,13 @@ prenex(expression::op_ref o,
   auto t = transform::prenex_quantifier(kind);
   t.animate(animation_path);
   return t(o);
+}
+
+std::optional<expression::op_ref>
+solve_sat(expression::op_ref o,
+          std::string solver,
+          std::vector<std::string> args) {
+  solve::sat s(solver, args);
+  return s.solve(o);
 }
 }

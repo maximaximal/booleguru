@@ -102,4 +102,14 @@ expression::op_ref
 prenex(expression::op_ref o,
        transform::prenex_quantifier::kind kind,
        const std::string& animation_path = "");
+
+std::optional<expression::op_ref>
+solve_sat(expression::op_ref o,
+          std::string solver = "kissat",
+          std::vector<std::string> args = { "-q" });
+
+inline std::optional<expression::op_ref>
+solve_sat_default_args(expression::op_ref o) {
+  return solve_sat(o);
+}
 }

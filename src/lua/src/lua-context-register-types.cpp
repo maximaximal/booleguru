@@ -136,6 +136,12 @@ lua_context::register_booleguru_types() {
   set_to_state(s, "b_or", "b-or", &helpers::binop<op_type::Or>);
   set_to_state(s, "b_not", "b-not", &helpers::unop<op_type::Not>);
 
+  set_to_state(
+    s,
+    "solve",
+    "solve",
+    sol::overload(&helpers::solve_sat, helpers::solve_sat_default_args));
+
   using namespace booleguru::transform;
   auto reftype = s.new_usertype<op_ref>(
     "opref",

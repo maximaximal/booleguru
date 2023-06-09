@@ -104,7 +104,27 @@ class output_to_qdimacs {
 
   inline ref not_op(ref r) { return -r; }
 
+  void add(ref x) {
+    if(x == 0) {
+      o << "0\n";
+    } else {
+      o << x << " ";
+    }
+  }
+
   inline void serialize_cnf_op(const expression::op_ref& o) {
+    serialize_cnf_op(
+      o,
+      [this](int32_t a, int32_t b) { problem(a, b); },
+      [this](int32_t a) { add(a); },
+      true);
+  }
+
+  template<typename Problem, typename Add>
+  inline void serialize_cnf_op(const expression::op_ref& o,
+                               Problem problem,
+                               Add a,
+                               bool mapping = true) {
     using enum expression::op_type;
 
     assert(o->is_cnf);
@@ -167,7 +187,8 @@ class output_to_qdimacs {
         case Var:
           if(!op.user_int32) {
             op.user_int32 = var_id++;
-            insert_mapping_comment(op.user_int32, ops[i].to_string());
+            if(mapping)
+              insert_mapping_comment(op.user_int32, ops[i].to_string());
           }
           break;
         default:
@@ -176,7 +197,6 @@ class output_to_qdimacs {
       }
     }
 
-    // Mappings
     while(i->is_quant()) {
       i = i.right();
     }
@@ -184,6 +204,9 @@ class output_to_qdimacs {
 
     int32_t variables = var_id - 1;
     int32_t clauses = 0;
+
+    if(i->type == And)
+      ++clauses;
 
     s.emplace(behind_prefix);
     while(!s.empty()) {
@@ -222,20 +245,22 @@ class output_to_qdimacs {
         if(o.left()->type == And) {
           s.emplace(o->left());
         } else {
-          print_or_tree(ops, o->left(), inner_s);
+          print_or_tree(ops, o->left(), inner_s, a);
         }
         if(o.right()->type == And) {
           s.emplace(o->right());
         } else {
-          print_or_tree(ops, o->right(), inner_s);
+          print_or_tree(ops, o->right(), inner_s, a);
         }
       }
     }
   }
 
+  template<typename Add>
   inline void print_or_tree(const expression::op_manager& ops,
                             uint32_t top,
-                            std::stack<uint32_t>& s) {
+                            std::stack<uint32_t>& s,
+                            Add a) {
     using enum expression::op_type;
     assert(s.empty());
     s.emplace(top);
@@ -249,13 +274,13 @@ class output_to_qdimacs {
           s.emplace(op.bin.r);
           break;
         case Not: {
-          const expression::op& v = ops.getobj(op.left());
+          const expression::op& v = ops.getobj(op.un.c);
           assert(v.type == Var);
-          o << "-" << v.user_int32 << " ";
+          a(-v.user_int32);
           break;
         }
         case Var: {
-          o << op.user_int32 << " ";
+          a(op.user_int32);
           break;
         }
         default:
@@ -263,7 +288,7 @@ class output_to_qdimacs {
           break;
       }
     }
-    o << "0\n";
+    a(0);
   }
 };
 }
