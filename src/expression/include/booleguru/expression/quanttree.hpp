@@ -223,6 +223,16 @@ class quanttree {
     return i;
   }
 
+  uint32_t next_fork(uint32_t i) {
+    assert(i < size());
+    assert(v[i].is_path() && v[i].has_next());
+    do {
+      i = v[i].p.next;
+      assert(i < size());
+    } while(v[i].is_path());
+    return i;
+  }
+
   uint32_t last_entry_on_critical_path(uint32_t i) {
     while(v[i].is_fork_ || v[i].has_next())
       i = next_marked(i);
@@ -239,114 +249,7 @@ class quanttree {
 
   op_ref prepend_marked_to_op(uint32_t root, op_ref o);
 
-  template<typename Functor>
-  void prenex(uint32_t root, Functor should_inline) {
-    mark_critical_path(root);
-    if(animate)
-      create_animation_step(root);
-
-    uint32_t bottom = 0;
-    bool changing = false;
-    bool ignore_QAs = false;
-
-    do {
-      changing = false;
-      for(uint32_t c = root; c < size(); c = next_marked(c)) {
-        entry& e = v[c];
-        if(e.is_fork())
-          continue;
-
-        bool is_above = true;
-        for(uint32_t f = root; f < size() && (is_above || last_path(f) == c);
-            f = next_marked(f)) {
-
-          if(f == c)
-            is_above = false;
-          if(!v[f].is_fork_)
-            continue;
-
-          walk_next_paths(
-            v[f], [this, root, &should_inline, &e, c, &changing](entry& check) {
-              if(should_inline(direction::downwards, e, check)) {
-                splice_path_after_path(c, index(check));
-                if(animate)
-                  create_animation_step(root);
-                changing = true;
-              }
-            });
-        }
-        bottom = c;
-      }
-
-      if(marked_contains_forks(root)) {
-        for(;;) {
-          uint32_t next_override = std::numeric_limits<uint32_t>::max();
-          std::reference_wrapper<entry> e = v[bottom];
-          if(e.get().is_fork()) {
-            bottom = e.get().parent_;
-            continue;
-          }
-
-          bool is_below = true;
-
-          for(uint32_t f = root;
-              f < size() && (is_below || last_path(f) == bottom);
-              f = next_marked(f)) {
-            if(f == bottom)
-              is_below = false;
-            if(!v[f].is_fork_)
-              continue;
-
-            walk_next_paths(
-              v[f],
-              [this,
-               root,
-               &should_inline,
-               &e,
-               &bottom,
-               &next_override,
-               &changing,
-               ignore_QAs](entry& check) {
-                if(!ignore_QAs && e.get().alternations < check.alternations)
-                  return;
-
-                if(should_inline(direction::upwards, e, check)) {
-                  next_override = splice_path_before_path(bottom, index(check));
-                  if(animate)
-                    create_animation_step(root);
-                  changing = true;
-                  e = v[next_override];
-                }
-              });
-
-            if(next_override != std::numeric_limits<uint32_t>::max()) {
-              break;
-            }
-          }
-          if(next_override != std::numeric_limits<uint32_t>::max()) {
-            bottom = next_override;
-          } else if(e.get().has_parent())
-            bottom = e.get().parent_;
-          else
-            break;
-        }
-      }
-      if(!changing && ignore_QAs) {
-        ignore_QAs = false;
-        // Nothing helped! We have to splice the remaining fork at the very
-        // bottom.
-        if(uint32_t f = marked_contains_forks(root)) {
-          uint32_t last = last_entry_on_critical_path(root);
-          splice_path_after_path(last, next_unmarked_path(f));
-          if(animate)
-            create_animation_step(root);
-          changing = true;
-        }
-      } else if(!changing) {
-        ignore_QAs = true;
-      }
-    } while((changing || ignore_QAs) && marked_contains_forks(root));
-  }
+  void prenex(uint32_t root, should_inline_checker should_inline);
 
   void mark_critical_path(uint32_t root);
 
