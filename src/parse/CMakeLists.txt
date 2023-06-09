@@ -17,9 +17,19 @@ set(SRCS
   src/base.cpp
   src/boole.cpp
   src/qdimacs.cpp
+  src/luascript.cpp
 )
 
+if(TARGET booleguru-py-embed)
+  list(APPEND SRCS "src/pythonscript.cpp")
+endif()
+
 add_library(booleguru-parse STATIC ${SRCS})
+
+if(TARGET booleguru-py-embed)
+  target_link_libraries(booleguru-parse PRIVATE booleguru-py-embed)
+  target_compile_definitions(booleguru-parse PUBLIC BOOLEGURU_PARSE_PY)
+endif()
 
 target_include_directories(booleguru-parse PRIVATE SYSTEM ${ANTLR_boole_lexer_OUTPUT_DIR})
 target_include_directories(booleguru-parse PRIVATE SYSTEM ${ANTLR_boole_parser_OUTPUT_DIR})

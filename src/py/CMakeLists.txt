@@ -4,7 +4,6 @@ add_library(booleguru-py-common OBJECT
 
 target_include_directories(booleguru-py-common PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(booleguru-py-common PUBLIC
-  booleguru-parse
   booleguru-serialize
   booleguru-transform
   booleguru-solve
@@ -14,7 +13,7 @@ target_link_libraries(booleguru-py-common PUBLIC
 target_link_libraries(booleguru-py-common PRIVATE pybind11::pybind11)
 
 add_library(booleguru-py-embed STATIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/embedded_python.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/python-context.cpp
 )
 
 set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR})

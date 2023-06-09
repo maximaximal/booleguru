@@ -89,8 +89,3 @@ PYBIND11_MODULE(pybooleguru, m) {
         pybind11::arg("kind") = transform::prenex_quantifier::Eup_Aup,
         pybind11::arg("animation_path") = "");
 }
-
-namespace booleguru::py {
-void
-register_booleguru_types() {}
-}

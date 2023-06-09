@@ -13,7 +13,11 @@
 #include <booleguru/expression/var_manager.hpp>
 #include <booleguru/parse/base.hpp>
 #include <booleguru/parse/boole.hpp>
+#include <booleguru/parse/luascript.hpp>
 #include <booleguru/parse/qdimacs.hpp>
+#ifdef BOOLEGURU_PARSE_PY
+#include <booleguru/parse/pythonscript.hpp>
+#endif
 #include <booleguru/parse/result.hpp>
 
 namespace booleguru::cli {
@@ -196,6 +200,10 @@ input_file::produce_parser(std::istream& is) {
       args_[argument::type] = argument::qdimacs;
     } else if(name_.ends_with(".qcir")) {
       args_[argument::type] = argument::qcir;
+    } else if(name_.ends_with(".py")) {
+      args_[argument::type] = argument::py;
+    } else if(name_.ends_with(".lua")) {
+      args_[argument::type] = argument::lua;
     }
   }
 
@@ -211,6 +219,22 @@ input_file::produce_parser(std::istream& is) {
       boole->eval(std::get<bool>(args_[argument::eval]));
       return boole;
     }
+    case argument::lua: {
+      is >> std::noskipws;
+      auto lua = std::make_unique<parse::luascript>(is, ops_);
+      return lua;
+    }
+    case argument::py: {
+#ifdef BOOLEGURU_PARSE_PY
+      is >> std::noskipws;
+      auto py = std::make_unique<parse::pythonscript>(is, ops_);
+      return py;
+#else
+      throw std::runtime_error("No support for Python parsing built in! "
+                               "Requires PyBind11 and Python.");
+#endif
+    }
+
     case argument::qdimacs:
       is >> std::noskipws;
       return std::make_unique<parse::qdimacs>(is, ops_);
