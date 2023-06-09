@@ -211,6 +211,7 @@ op_manager::insert_id(T&& obj) {
     case op_type::Or:
       obj.is_ors = getobj(obj.left()).is_ors && getobj(obj.right()).is_ors;
       obj.is_cnf = obj.is_ors;
+      [[fallthrough]];
     case op_type::Lpmi:
       [[fallthrough]];
     case op_type::Impl:
