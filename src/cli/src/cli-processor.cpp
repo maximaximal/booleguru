@@ -2,6 +2,7 @@
 #include <booleguru/cli/cli-processor.hpp>
 #include <booleguru/cli/input_file.hpp>
 
+#include <booleguru/expression/literals.hpp>
 #include <booleguru/expression/op.hpp>
 #include <booleguru/expression/op_manager.hpp>
 
@@ -41,7 +42,10 @@ cli_processor::cli_processor(arg_vec args)
   , cur_(args_[0])
   , next_(args_[1])
   , ops_(std::make_shared<expression::op_manager>())
-  , lua_(std::make_shared<lua::lua_context>(ops_)) {}
+  , lua_(std::make_shared<lua::lua_context>(ops_)) {
+  // Register this to be the global handler!
+  expression::literals::handle::global(ops_);
+}
 
 expression::op_ref
 cli_processor::process() {
