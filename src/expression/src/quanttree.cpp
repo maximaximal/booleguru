@@ -5,6 +5,7 @@
 
 #include <booleguru/expression/op_manager.hpp>
 #include <booleguru/expression/quanttree.hpp>
+#include <booleguru/expression/var_manager.hpp>
 
 std::ostream&
 operator<<(std::ostream& o, const booleguru::expression::quanttree& q) {
@@ -15,14 +16,14 @@ operator<<(std::ostream& o, const booleguru::expression::quanttree& q) {
     else
       o << ", ";
 
-    q[i].stream(o);
+    q[i].stream(o, nullptr);
   }
   return o;
 }
 
 std::ostream&
 operator<<(std::ostream& o, const booleguru::expression::quanttree::entry& e) {
-  return e.stream(o);
+  return e.stream(o, nullptr);
 }
 
 std::ostream&
@@ -35,14 +36,25 @@ operator<<(std::ostream& o, const booleguru::expression::quanttree::path& p) {
 
 namespace booleguru::expression {
 std::ostream&
-booleguru::expression::quanttree::entry::stream(std::ostream& o) const {
+booleguru::expression::quanttree::entry::stream(std::ostream& o,
+                                                const op_manager* ops) const {
   if(is_fork()) {
     o << f.left << ":" << f.right;
   } else {
-    o << p.type << ":" << p.var;
+    o << p.type << ":";
+    if(ops) {
+      o << ops->vars()[(*ops)[p.var]->var.v]->name;
+    } else {
+      o << p.var;
+    }
   }
   o << " (" << alternations << " QAs)";
   return o;
+}
+
+void
+quanttree::set_lookup_op_manager(const op_manager* ops) {
+  this->ops = ops;
 }
 
 uint32_t
@@ -444,7 +456,7 @@ quanttree::to_dot(std::string_view name, std::ostream& o, uint32_t root) {
     unvisited.pop();
     const entry& e = v[i];
     o << i << " [ label=\"";
-    e.stream(o) << "\"";
+    e.stream(o, ops) << "\"";
     if(e.marked_) {
       o << ", color=\"red\"";
     }

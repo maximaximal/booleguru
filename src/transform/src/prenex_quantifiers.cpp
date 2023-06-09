@@ -44,6 +44,8 @@ op_ref
 prenex_quantifier::operator()(op_ref o) {
   using enum op_type;
 
+  i_->qt.set_lookup_op_manager(&o.get_mgr());
+
   // I want to postorder traverse the tree and remove all quantifiers in the
   // process. In the end, the collected quantifiers are used from the quanttree.
 

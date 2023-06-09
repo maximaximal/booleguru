@@ -8,6 +8,8 @@
 #include "op.hpp"
 
 namespace booleguru::expression {
+class op_manager;
+
 /** Toolkit for manipulating quantifier trees */
 class quanttree {
   public:
@@ -86,7 +88,7 @@ class quanttree {
 
     constexpr uint32_t index(const entry* arr) const { return this - arr; }
 
-    std::ostream& stream(std::ostream&) const;
+    std::ostream& stream(std::ostream&, const op_manager* ops) const;
   };
 
   using should_inline_checker =
@@ -100,6 +102,7 @@ class quanttree {
   std::string animation_path = "";
   bool animate = false;
   uint32_t animate_step = 0;
+  const op_manager* ops = nullptr;
 
   void create_animation_step(uint32_t root);
 
@@ -156,6 +159,8 @@ class quanttree {
                    std::numeric_limits<uint32_t>::max(),
                    std::numeric_limits<uint32_t>::max());
   }
+
+  void set_lookup_op_manager(const op_manager* ops);
 
   [[nodiscard]] inline size_t size() const noexcept { return v.size(); }
   [[nodiscard]] inline entry& operator[](uint32_t i) noexcept { return v[i]; }
