@@ -50,8 +50,13 @@ main(int argc, char* argv[]) {
       std::cout << result << std::endl;
       return EXIT_SUCCESS;
     case cli::argument::qdimacs: {
-      transform::tseitin<transform::output_to_qdimacs> qdimacs(std::cout);
-      qdimacs(result);
+      if(result->is_cnf) {
+        transform::output_to_qdimacs o(std::cout);
+        o.serialize_cnf_op(result);
+      } else {
+        transform::tseitin<transform::output_to_qdimacs> qdimacs(std::cout);
+        qdimacs(result);
+      }
       return EXIT_SUCCESS;
     }
     case cli::argument::none:
