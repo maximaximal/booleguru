@@ -15,6 +15,10 @@ extern "C" {
 #define F_OK 0
 #define access _access
 #endif
+
+#if __has_include(<sys/wait.h>)
+#include <sys/wait.h>
+#endif
 }
 
 extern char** environ;
