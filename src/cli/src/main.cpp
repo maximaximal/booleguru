@@ -30,8 +30,57 @@ using namespace booleguru::cli;
  * is the default file.
  */
 
+static void print_help() {
+  using std::cout;
+  cout << "booleguru - boolean format multitool\n";
+  cout << "\n";
+  cout << "DOCUMENTATION:\n";
+  cout << "  See web-based documentation at:\n";
+  cout << "  https://booleguru.pages.sai.jku.at/booleguru/\n";
+  cout << "QUICK USAGE EXAMPLE:\n";
+  cout << "  ./booleguru [parser-args] <formula> [output-args]\n";
+  cout << "\n";
+  cout << "QUICK CLI EXPRESSION USAGE EXAMPLE:\n";
+  cout << "  ./booleguru <unop> [ file1.boole <binop> file2.boole ]\n";
+  cout << "\n";
+  cout << "SUPPORTED INPUT FORMATS:\n";
+  cout << "  (Q)DIMACS\n";
+  cout << "  Infix Logic Format (Limboole-esque)\n";
+  cout << "\n";
+  cout << "SUPPORTED OUTPUT FORMATS (as [output-args]):\n";
+  cout << "  --dimacs, --qdimacs\n";
+  cout << "  --qcir\n";
+  cout << "SUPPORTED OPERATIONS (append after some CLI expression):\n";
+  cout << "  :unquantified\n";
+  cout << "  :tseitin\n";
+  cout << "  :distribute-to-cnf\n";
+  cout << "  :solve\n";
+  cout << std::endl;
+}
+
+#define xstr(s) str(s)
+#define str(s) #s
+
+static void print_version() {
+  using std::cout;
+  cout << BOOLEGURU_VERSION << std::endl;
+}
+
+#undef xstr
+#undef str
+
 int
 main(int argc, char* argv[]) {
+  if(argc > 1) {
+    std::string_view arg1 = argv[1];
+    if(arg1 == "--help") {
+      print_help();
+      return EXIT_SUCCESS;
+    } else if(arg1 == "--version") {
+      print_version();
+      return EXIT_SUCCESS;
+    }
+  }
 
   // Preliminary stuff, just for testing!!
   cli::cli_processor cli(argc, argv);
