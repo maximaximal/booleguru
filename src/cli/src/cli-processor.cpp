@@ -41,8 +41,7 @@ cli_processor::cli_processor(arg_vec args)
   , args_(process_args_to_inputs(input_args_))
   , cur_(args_[0])
   , next_(args_[1])
-  , ops_(std::make_shared<expression::op_manager>())
-  , lua_(std::make_shared<lua::lua_context>(ops_)) {
+  , ops_(std::make_shared<expression::op_manager>()) {
   // Register this to be the global handler!
   expression::literals::handle::global(ops_);
 }
@@ -162,6 +161,7 @@ cli_processor::consume_eventual_lisp_arguments(expression::op_ref last_op) {
       // Just one thing, call that with *last-op* as parameter.
       cmd = "(" + cmd + " *last-op*)";
     }
+    ensure_lua_initialized();
     auto ret = lua_->eval_fennel(cmd.c_str(), last_op);
     if(std::holds_alternative<expression::op_ref>(ret))
       last_op = std::get<expression::op_ref>(ret);
@@ -200,6 +200,15 @@ cli_processor::process_args_to_inputs(arg_vec& args) {
         curr.emplace_back(arg);
         continue;
       }
+    } else if(arg == "[" || arg == "{") {
+      inputs.emplace_back(LPar);
+      continue;
+    } else if(arg == "]" || arg == "}") {
+      inputs.emplace_back(RPar);
+      continue;
+    } else if(arg == "!" || arg == "~") {
+      inputs.emplace_back(Not);
+      continue;
     } else if(arg.size() > 1 && arg.at(0) == ':') {
       // This is a transformation of the last expression through some lisp
       // function!
@@ -271,6 +280,7 @@ cli_processor::process_input_file(const arg_vec& v) {
 
 expression::op_ref
 cli_processor::process_input_fennel(arg_vec& v) {
+  ensure_lua_initialized();
   auto& input_file = v[v.size() - 1];
   lua::lua_context::eval_result result = lua_->eval_fennel(input_file);
   if(std::holds_alternative<std::string>(result)) {
@@ -293,5 +303,11 @@ cli_processor::next() {
       "Trying to call next() but no input parameters are left.");
   }
   next_ = args_[cur_idx_ + 1];
+}
+
+void
+cli_processor::ensure_lua_initialized() {
+  if(!lua_)
+    lua_ = std::make_shared<lua::lua_context>(ops_);
 }
 }

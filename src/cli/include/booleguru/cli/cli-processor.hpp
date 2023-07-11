@@ -84,13 +84,18 @@ class cli_processor {
   template<cli_processor::arg_op type, typename Functor>
   expression::op_ref process_assoc_op(Functor next);
 
+  void ensure_lua_initialized();
+
   arg_vec input_args_;
   size_t cur_idx_ = 0;
   arg_stream args_;
   std::reference_wrapper<arg_variant> cur_;
   std::reference_wrapper<arg_variant> next_;
   std::shared_ptr<expression::op_manager> ops_;
-  std::shared_ptr<lua::lua_context> lua_;
+
+  std::shared_ptr<lua::lua_context> lua_; /// Left empty by default and only
+                                          /// initialized when needed during
+                                          /// command-line parsing
   void next();
 };
 }
