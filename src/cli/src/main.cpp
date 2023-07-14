@@ -8,6 +8,7 @@
 #include <booleguru/parse/boole.hpp>
 #include <booleguru/parse/result.hpp>
 #include <booleguru/serialize/qcir.hpp>
+#include <booleguru/serialize/smtlib2.hpp>
 
 #include <booleguru/transform/output_to_qdimacs.hpp>
 #include <booleguru/transform/tseitin.hpp>
@@ -30,7 +31,8 @@ using namespace booleguru::cli;
  * is the default file.
  */
 
-static void print_help() {
+static void
+print_help() {
   using std::cout;
   cout << "booleguru - boolean format multitool\n";
   cout << "\n";
@@ -61,7 +63,8 @@ static void print_help() {
 #define xstr(s) str(s)
 #define str(s) #s
 
-static void print_version() {
+static void
+print_version() {
   using std::cout;
   cout << BOOLEGURU_VERSION << std::endl;
 }
@@ -106,6 +109,11 @@ main(int argc, char* argv[]) {
         transform::tseitin<transform::output_to_qdimacs> qdimacs(std::cout);
         qdimacs(result);
       }
+      return EXIT_SUCCESS;
+    }
+    case cli::argument::smtlib2: {
+      serialize::smtlib2 s(std::cout);
+      s(result);
       return EXIT_SUCCESS;
     }
     case cli::argument::none:

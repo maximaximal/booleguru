@@ -245,7 +245,10 @@ op_manager::insert_id(T&& obj) {
       break;
     }
     case op_type::Var:
-      assert(obj.var.v - 1 < vars().size());
+      // This is not strictly required and may only be useful during debugging.
+      // It's only good for debugging.
+      //
+      // assert(obj.var.v - 1 < vars().size());
       obj.is_ors = true;
       obj.is_cnf = true;
       break;

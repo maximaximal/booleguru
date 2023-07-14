@@ -20,7 +20,7 @@ class qdimacs : public base {
     exists,
     forall,
   };
-  std::vector<std::pair<quantifier, std::string>> quantified_;
+  std::vector<std::pair<quantifier, int>> quantified_;
 
   public:
   using base::base;

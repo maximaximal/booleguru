@@ -18,6 +18,7 @@ bool
 qdimacs::read_header(std::istringstream& line) {
   std::string p = "";
   std::string cnf = "";
+
   line >> p;
   if(!line || p != "p")
     return false;
@@ -42,63 +43,77 @@ qdimacs::operator()() {
 
   std::string line_str;
   op_ref expr = op_ref();
+  int highest_var = 0;
 
   while(std::getline(in_, line_str)) {
     std::istringstream line(line_str);
 
     switch(phase_) {
       case header:
-        if(!read_header(line)) {
-          column_ = line.tellg();
-          return error("Could not read header!");
+        if(line.peek() == 'c') {
+          char c;
+          do {
+            line >> c;
+          } while(line);
+        } else {
+          if(!read_header(line)) {
+            column_ = line.tellg();
+            return error("Could not read header!");
+          }
+          phase_ = prefix_and_matrix;
         }
-        phase_ = prefix_and_matrix;
         break;
       case prefix_and_matrix:
         if(line_str.size() > 0) {
           if(line_str[0] == 'e') {
             char e;
             line >> e;
-            std::string var;
+            int var;
             do {
               line >> var;
               CHECK_OR_RETURN(
                 line, "could not read existentially quantified variable");
-              if(var == "0") {
+              if(var == 0) {
                 break;
               } else {
-                quantified_.push_back(std::make_pair(exists, var));
+                quantified_.push_back(std::make_pair(exists, var + 1));
               }
-            } while(line && var != "0");
+            } while(line && var != 0);
           } else if(line_str[0] == 'a') {
             char a;
             line >> a;
-            std::string var;
+            int var;
             do {
               line >> var;
               CHECK_OR_RETURN(line,
                               "could not read universally quantified variable");
-              if(var == "0") {
+              if(var == 0) {
                 break;
               } else {
-                quantified_.push_back(std::make_pair(forall, var));
+                quantified_.push_back(std::make_pair(forall, var + 1));
               }
-            } while(line && var != "0");
+            } while(line && var != 0);
           } else {
-            std::string var;
+            int var;
             line >> var;
-            op_ref ex = ops_->get(
-              op(op_type::Var, vars_->get(variable{ var }).get_id(), 0));
+            int abs_var = abs(var);
+            if(abs_var > highest_var)
+              highest_var = abs_var;
+            op_ref ex = ops_->get(op(op_type::Var, abs_var + 1, 0));
+            if(var < 0)
+              ex = !ex;
             CHECK_OR_RETURN(line, "could not read first variable");
             do {
               line >> var;
-              if(var == "0")
+              if(var == 0)
                 break;
-              ex = ex ||
-                   ops_->get(
-                     op(op_type::Var, vars_->get(variable{ var }).get_id(), 0));
+              abs_var = abs(var);
+              auto next = ops_->get(op(op_type::Var, abs_var + 1, 0));
+              if(var < 0)
+                next = !next;
+              ex = ex || next;
               CHECK_OR_RETURN(line, "could not read variable");
-            } while(line && var != "0");
+            } while(line && var != 0);
             expr = expr.valid() ? expr && ex : ex;
           }
         }
@@ -108,11 +123,16 @@ qdimacs::operator()() {
     ++line_;
   }
 
+  for(int i = 1; i <= highest_var; ++i) {
+    int id = vars_->get_id(variable{ std::to_string(i) }) - 1;
+    assert(id == i);
+  }
+
   for(auto it = quantified_.rbegin(); it != quantified_.rend(); ++it) {
-    auto& [quant, str] = *it;
+    auto& [quant, v] = *it;
     op_type q = quant == exists ? op_type::Exists : op_type::Forall;
-    expr =
-      ops_->get(op(q, vars_->get(variable{ str }).get_id(), expr.get_id()));
+    auto v_op = ops_->get_id(op(op_type::Var, v, 0));
+    expr = ops_->get(op(q, v_op, expr.get_id()));
   }
 
   return generate_result(expr);

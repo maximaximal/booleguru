@@ -135,6 +135,27 @@ class op_manager : public manager<op_ref, op_manager> {
       return r;
     }
   }
+
+  template<typename Visitor>
+  void traverse_preorder_with_stack(ref root, Visitor visit) {
+    if(root == 0)
+      return;
+
+    std::stack<ref> s;
+    s.emplace(root);
+
+    while(!s.empty()) {
+      ref current = s.top();
+      const auto& current_obj = getobj(current);
+      s.pop();
+      visit(current);
+
+      if(current_obj.right())
+        s.emplace(current_obj.right());
+      if(current_obj.left())
+        s.emplace(current_obj.left());
+    }
+  }
 };
 
 op_ref inline

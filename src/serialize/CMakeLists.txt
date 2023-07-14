@@ -1,5 +1,6 @@
 set(SRCS
   src/qcir.cpp
+  src/smtlib2.cpp
 )
 
 add_library(booleguru-serialize STATIC ${SRCS})
