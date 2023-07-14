@@ -10,6 +10,9 @@ Presented at MBMV'23 in Freiburg
 ([Presentation](http://maximaximal.pages.sai.jku.at/mbmv23/), [Workshop
 Website](https://cca.informatik.uni-freiburg.de/mbmv23/)).
 
+Documentation is being written and [put up
+here](https://booleguru.pages.sai.jku.at/booleguru/).
+
 ## Structure
 
 This document describes how the different components of booleguru interact with
