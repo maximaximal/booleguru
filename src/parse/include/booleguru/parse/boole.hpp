@@ -8,13 +8,6 @@
 
 namespace booleguru::parse {
 class boole : public base {
-  protected:
-  struct internal;
-  struct internal_deleter {
-    void operator()(internal* i);
-  };
-  std::unique_ptr<internal, internal_deleter> internal_;
-
   virtual void init() override;
 
   public:
@@ -25,5 +18,12 @@ class boole : public base {
   void eval(bool enable);
 
   virtual result operator()() override;
+
+  protected:
+  struct internal;
+  struct internal_deleter {
+    void operator()(internal*);
+  };
+  std::unique_ptr<internal, internal_deleter> internal_;
 };
 }

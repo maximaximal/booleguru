@@ -50,6 +50,10 @@ endif()
 
 target_include_directories(booleguru-parse PRIVATE SYSTEM ${ANTLR_boole_lexer_OUTPUT_DIR})
 target_include_directories(booleguru-parse PRIVATE SYSTEM ${ANTLR_boole_parser_OUTPUT_DIR})
+target_include_directories(booleguru-parse PRIVATE SYSTEM ${ANTLR_smtlib2_lexer_OUTPUT_DIR})
+target_include_directories(booleguru-parse PRIVATE SYSTEM ${ANTLR_smtlib2_parser_OUTPUT_DIR})
+target_include_directories(booleguru-parse PRIVATE SYSTEM ${ANTLR_qcir_lexer_OUTPUT_DIR})
+target_include_directories(booleguru-parse PRIVATE SYSTEM ${ANTLR_qcir_parser_OUTPUT_DIR})
 
 target_include_directories(booleguru-parse PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
