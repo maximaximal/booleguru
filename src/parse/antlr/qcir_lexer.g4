@@ -25,3 +25,5 @@ ID : ('_'|LETTER) ('_'|LETTER|DIGIT)* ;
 INT : DIGIT+ ;
 DIGIT : '0'..'9' ;
 LETTER : ('a'..'z'|'A'..'Z') ;
+
+WS : (' ' | '\t')+ -> channel(HIDDEN);
