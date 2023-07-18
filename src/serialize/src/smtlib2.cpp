@@ -47,8 +47,12 @@ smtlib2::operator()(expression::op_ref op) {
   }
 
   if(quantifiers) {
-    o_ << "(set-logic BV)\n";
-    o_ << "\n";
+    // This leads to immense slowdown in SMT solvers for some reason! TODO: Look
+    // into this.
+    //
+    // o_ << "(set-logic BV)\n";
+    //
+    // o_ << "\n";
   } else {
     o_ << "(set-logic QF_BV)\n";
     o_ << "\n";
