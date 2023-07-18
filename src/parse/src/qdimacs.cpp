@@ -108,6 +108,8 @@ qdimacs::operator()() {
               if(var == 0)
                 break;
               abs_var = abs(var);
+              if(abs_var > highest_var)
+                highest_var = abs_var;
               auto next = ops_->get(op(op_type::Var, abs_var + 1, 0));
               if(var < 0)
                 next = !next;
@@ -123,7 +125,7 @@ qdimacs::operator()() {
     ++line_;
   }
 
-  for(int i = 1; i <= highest_var + 1; ++i) {
+  for(int i = 1; i <= highest_var; ++i) {
     int id = vars_->get_id(variable{ std::to_string(i) }) - 1;
     assert(id == i);
   }
