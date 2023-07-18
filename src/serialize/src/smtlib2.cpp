@@ -87,7 +87,10 @@ smtlib2::operator()(expression::op_ref op) {
     });
   assert(expr.size() == 1);
 
-  if(!quantifiers) {
+  if(quantifiers) {
+    o_ << "(set-logic BV)\n";
+    o_ << "\n";
+  } else {
     o_ << "(set-logic QF_BV)\n";
     o_ << "\n";
   }
@@ -96,5 +99,6 @@ smtlib2::operator()(expression::op_ref op) {
   }
   o_ << "\n";
   o_ << "(assert " << expr.top() << ")\n";
+  o_ << "(check-sat)\n";
 }
 }
