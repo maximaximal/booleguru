@@ -121,7 +121,7 @@ smtlib2::operator()(expression::op_ref op) {
           s.emplace(std::make_pair(o.left(), d + 1));
           s.emplace(std::make_pair(o.right(), 0));
           break;
-#ifdef FALSE
+#ifdef BINARY_TREE_BINOPS
           // Strict binary tree SMTLIB2 printing
 
         case expression::op_type::And:
@@ -134,7 +134,7 @@ smtlib2::operator()(expression::op_ref op) {
           s.emplace(std::make_pair(o.left(), d + 1));
           s.emplace(std::make_pair(o.right(), 0));
           break;
-#endif
+#else
         case expression::op_type::Or: {
           o_ << "(or";
           s.emplace(std::make_pair(o.right(), d + 1));
@@ -157,6 +157,7 @@ smtlib2::operator()(expression::op_ref op) {
           s.emplace(std::make_pair(l, 0));
           break;
         }
+#endif
         case expression::op_type::Xor:
           o_ << "(xor";
           s.emplace(std::make_pair(o.right(), d + 1));
