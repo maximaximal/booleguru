@@ -1,6 +1,7 @@
+#include <algorithm>
 #include <cassert>
+#include <set>
 #include <string_view>
-#include <unordered_set>
 
 #include <booleguru/serialize/smtlib2.hpp>
 #include <booleguru/transform/hash_variables.hpp>
@@ -11,7 +12,8 @@ void
 smtlib2::operator()(expression::op_ref op) {
   expression::op_manager& mgr = op.get_mgr();
 
-  std::unordered_set<int32_t> vars;
+  std::set<expression::op_manager::ref> vars;
+  std::set<expression::op_manager::ref> quantified_vars;
   expression::op_manager::ref root = op.get_id();
   std::stack<std::pair<expression::op_manager::ref, uint32_t>> s;
   s.emplace(std::make_pair(root, 0));
@@ -29,6 +31,7 @@ smtlib2::operator()(expression::op_ref op) {
       case op_type::Forall:
         quantifiers = true;
         s.emplace(std::make_pair(o.right(), 0));
+        quantified_vars.insert(o.left());
         break;
       case op_type::Not:
         s.emplace(std::make_pair(o.left(), 0));
@@ -50,11 +53,19 @@ smtlib2::operator()(expression::op_ref op) {
     o_ << "(set-logic QF_BV)\n";
     o_ << "\n";
   }
-  for(const auto& v : vars) {
+
+  std::set<expression::op_manager::ref> unquantified_vars;
+  std::set_difference(
+    vars.begin(),
+    vars.end(),
+    quantified_vars.begin(),
+    quantified_vars.end(),
+    std::inserter(unquantified_vars, unquantified_vars.begin()));
+
+  for(const auto& v : unquantified_vars) {
     o_ << "(declare-const "
        << "const_" << mgr[v].to_string() << " Bool)\n";
   }
-  o_ << "\n";
   o_ << "(assert\n";
 
   s.emplace(std::make_pair(root, 0));
