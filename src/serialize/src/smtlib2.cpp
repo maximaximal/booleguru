@@ -67,13 +67,13 @@ smtlib2::operator()(expression::op_ref op) {
             e = "(implies " + right + " " + left + ")";
             break;
           case expression::op_type::Or:
-            e = "(or " + right + " " + left + ")";
+            e = "(or " + left + " " + right + ")";
             break;
           case expression::op_type::And:
-            e = "(and " + right + " " + left + ")";
+            e = "(and " + left + " " + right + ")";
             break;
           case expression::op_type::Xor:
-            e = "(xor " + right + " " + left + ")";
+            e = "(xor " + left + " " + right + ")";
             break;
           case expression::op_type::Not:
             assert(false);
