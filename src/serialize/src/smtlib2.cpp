@@ -55,6 +55,7 @@ smtlib2::operator()(expression::op_ref op) {
        << "const_" << mgr[v].to_string() << " Bool)\n";
   }
   o_ << "\n";
+  o_ << "(assert\n";
 
   s.emplace(std::make_pair(root, 0));
 
@@ -109,6 +110,20 @@ smtlib2::operator()(expression::op_ref op) {
           s.emplace(std::make_pair(o.left(), d + 1));
           s.emplace(std::make_pair(o.right(), 0));
           break;
+#ifdef FALSE
+          // Strict binary tree SMTLIB2 printing
+
+        case expression::op_type::And:
+          o_ << "(and";
+          s.emplace(std::make_pair(o.left(), d + 1));
+          s.emplace(std::make_pair(o.right(), 0));
+          break;
+        case expression::op_type::Or:
+          o_ << "(or";
+          s.emplace(std::make_pair(o.left(), d + 1));
+          s.emplace(std::make_pair(o.right(), 0));
+          break;
+#endif
         case expression::op_type::Or: {
           o_ << "(or";
           s.emplace(std::make_pair(o.right(), d + 1));
@@ -146,6 +161,6 @@ smtlib2::operator()(expression::op_ref op) {
     }
   }
 
-  o_ << "(check-sat)\n";
+  o_ << ")\n(check-sat)\n";
 }
 }
