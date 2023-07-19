@@ -43,7 +43,8 @@ booleguru::expression::quanttree::entry::stream(std::ostream& o,
   } else {
     o << p.type << ":";
     if(ops) {
-      o << ops->vars()[(*ops)[p.var]->var.v]->name;
+      auto varop = (*ops)[p.var];
+      o << varop;
     } else {
       o << p.var;
     }
