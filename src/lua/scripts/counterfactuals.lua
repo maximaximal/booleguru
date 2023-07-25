@@ -45,7 +45,7 @@ function counterfactuals(formulas_in_theory, var_count, nesting_depth, clauses_p
   -- Vars are v_1..var_count
   function generate_vars()
     local vars = {}
-    for i = 0,var_count-1 do
+    for i = 0,var_count do
       vars[i] = v("v_" .. i+1)
     end
     return vars
@@ -94,7 +94,7 @@ function counterfactuals(formulas_in_theory, var_count, nesting_depth, clauses_p
 
   function random_select_var(previous_vars)
     while true do
-      local selected = V[math.random(#V)]
+      local selected = V[math.random(var_count)]
       if previous_vars[selected] == nil then
         previous_vars[selected] = true
         return selected
@@ -218,43 +218,36 @@ function counterfactuals(formulas_in_theory, var_count, nesting_depth, clauses_p
   end
 
   psi = {}
-
   function PSI(i)
+    if i < nesting_depth then
+      local rel_1 = nil
+      local rel_2 = nil
 
-    print_table(psi)
-
-    -- k is even 
-    if(nesting_depth % 2 == 0) then
-      
-      if(i % 2 == 0) and (i < nesting_depth) then
-        table.insert(psi[i], GT(i))
-        PSI(i+1)
-      elseif (i < nesting_depth) then
-        table.insert(psi[i], NGT(i))
-        PSI(i+1)
-      else 
-        table.insert(psi[i], W(nesting_depth))
+      if nesting_depth % 2 == 0 then
+        -- k is even
+        rel_1 = GT
+        rel_2 = NGT
+      else
+        -- k is odd
+        rel_1 = NGT
+        rel_2 = GT
       end
-      
-    -- k is odd
+
+      local rel = nil
+      if i % 2 == 0 then
+        rel = rel_1
+      else
+        rel = rel_2
+      end
+      return rel(i)
     else
-      if(i % 2 == 0) and (i < nesting_depth) then
-        table.insert(psi[i], NGT(i))
-        
-      elseif (i < nesting_depth) then
-        table.insert(psi[i], GT(i))
-        
-      else 
-        table.insert(psi[i], W(nesting_depth))
-      end
+      return W(nesting_depth)
     end
   end
-  
-  -- function for Psi_(k+1) 
-  function W(k) 
-    local left = quantify_table(forall, V, sum_table(M(k)) & phi[k])
-    local res = impl(left, phi[k])
-    return res
+
+  -- function for Psi_(k+1)
+  function W(k)
+    return quantify_table(forall, V, impl(sum_table(M(k-1)) & phi[k-1], phi[k]))
   end
 
   function GT(i)
@@ -264,8 +257,8 @@ function counterfactuals(formulas_in_theory, var_count, nesting_depth, clauses_p
   end
 
   function NGT(i)
-    local step1 = PHI(i) & ~sum_table(PSI(i+1))
-    local quant = quantify_table(exists, S[i], step1) 
+    local step1 = PHI(i) & ~PSI(i+1)
+    local quant = quantify_table(exists, S[i], step1)
     return quant
   end
 
