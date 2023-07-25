@@ -217,5 +217,57 @@ function counterfactuals(formulas_in_theory, var_count, nesting_depth, clauses_p
     return p & f
   end
 
-  return PHI(1)
+  psi = {}
+
+  function PSI(i)
+
+    print_table(psi)
+
+    -- k is even 
+    if(nesting_depth % 2 == 0) then
+      
+      if(i % 2 == 0) and (i < nesting_depth) then
+        table.insert(psi[i], GT(i))
+        PSI(i+1)
+      elseif (i < nesting_depth) then
+        table.insert(psi[i], NGT(i))
+        PSI(i+1)
+      else 
+        table.insert(psi[i], W(nesting_depth))
+      end
+      
+    -- k is odd
+    else
+      if(i % 2 == 0) and (i < nesting_depth) then
+        table.insert(psi[i], NGT(i))
+        
+      elseif (i < nesting_depth) then
+        table.insert(psi[i], GT(i))
+        
+      else 
+        table.insert(psi[i], W(nesting_depth))
+      end
+    end
+  end
+  
+  -- function for Psi_(k+1) 
+  function W(k) 
+    local left = quantify_table(forall, V, sum_table(M(k)) & phi[k])
+    local res = impl(left, phi[k])
+    return res
+  end
+
+  function GT(i)
+    local step1 = impl(PHI(i), PSI(i+1))
+    local quant = quantify_table(forall, S[i], step1)
+    return quant
+  end
+
+  function NGT(i)
+    local step1 = PHI(i) & ~sum_table(PSI(i+1))
+    local quant = quantify_table(exists, S[i], step1) 
+    return quant
+  end
+
+  return PSI(0)
 end
