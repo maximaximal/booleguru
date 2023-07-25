@@ -57,7 +57,7 @@ function counterfactuals(formulas_in_theory, var_count, nesting_depth, clauses_p
 
   S = {}
   U = {}
-  for i=0,nesting_depth-1 do
+  for i=0,nesting_depth do
     local s = {}
     local u = {}
     for n=0,formulas_in_theory+i-1 do
@@ -219,7 +219,7 @@ function counterfactuals(formulas_in_theory, var_count, nesting_depth, clauses_p
 
   psi = {}
   function PSI(i)
-    if i < nesting_depth then
+    if i <= nesting_depth then
       local rel_1 = nil
       local rel_2 = nil
 
@@ -257,7 +257,7 @@ function counterfactuals(formulas_in_theory, var_count, nesting_depth, clauses_p
   end
 
   function NGT(i)
-    local step1 = PHI(i) & ~PSI(i+1)
+    local step1 = PHI(i) & PSI(i+1)
     local quant = quantify_table(exists, S[i], step1)
     return quant
   end
