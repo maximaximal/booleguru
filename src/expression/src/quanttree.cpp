@@ -341,10 +341,45 @@ quanttree::next_highest_QAs(uint32_t i) {
   }
 
   uint32_t left_ = e.f.left;
-  const entry& left = v[left_];
+  entry& left = v[left_];
   uint32_t right_ = e.f.right;
-  const entry& right = v[right_];
-  if(left.alternations > right.alternations) {
+  entry& right = v[right_];
+
+  size_t left_alternations = left.alternations;
+  size_t right_alternations = right.alternations;
+
+  assert(!left.marked_);
+  assert(!right.marked_);
+
+  if(left_alternations == right_alternations) {
+    uint32_t p = last_path(i);
+    entry& pe = v[p];
+
+    // Check which side gives us the most quantifier alternations. This may also
+    // include a changing quantifier from the last path to the next, which is
+    // why we have to walk over all possibilities. This only applies if the
+    // alternations would otherwise be equal.
+
+    bool left_found = false;
+    walk_next_paths(left,
+                    [&pe, &left_alternations, &left_found](const entry& e) {
+                      if(e.p.type != pe.p.type && !left_found) {
+                        ++left_alternations;
+                        left_found = true;
+                      }
+                    });
+
+    bool right_found = false;
+    walk_next_paths(right,
+                    [&pe, &right_alternations, &right_found](const entry& e) {
+                      if(e.p.type != pe.p.type && !right_found) {
+                        ++right_alternations;
+                        right_found = true;
+                      }
+                    });
+  }
+
+  if(left_alternations > right_alternations) {
     return left_;
   } else {
     return right_;
