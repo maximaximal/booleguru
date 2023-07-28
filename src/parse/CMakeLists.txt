@@ -16,6 +16,12 @@ antlr_target(qcir_parser ${CMAKE_CURRENT_SOURCE_DIR}/antlr/qcir_parser.g4 PARSER
   DEPENDS_ANTLR qcir_lexer
   COMPILE_FLAGS -lib ${ANTLR_qcir_lexer_OUTPUT_DIR})
 
+antlr_target(cli_lexer ${CMAKE_CURRENT_SOURCE_DIR}/antlr/cli_lexer.g4 LEXER PACKAGE booleguru::parse::antlr)
+antlr_target(cli_parser ${CMAKE_CURRENT_SOURCE_DIR}/antlr/cli_parser.g4 PARSER
+  PACKAGE booleguru::parse::antlr
+  DEPENDS_ANTLR cli_lexer
+  COMPILE_FLAGS -lib ${ANTLR_cli_lexer_OUTPUT_DIR})
+
 add_library(booleguru-parse-antlr OBJECT
   ${ANTLR_boole_lexer_CXX_OUTPUTS}
   ${ANTLR_boole_parser_CXX_OUTPUTS}
@@ -23,6 +29,8 @@ add_library(booleguru-parse-antlr OBJECT
   ${ANTLR_smtlib2_parser_CXX_OUTPUTS}
   ${ANTLR_qcir_lexer_CXX_OUTPUTS}
   ${ANTLR_qcir_parser_CXX_OUTPUTS}
+  ${ANTLR_cli_lexer_CXX_OUTPUTS}
+  ${ANTLR_cli_parser_CXX_OUTPUTS}
 )
 
 target_link_libraries(booleguru-parse-antlr PUBLIC antlr4_static)
