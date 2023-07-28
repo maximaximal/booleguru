@@ -87,3 +87,33 @@ TEST_CASE("Stackful Postorder expression tree traversal with modification 2") {
 
   REQUIRE(ops[root].to_string() == "!(a -> b)");
 }
+
+TEST_CASE("Stackful Postorder expression tree traversal with modification 3") {
+  std::vector<uint32_t> log;
+
+  op_manager ops;
+
+  op_ref a = "a"_var(ops);
+  op_ref b = "b"_var(ops);
+  op_ref c = "c"_var(ops);
+
+  op_ref t0 = ((a && b || c) && (b && c || a)) && c;
+  op_ref t1 = t0 && !t0;
+  op_ref t2 = lpmi(forall(a, t1), exists(a, t1));
+
+  uint32_t root = ops.traverse_postorder_with_stack(
+    t2.get_id(), [&log, &b](op_manager* ops, uint32_t i) -> uint32_t {
+      op_ref r = (*ops)[i];
+      if(r->type == op_type::Lpmi) {
+        // Flip the lpmi to impl
+        return ops->get_id(op(op_type::Impl, r->left(), r->right()));
+      } else if(r->type == op_type::Not) {
+        // Remove the not
+        return r->left();
+      }
+      return i;
+    });
+
+  std::string s{ops[root].to_string()};
+  REQUIRE(s.find("<-") == std::string::npos);
+}
