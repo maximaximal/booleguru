@@ -100,7 +100,7 @@ class op_manager : public manager<op_ref, op_manager> {
       s.pop_back();
 
       ref right = getobj(root).right();
-      if(right && s.back().op == right) {
+      if(right && !s.empty() && s.back().op == right) {
         s.pop_back();
         s.emplace_back(root, parent, l);
         parent = s.size() - 1;
