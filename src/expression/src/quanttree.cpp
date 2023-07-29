@@ -353,30 +353,32 @@ quanttree::next_highest_QAs(uint32_t i) {
 
   if(left_alternations == right_alternations) {
     uint32_t p = last_path(i);
-    entry& pe = v[p];
+    if(p != std::numeric_limits<uint32_t>::max()) {
+      entry& pe = v[p];
 
-    // Check which side gives us the most quantifier alternations. This may also
-    // include a changing quantifier from the last path to the next, which is
-    // why we have to walk over all possibilities. This only applies if the
-    // alternations would otherwise be equal.
+      // Check which side gives us the most quantifier alternations. This may
+      // also include a changing quantifier from the last path to the next,
+      // which is why we have to walk over all possibilities. This only applies
+      // if the alternations would otherwise be equal.
 
-    bool left_found = false;
-    walk_next_paths(left,
-                    [&pe, &left_alternations, &left_found](const entry& e) {
-                      if(e.p.type != pe.p.type && !left_found) {
-                        ++left_alternations;
-                        left_found = true;
-                      }
-                    });
+      bool left_found = false;
+      walk_next_paths(left,
+                      [&pe, &left_alternations, &left_found](const entry& e) {
+                        if(e.p.type != pe.p.type && !left_found) {
+                          ++left_alternations;
+                          left_found = true;
+                        }
+                      });
 
-    bool right_found = false;
-    walk_next_paths(right,
-                    [&pe, &right_alternations, &right_found](const entry& e) {
-                      if(e.p.type != pe.p.type && !right_found) {
-                        ++right_alternations;
-                        right_found = true;
-                      }
-                    });
+      bool right_found = false;
+      walk_next_paths(right,
+                      [&pe, &right_alternations, &right_found](const entry& e) {
+                        if(e.p.type != pe.p.type && !right_found) {
+                          ++right_alternations;
+                          right_found = true;
+                        }
+                      });
+    }
   }
 
   if(left_alternations > right_alternations) {
@@ -435,7 +437,7 @@ quanttree::next_unmarked_path(uint32_t i) {
 uint32_t
 quanttree::last_path(uint32_t i) {
   assert(i < size());
-  while(v[i].is_fork_) {
+  while(i < size() && v[i].is_fork_) {
     i = v[i].parent_;
   }
   return i;

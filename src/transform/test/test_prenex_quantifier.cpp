@@ -62,7 +62,7 @@ TEST_CASE("Transform a simple Non-Prenex formula into prenex formula") {
   transformed << prenexed;
 
   const char* expected =
-    R"(?p[1] ?r[2] #q[2] #q[1] ?r[1] ((p[1] | q[1] | r[1]) & (!p[1] | q[2] | r[2])))";
+    R"(?p[1] ?r[2] #q[1] #q[2] ?r[1] ((p[1] | q[1] | r[1]) & (!p[1] | q[2] | r[2])))";
 
   REQUIRE(transformed.str() == expected);
 }
