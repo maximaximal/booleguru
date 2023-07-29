@@ -169,6 +169,34 @@ function counterfactuals(formulas_in_theory, var_count, nesting_depth, clauses_p
     return theory
   end
 
+  function gather_vars(top)
+    local s = { top }
+    local inserted_vars = {}
+    local vars = {}
+    local i = 0
+
+    while #s > 0 do
+      top = table.remove(s, #s)
+
+      if top.t == optype.var then
+        if inserted_vars[top.id] == nil then
+          vars[i] = top
+          i = i + 1
+        end
+        inserted_vars[top.id] = true
+      end
+
+      if top.r ~= nil then
+        table.insert(s, top.r)
+      end
+      if top.l ~= nil then
+        table.insert(s, top.l)
+      end
+    end
+
+    return vars
+  end
+
   function sum_table(t)
     assert(#t >= 1)
     local a = t[0]
@@ -246,7 +274,8 @@ function counterfactuals(formulas_in_theory, var_count, nesting_depth, clauses_p
 
   -- function for Psi_(k+1)
   function W(k)
-    return quantify_table(forall, V, impl(sum_table(M(k-1)) & phi[k-1], phi[k]))
+    local inner = impl(sum_table(M(k-1)) & phi[k-1], phi[k])
+    return quantify_table(forall, V, inner)
   end
 
   function GT(i)
@@ -262,4 +291,10 @@ function counterfactuals(formulas_in_theory, var_count, nesting_depth, clauses_p
   end
 
   return PSI(0)
+
+  -- Where do V_i play a role?
+  -- Atoms, propositional formulas, variables in T?
+  -- Atom Flipping - what is being flipped when generating a theory (conjunction of clauses)?
+  -- Now, everything is UNSAT. How to fix this? Is this overquantified
+  -- (i.e. scopes are bleeding together somehow)? Are invalid variables chosen? What's going on?
 end
