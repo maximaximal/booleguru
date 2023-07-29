@@ -5,6 +5,7 @@ function counterfactuals(formulas_in_theory, var_count, nesting_depth, clauses_p
   assert(nesting_depth)
   assert(clauses_per_formula)
   assert(vars_per_clause)
+  assert(var_count >= clauses_per_formula)
 
   if seed ~= nil then
     math.randomseed(seed)
@@ -39,8 +40,6 @@ function counterfactuals(formulas_in_theory, var_count, nesting_depth, clauses_p
       print(i .. " : " .. tostring(t[i]))
     end
   end
-
-  assert(var_count >= clauses_per_formula)
 
   -- Vars are v_1..var_count
   function generate_vars()
@@ -94,7 +93,7 @@ function counterfactuals(formulas_in_theory, var_count, nesting_depth, clauses_p
 
   function random_select_var(previous_vars)
     while true do
-      local selected = V[math.random(var_count)]
+      local selected = V[math.random(0, var_count)]
       if previous_vars[selected] == nil then
         previous_vars[selected] = true
         return selected
