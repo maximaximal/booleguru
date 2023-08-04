@@ -31,8 +31,13 @@ class manager {
   map objects_map_;
   size_t counter_ = 1;
 
+  inline void init() {}
+
   public:
-  manager(size_t size = 2048) { objects_map_.reserve(size); };
+  manager(size_t size = 2048) {
+    objects_map_.reserve(size);
+    static_cast<C*>(this)->init();
+  };
 
   inline const vec& objects() const noexcept { return objects_map_.values(); }
 

@@ -46,6 +46,13 @@ class var_manager : public manager<var_ref, var_manager> {
                        obj.name };
   }
 
+  inline void init() {
+    auto top_id = get_id(variable{ "⊤" });
+    auto bot_id = get_id(variable{ "⊥" });
+    assert(top_id == 1);
+    assert(bot_id == 2);
+  }
+
   public:
   using base = manager<var_ref, var_manager>;
   using base::base;

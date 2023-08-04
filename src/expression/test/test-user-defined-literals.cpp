@@ -33,9 +33,9 @@ TEST_CASE("Create quantifier using short-hand syntax") {
   op_ref y = "y"_var(ops);
 
   REQUIRE(x.get_id() == 1);
-  REQUIRE(x->var.v == 1);
+  REQUIRE(x->var.v == 3);
   REQUIRE(y.get_id() == 2);
-  REQUIRE(y->var.v == 2);
+  REQUIRE(y->var.v == 4);
 
   auto formula = forall(x, exists(y, x && y));
 
