@@ -33,6 +33,7 @@ set(SRCS
   src/base.cpp
   src/boole.cpp
   src/qdimacs.cpp
+  src/aiger.cpp
   src/smtlib2.cpp
   src/luascript.cpp
 )
