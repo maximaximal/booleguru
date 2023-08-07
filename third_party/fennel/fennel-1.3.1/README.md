@@ -54,6 +54,8 @@ haven't been released, and it makes contributing to Fennel easier.
 
 ### To build Fennel from source
 
+This requires GNU Make and Lua (5.1-5.4 or LuaJIT).
+
 1. `cd` to a directory in which you want to download Fennel, such as
    `~/src`
 2. Run `git clone https://git.sr.ht/~technomancy/fennel`
@@ -112,16 +114,16 @@ Lua is much more readily-available than it is for Fennel.
 
 ## License
 
-Copyright © 2016-2022 Calvin Rose and contributors
+Copyright © 2016-2023 Calvin Rose and contributors
 
 Released under the [MIT license](LICENSE).
 
 [1]: https://fennel-lang.org
-[2]: https://github.com/bakpakin/Fennel/wiki/Cookbook
+[2]: https://wiki.fennel-lang.org/Cookbook
 [3]: https://fennel-lang.org/see
 [4]: http://luajit.org/ext_ffi_tutorial.html
 [5]: https://lists.sr.ht/%7Etechnomancy/fennel
-[7]: https://github.com/bakpakin/Fennel/wiki
+[7]: https://wiki.fennel-lang.org/
 [8]: https://builds.sr.ht/~technomancy/fennel
 [9]: https://libera.chat
 [10]: https://matrix.to/#/!rnpLWzzTijEUDhhtjW:matrix.org?via=matrix.org

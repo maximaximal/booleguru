@@ -1,1 +1,1 @@
-add_subdirectory(fennel-1.2.1)
+add_subdirectory(fennel-1.3.1)

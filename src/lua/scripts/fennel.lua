@@ -1,1 +1,1 @@
-../../../third_party/fennel/fennel-1.2.1/fennel.lua
+../../../third_party/fennel/fennel-1.3.1/fennel.lua

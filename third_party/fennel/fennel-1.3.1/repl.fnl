@@ -32,22 +32,19 @@
      "Runtime" (.. (compiler.traceback (tostring err) 4) "\n")
      _ (: "%s error: %s\n" :format errtype (tostring err)))))
 
-(local save-source " ___replLocals___['%s'] = %s")
-
 (fn splice-save-locals [env lua-source scope]
-  (let [spliced-source []
-        bind "local %s = ___replLocals___['%s']"]
-    (each [line (lua-source:gmatch "([^\n]+)\n?")]
-      (table.insert spliced-source line))
-    (each [name (pairs env.___replLocals___)]
-      (table.insert spliced-source 1 (bind:format name name)))
-    (when (and (< 1 (length spliced-source))
-               (: (. spliced-source (length spliced-source)) :match
-                  "^ *return .*$"))
-      (each [_ name (pairs scope.manglings)]
-        (table.insert spliced-source (length spliced-source)
-                      (save-source:format name name))))
-    (table.concat spliced-source "\n")))
+  (let [saves (icollect [name (pairs env.___replLocals___)]
+                (: "local %s = ___replLocals___['%s']"
+                   :format (or (. scope.manglings name) name) name))
+        binds (icollect [raw name (pairs scope.manglings)]
+                (when (not (. scope.gensyms name))
+                  (: "___replLocals___['%s'] = %s"
+                     :format raw name)))
+        gap (if (lua-source:find "\n") "\n" " ")]
+    (.. (if (next saves) (.. (table.concat saves " ") gap) "")
+        (match (lua-source:match "^(.*)[\n ](return .*)$")
+          (body return) (.. body gap (table.concat binds " ") gap return)
+          _ lua-source))))
 
 (fn completer [env scope text]
   (let [max-items 2000 ; to stop explosion on too mny items
@@ -146,15 +143,19 @@ For more information about the language, see https://fennel-lang.org/reference")
                        (tset old k nil)))
                    (tset package.loaded module-name old))
                  (on-values [:ok]))
-    (false msg) (if (. specials.macro-loaded module-name)
+    (false msg) (if (msg:match "loop or previous error loading module")
+                    (do (tset package.loaded module-name nil)
+                        (reload module-name env on-values on-error))
+                    (. specials.macro-loaded module-name)
                     (tset specials.macro-loaded module-name nil)
                     ;; only show the error if it's not found in package.loaded
                     ;; AND macro-loaded
                     (on-error :Runtime (pick-values 1 (msg:gsub "\n.*" ""))))))
 
 (fn run-command [read on-error f]
-  (match (pcall read)
-    (true true val) (f val)
+  (case (pcall read)
+    (true true val) (case (pcall f val)
+                      (false msg) (on-error :Runtime msg))
     false (on-error :Parse "Couldn't parse input.")))
 
 (fn commands.reload [env read on-values on-error]
@@ -172,7 +173,7 @@ For more information about the language, see https://fennel-lang.org/reference")
 
 (fn commands.complete [env read on-values on-error scope chars]
   (run-command read on-error
-               #(on-values (completer env scope (-> (string.char (unpack chars))
+               #(on-values (completer env scope (-> (table.concat chars)
                                                     (: :gsub ",complete +" "")
                                                     (: :sub 1 -2))))))
 
@@ -248,9 +249,13 @@ For more information about the language, see https://fennel-lang.org/reference")
                        "Print all documentations matching a pattern in function name")
 
 (fn resolve [identifier {: ___replLocals___ &as env} scope]
-  (let [e (setmetatable {} {:__index #(or (. ___replLocals___ $2) (. env $2))})]
-    (match (pcall compiler.compile-string (tostring identifier) {: scope})
-      (true code) ((specials.load-code code e)))))
+  (let [e (setmetatable {} {:__index #(or (. ___replLocals___
+                                             (. scope.unmanglings $2))
+                                          (. env $2))})]
+    (case-try (pcall compiler.compile-string (tostring identifier) {: scope})
+      (true code) (pcall (specials.load-code code e))
+      (true val) val
+      (catch _ nil))))
 
 (fn commands.find [env read on-values on-error scope]
   (run-command read on-error
@@ -273,7 +278,7 @@ For more information about the language, see https://fennel-lang.org/reference")
                                                (resolve name env scope)))]
                   (if ok?
                       (on-values [(specials.doc target name)])
-                      (on-error :Repl "Could not resolve value for docstring lookup")))))
+                      (on-error :Repl (.. "Could not find " name " for docs."))))))
 
 (compiler.metadata:set commands.doc :fnl/docstring
                        "Print the docstring and arglist for a function, macro, or special form.")
@@ -310,12 +315,8 @@ For more information about the language, see https://fennel-lang.org/reference")
   (when ok
     (when readline.set_readline_name
       (readline.set_readline_name :fennel))
-    ;; set_options returns current options so we can preserve whatever was
-    ;; already set in the .fennelrc file
-    (let [rl-opts (collect [k v (pairs (readline.set_options {}))
-                            :into {:keeplines 1000 :histfile ""}]
-                    (values k v))]
-      (readline.set_options rl-opts))
+    ;; set the readline defaults now; fennelrc can override them later
+    (readline.set_options {:keeplines 1000 :histfile ""})
 
     (fn opts.readChunk [parser-state]
       (let [prompt (if (< 0 parser-state.stack-size) ".. " ">> ")
@@ -344,21 +345,26 @@ For more information about the language, see https://fennel-lang.org/reference")
 
 (fn repl [?options]
   (let [old-root-options utils.root.options
-        opts (or (and ?options (utils.copy ?options)) {})
+        {:fennelrc ?fennelrc &as opts} (utils.copy ?options)
+        _ (set opts.fennelrc nil)
         readline (and (should-use-readline? opts)
                       (try-readline! opts (pcall require :readline)))
+        _ (when ?fennelrc (?fennelrc))
         env (specials.wrap-env (or opts.env (rawget _G :_ENV) _G))
+        callbacks {:readChunk (or opts.readChunk default-read-chunk)
+                   :onValues (or opts.onValues default-on-values)
+                   :onError (or opts.onError default-on-error)
+                   :pp (or opts.pp view)
+                   :env env}
         save-locals? (not= opts.saveLocals false)
-        read-chunk (or opts.readChunk default-read-chunk)
-        on-values (or opts.onValues default-on-values)
-        on-error (or opts.onError default-on-error)
-        pp (or opts.pp view)
-        (byte-stream clear-stream) (parser.granulate read-chunk)
+        (byte-stream clear-stream) (parser.granulate #(callbacks.readChunk $))
         chars []
         (read reset) (parser.parser (fn [parser-state]
-                                      (let [c (byte-stream parser-state)]
-                                        (table.insert chars c)
-                                        c)))]
+                                      (let [b (byte-stream parser-state)]
+                                        (when b
+                                          (table.insert chars (string.char b)))
+                                        b)))]
+    (set env.___repl___ callbacks)
     (set (opts.env opts.scope) (values env (compiler.make-scope)))
     ;; use metadata unless we've specifically disabled it
     (set opts.useMetadata (not= opts.useMetadata false))
@@ -369,47 +375,51 @@ For more information about the language, see https://fennel-lang.org/reference")
     (load-plugin-commands opts.plugins)
 
     (when save-locals?
-      (fn newindex [t k v] (when (. opts.scope.unmanglings k) (rawset t k v)))
+      (fn newindex [t k v] (when (. opts.scope.manglings k) (rawset t k v)))
       (set env.___replLocals___ (setmetatable {} {:__newindex newindex})))
 
     (fn print-values [...]
       (let [vals [...]
-            out []]
+            out []
+            pp callbacks.pp]
         (set (env._ env.__) (values (. vals 1) vals))
         ;; utils.map won't work here because of sparse tables
         (for [i 1 (select "#" ...)]
           (table.insert out (pp (. vals i))))
-        (on-values out)))
+        (callbacks.onValues out)))
 
     (fn loop []
       (each [k (pairs chars)]
         (tset chars k nil))
       (reset)
-      (let [(ok not-eof? x) (pcall read)
-            src-string (string.char (unpack chars))]
+      (let [(ok parser-not-eof? x) (pcall read)
+            src-string (table.concat chars)
+            ;; Work around a bug introduced in lua-readline 3.2
+            readline-not-eof? (or (not readline) (not= src-string "(null)"))
+            not-eof? (and readline-not-eof? parser-not-eof?)]
         (if (not ok)
             (do
-              (on-error :Parse not-eof?)
+              (callbacks.onError :Parse not-eof?)
               (clear-stream)
               (loop))
             (command? src-string)
-            (run-command-loop src-string read loop env on-values on-error
+            (run-command-loop src-string read loop env callbacks.onValues callbacks.onError
                               opts.scope chars)
             (when not-eof?
               (match (pcall compiler.compile x (doto opts
                                                  (tset :source src-string)))
                 (false msg) (do
                               (clear-stream)
-                              (on-error :Compile msg))
+                              (callbacks.onError :Compile msg))
                 (true src) (let [src (if save-locals?
                                          (splice-save-locals env src opts.scope)
                                          src)]
                              (match (pcall specials.load-code src env)
                                (false msg) (do
                                              (clear-stream)
-                                             (on-error "Lua Compile" msg src))
+                                             (callbacks.onError "Lua Compile" msg src))
                                (_ chunk) (xpcall #(print-values (chunk))
-                                                 (partial on-error :Runtime)))))
+                                                 (partial callbacks.onError :Runtime)))))
               (set utils.root.options old-root-options)
               (loop)))))
 

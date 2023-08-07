@@ -5,7 +5,7 @@
 
 (local view (require :fennel.view))
 
-(local version :1.2.1)
+(local version :1.3.1)
 
 ;;; Lua VM detection helper functions
 
@@ -32,8 +32,11 @@
       (fengari-vm?) (fengari-vm-version)
       (.. "PUC " _VERSION)))
 
-(fn runtime-version []
-  (.. "Fennel " version " on " (lua-vm-version)))
+(fn runtime-version [?as-table]
+  (if ?as-table
+      {:fennel version
+       :lua (lua-vm-version)}
+      (.. "Fennel " version " on " (lua-vm-version))))
 
 ;;; General-purpose helper functions
 
@@ -46,33 +49,43 @@
              (true utf8) utf8.len
              _ string.len))
 
-(fn mt-keys-in-order [t out used-keys]
-  ;; the metatable keys list gives us ordering; it is not canonical for what
-  ;; keys actually exist in the table. for instance a macro can modify a k/v
-  ;; table that came from the parser.
-  (each [_ k (ipairs (. (getmetatable t) :keys))]
-    (when (and (. t k) (not (. used-keys k)))
-      (tset used-keys k true)
-      (table.insert out k)))
-  (each [k (pairs t)]
-    (when (not (. used-keys k))
-      (table.insert out k)))
-  out)
+;; The following sort comparator is used for stablepairs below.
+;; Need more than (< (tostring ) (tostring )) due to edge cases like {"1" x 1 y}
+(local kv-order {:number 1 :boolean 2 :string 3 :table 4})
+(fn kv-compare [a b]
+  (case (values (type a) (type b))
+    (where (or (:number :number) (:string :string))) (< a b)
+    (where (a-t b-t) (not= a-t b-t)) (< (or (. kv-order a-t) 5)
+                                        (or (. kv-order b-t) 5))
+    _ (< (tostring a) (tostring b))))
+
+(fn add-stable-keys [succ prev-key src ?pred]
+  (var first prev-key)
+  (let [last (accumulate [prev prev-key _ k (ipairs src)]
+               ;; Skip any keys we've already seen, or that fail ?pred
+               (if (or (= prev k) (not= (. succ k) nil)
+                       (and ?pred (not (?pred k))))
+                 prev
+                 (if (= first nil) (do (set first k) k)
+                     (not= prev nil) (do (tset succ prev k) k)
+                     k)))]
+    (values succ last first)))
 
 (fn stablepairs [t]
   "Like pairs, but gives consistent ordering every time. On 5.1, 5.2, and LuaJIT
   pairs is already stable, but on 5.3+ every run gives different ordering. Gives
   the same order as parsed in the AST when present in the metatable."
-  (let [keys (if (?. (getmetatable t) :keys)
-                 (mt-keys-in-order t [] {})
-                 (doto (icollect [k (pairs t)] k)
-                   (table.sort #(< (tostring $1) (tostring $2)))))
-        succ (collect [i k (ipairs keys)]
-               (values k (. keys (+ i 1))))]
-
+  (let [mt-keys (?. (getmetatable t) :keys)
+        ;; Generate a table of successor keys to guarantee stable order.
+        ;; First, use order from the :keys mt, but only for keys present in t
+        (succ prev first-mt) (add-stable-keys {} nil (or mt-keys []) #(. t $))
+        ;; Sort any keys unspecified by :keys metatable
+        pairs-keys (doto (icollect [k (pairs t)] k) (table.sort kv-compare))
+        (succ _ first-after-mt) (add-stable-keys succ prev pairs-keys)
+        first (if (= first-mt nil) first-after-mt first-mt)]
     (fn stablenext [tbl key]
-      (let [next-key (if (= key nil) (. keys 1) (. succ key))]
-        (values next-key (. tbl next-key))))
+      (case (if (= key nil) first (. succ key))
+        next-key (-?>> (. tbl next-key) (values next-key))))
 
     (values stablenext t nil)))
 
@@ -124,6 +137,16 @@ Optionally takes a target table to insert the mapped values into."
     nil nil
     _ (member? x tbl (+ (or ?n 1) 1))))
 
+(fn maxn [tbl]
+  (accumulate [max 0 k (pairs tbl)]
+    (if (= :number (type k)) (math.max max k) max)))
+
+(fn every? [t predicate]
+  (accumulate [result true
+               _ item (ipairs t)
+               :until (not result)]
+    (predicate item)))
+
 (fn allpairs [tbl]
   "Like pairs, but if the table has an __index metamethod, it will recurisvely
 traverse upwards, skipping duplicates, to iterate all inherited properties"
@@ -165,15 +188,13 @@ traverse upwards, skipping duplicates, to iterate all inherited properties"
 ;; the tostring2 argument is passed in by fennelview; this lets us use the same
 ;; function for regular tostring as for fennelview. when called from fennelview
 ;; the list's contents will also show as being fennelviewed.
-(fn list->string [self ?tostring2]
-  (let [safe []]
-    (var max 0)
-    (each [k (pairs self)]
-      (when (and (= (type k) :number) (< max k))
-        (set max k)))
+(fn list->string [self ?view ?options ?indent]
+  (let [safe []
+        view (if ?view #(?view $ ?options ?indent) view)
+        max (maxn self)]
     (for [i 1 max]
       (tset safe i (or (and (= (. self i) nil) nil-sym) (. self i))))
-    (.. "(" (table.concat (map safe (or ?tostring2 view)) " " 1 max) ")")))
+    (.. "(" (table.concat (map safe view) " " 1 max) ")")))
 
 (fn comment-view [c]
   (values c true))
@@ -233,7 +254,15 @@ except when certain macros need to look for binding forms, etc specifically."
   ;; the other types without giving up the ability to set source metadata
   ;; on a sequence, (which we need for error reporting) so embed a marker
   ;; value in the metatable instead.
-  (setmetatable [...] {:sequence sequence-marker}))
+  (setmetatable [...] {:sequence sequence-marker
+                       :__fennelview
+                       (fn [seq view inspector indent]
+                         (let [opts (doto inspector
+                                      (tset :empty-as-sequence?
+                                            {:once true :after inspector.empty-as-sequence?})
+                                      (tset :metamethod?
+                                            {:once false :after inspector.metamethod?}))]
+                           (view seq opts indent)))}))
 
 (fn expr [strcode etype]
   "Create a new expression. etype should be one of:
@@ -266,9 +295,11 @@ except when certain macros need to look for binding forms, etc specifically."
   "Checks if an object is a list. Returns the object if is."
   (and (= (type x) :table) (= (getmetatable x) list-mt) x))
 
-(fn sym? [x]
-  "Checks if an object is a symbol. Returns the object if it is."
-  (and (= (type x) :table) (= (getmetatable x) symbol-mt) x))
+(fn sym? [x ?name]
+  "Checks if an object is a symbol. Returns the object if it is.
+When given a second string argument, will check that the sym's name matches it."
+  (and (= (type x) :table) (= (getmetatable x) symbol-mt)
+       (or (= nil ?name) (= (. x 1) ?name)) x))
 
 (fn sequence? [x]
   "Checks if an object is a sequence (created with a [] literal)"
@@ -283,6 +314,14 @@ except when certain macros need to look for binding forms, etc specifically."
   (and (= (type x) :table) (not (varg? x)) (not= (getmetatable x) list-mt)
        (not= (getmetatable x) symbol-mt) (not (comment? x)) x))
 
+(fn kv-table? [t]
+  "Checks if t is an associative table and not empty"
+  (when (table? t)
+    (let [(nxt t k) (pairs t)
+          len (length t)
+          next-state (if (= 0 len) k len)]
+      (and (not= nil (nxt t next-state)) t))))
+
 (fn string? [x] (= (type x) :string))
 
 (fn multi-sym? [str]
@@ -291,20 +330,31 @@ A multi-sym refers to a table field reference like tbl.x or access.channel:deny.
 Returns nil if passed something other than a multi-sym."
   (if (sym? str) (multi-sym? (tostring str))
       (not= (type str) :string) false
-      (let [parts []]
-        (each [part (str:gmatch "[^%.%:]+[%.%:]?")]
-          (let [last-char (part:sub (- 1))]
-            (when (= last-char ":")
-              (set parts.multi-sym-method-call true))
-            (if (or (= last-char ":") (= last-char "."))
-                (tset parts (+ (length parts) 1) (part:sub 1 (- 2)))
-                (tset parts (+ (length parts) 1) part))))
-        (and (< 0 (length parts)) (or (: str :match "%.") (: str :match ":"))
-             (not (str:match "%.%.")) (not= (str:byte) (string.byte "."))
-             (not= (str:byte (- 1)) (string.byte ".")) parts))))
+      (and (or (: str :match "%.") (: str :match ":"))
+           (not (str:match "%.%."))
+           (not= (str:byte) (string.byte "."))
+           (not= (str:byte (- 1)) (string.byte "."))
+           (let [parts []]
+             (each [part (str:gmatch "[^%.%:]+[%.%:]?")]
+                   (let [last-char (part:sub (- 1))]
+                     (when (= last-char ":")
+                       (set parts.multi-sym-method-call true))
+                     (if (or (= last-char ":") (= last-char "."))
+                       (tset parts (+ (length parts) 1) (part:sub 1 (- 2)))
+                       (tset parts (+ (length parts) 1) part))))
+             (and (< 0 (length parts))
+                  parts)))))
 
 (fn quoted? [symbol]
   symbol.quoted)
+
+(fn idempotent-expr? [x]
+  "Checks if an object is an idempotent expression. Returns the object if it is."
+  (or (= (type x) :string)
+      (= (type x) :integer)
+      (= (type x) :number)
+      (and (sym? x)
+           (not (multi-sym? x)))))
 
 (fn ast-source [ast]
   "Get a table for the given ast which includes file/line info, if possible."
@@ -325,31 +375,28 @@ When f returns a truthy value, recursively walks the children."
   (walk (or ?custom-iterator pairs) nil nil root)
   root)
 
-(local lua-keywords [:and
-                     :break
-                     :do
-                     :else
-                     :elseif
-                     :end
-                     :false
-                     :for
-                     :function
-                     :if
-                     :in
-                     :local
-                     :nil
-                     :not
-                     :or
-                     :repeat
-                     :return
-                     :then
-                     :true
-                     :until
-                     :while
-                     :goto])
-
-(each [i v (ipairs lua-keywords)]
-  (tset lua-keywords v i))
+(local lua-keywords {:and true
+                     :break true
+                     :do true
+                     :else true
+                     :elseif true
+                     :end true
+                     :false true
+                     :for true
+                     :function true
+                     :if true
+                     :in true
+                     :local true
+                     :nil true
+                     :not true
+                     :or true
+                     :repeat true
+                     :return true
+                     :then true
+                     :true true
+                     :until true
+                     :while true
+                     :goto true})
 
 (fn valid-lua-identifier? [str]
   (and (str:match "^[%a_][%w_]*$") (not (. lua-keywords str))))
@@ -414,6 +461,8 @@ handlers will be skipped."
  : map
  : walk-tree
  : member?
+ : maxn
+ : every?
  : list
  : sequence
  : sym
@@ -427,9 +476,11 @@ handlers will be skipped."
  : sequence?
  : sym?
  : table?
+ : kv-table?
  : varg?
  : quoted?
  : string?
+ : idempotent-expr?
  : valid-lua-identifier?
  : lua-keywords
  : hook

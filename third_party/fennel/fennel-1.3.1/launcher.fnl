@@ -8,35 +8,36 @@ Usage: fennel [FLAG] [FILE]
 
 Run fennel, a lisp programming language for the Lua runtime.
 
-  --repl                  : Command to launch an interactive repl session
-  --compile FILES (-c)    : Command to AOT compile files, writing Lua to stdout
-  --eval SOURCE (-e)      : Command to evaluate source code and print the result
+  --repl                   : Command to launch an interactive repl session
+  --compile FILES (-c)     : Command to AOT compile files, writing Lua to stdout
+  --eval SOURCE (-e)       : Command to evaluate source code and print result
 
-  --no-searcher           : Skip installing package.searchers entry
-  --indent VAL            : Indent compiler output with VAL
-  --add-package-path PATH : Add PATH to package.path for finding Lua modules
-  --add-fennel-path  PATH : Add PATH to fennel.path for finding Fennel modules
-  --add-macro-path   PATH : Add PATH to fennel.macro-path for macro modules
-  --globals G1[,G2...]    : Allow these globals in addition to standard ones
-  --globals-only G1[,G2]  : Same as above, but exclude standard ones
-  --require-as-include    : Inline required modules in the output
-  --skip-include M1[,M2]  : Omit certain modules from output when included
-  --use-bit-lib           : Use LuaJITs bit library instead of operators
-  --metadata              : Enable function metadata, even in compiled output
-  --no-metadata           : Disable function metadata, even in REPL
-  --correlate             : Make Lua output line numbers match Fennel input
-  --load FILE (-l)        : Load the specified FILE before executing the command
-  --lua LUA_EXE           : Run in a child process with LUA_EXE
-  --no-fennelrc           : Skip loading ~/.fennelrc when launching repl
-  --raw-errors            : Disable friendly compile error reporting
-  --plugin FILE           : Activate the compiler plugin in FILE
+  --no-searcher            : Skip installing package.searchers entry
+  --indent VAL             : Indent compiler output with VAL
+  --add-package-path PATH  : Add PATH to package.path for finding Lua modules
+  --add-package-cpath PATH : Add PATH to package.cpath for finding Lua modules
+  --add-fennel-path PATH   : Add PATH to fennel.path for finding Fennel modules
+  --add-macro-path PATH    : Add PATH to fennel.macro-path for macro modules
+  --globals G1[,G2...]     : Allow these globals in addition to standard ones
+  --globals-only G1[,G2]   : Same as above, but exclude standard ones
+  --require-as-include     : Inline required modules in the output
+  --skip-include M1[,M2]   : Omit certain modules from output when included
+  --use-bit-lib            : Use LuaJITs bit library instead of operators
+  --metadata               : Enable function metadata, even in compiled output
+  --no-metadata            : Disable function metadata, even in REPL
+  --correlate              : Make Lua output line numbers match Fennel input
+  --load FILE (-l)         : Load the specified FILE before executing command
+  --lua LUA_EXE            : Run in a child process with LUA_EXE
+  --no-fennelrc            : Skip loading ~/.fennelrc when launching repl
+  --raw-errors             : Disable friendly compile error reporting
+  --plugin FILE            : Activate the compiler plugin in FILE
   --compile-binary FILE
-      OUT LUA_LIB LUA_DIR : Compile FILE to standalone binary OUT
-  --compile-binary --help : Display further help for compiling binaries
-  --no-compiler-sandbox   : Do not limit compiler environment to minimal sandbox
+      OUT LUA_LIB LUA_DIR  : Compile FILE to standalone binary OUT
+  --compile-binary --help  : Display further help for compiling binaries
+  --no-compiler-sandbox    : Don't limit compiler environment to minimal sandbox
 
-  --help (-h)             : Display this text
-  --version (-v)          : Show version
+  --help (-h)              : Display this text
+  --version (-v)           : Show version
 
 Globals are not checked when doing AOT (ahead-of-time) compilation unless
 the --globals-only or --globals flag is provided. Use --globals \"*\" to disable
@@ -47,6 +48,8 @@ for production. It is used for docstrings and enabled by default in the REPL.
 
 When not given a command, runs the file given as the first argument.
 When given neither command nor file, launches a repl.
+
+Use the NO_COLOR environment variable to disable escape codes in error messages.
 
 If ~/.fennelrc exists, it will be loaded before launching a repl.")
 
@@ -66,13 +69,12 @@ If ~/.fennelrc exists, it will be loaded before launching a repl.")
       (os.exit 1))
     (unpack result 2 result.n)))
 
-(fn allow-globals [global-names globals]
-  (if (= global-names "*")
+(fn allow-globals [names actual-globals]
+  (if (= names "*")
       (set options.allowedGlobals false)
       (do
-        (set options.allowedGlobals
-             (icollect [g (global-names:gmatch "([^,]+),?")] g))
-        (each [global-name (pairs globals)]
+        (set options.allowedGlobals (icollect [g (names:gmatch "([^,]+),?")] g))
+        (each [global-name (pairs actual-globals)]
           (table.insert options.allowedGlobals global-name)))))
 
 (fn handle-load [i]
@@ -83,9 +85,12 @@ If ~/.fennelrc exists, it will be loaded before launching a repl.")
 (fn handle-lua [i]
   (table.remove arg i) ; remove the --lua flag from args
   (let [tgt-lua (table.remove arg i)
-        cmd [(string.format "%s %s" tgt-lua (. arg 0))]]
+        cmd [(string.format "%s %s" tgt-lua (or (. arg 0) "fennel"))]]
     (for [i 1 (length arg)] ; quote args to prevent shell escapes when executing
       (table.insert cmd (string.format "%q" (. arg i))))
+    (when (= nil (. arg -1))
+      (io.stderr:write
+       "WARNING: --lua argument only works from script, not binary.\n"))
     (let [ok (os.execute (table.concat cmd " "))]
       (os.exit (if ok 0 1) true))))
 
@@ -121,6 +126,9 @@ If ~/.fennelrc exists, it will be loaded before launching a repl.")
       :--add-package-path (let [entry (table.remove arg (+ i 1))]
                             (set package.path (.. entry ";" package.path))
                             (table.remove arg i))
+      :--add-package-cpath (let [entry (table.remove arg (+ i 1))]
+                             (set package.cpath (.. entry ";" package.cpath))
+                             (table.remove arg i))
       :--add-fennel-path (let [entry (table.remove arg (+ i 1))]
                           (set fennel.path (.. entry ";" fennel.path))
                           (table.remove arg i))
@@ -201,7 +209,7 @@ If ~/.fennelrc exists, it will be loaded before launching a repl.")
                        (pcall require :readline))]
     (set searcher-opts.useMetadata (not= false options.useMetadata))
     (when (not= false options.fennelrc)
-      (load-initfile))
+      (tset options :fennelrc load-initfile))
     (print (.. "Welcome to " (fennel.runtime-version) "!"))
     (print "Use ,help to see available commands.")
     (when (and (not readline?) (not= "dumb" (os.getenv "TERM")))
@@ -237,7 +245,9 @@ If ~/.fennelrc exists, it will be loaded before launching a repl.")
     (set options.filename filename)
     (set options.requireAsInclude true)
     (bin.compile filename out static-lua lua-include-dir options args))
-  [:--compile-binary] (print (. (require :fennel.binary) :help))
+  [:--compile-binary] (let [cmd (or (. arg 0) "fennel")]
+                        (print (: (. (require :fennel.binary) :help)
+                                  :format cmd cmd cmd)))
   [:--eval form] (eval form)
   [:-e form] (eval form)
   ([a] ? (or (= a :-v) (= a :--version)))

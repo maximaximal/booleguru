@@ -90,7 +90,7 @@ lua_context::~lua_context() {}
 void
 lua_context::init_fennel() {
   state_->script("fennel = require(\"fennel\")");
-  fennel_last_op_name_ = (*state_)["fennel"]["mangle"]("*last-op*");
+  fennel_last_op_name_ = (*state_)["fennel"]["mangle"]("**");
 }
 
 #ifdef EMSCRIPTEN

@@ -158,45 +158,80 @@ the number of expected arguments."
 (doc-special :values ["..."]
              "Return multiple values from a function. Must be in tail position.")
 
-;; TODO: use view here?
-(fn deep-tostring [x key?]
-  "Tostring for literal tables created with {}, [] or ().
-Recursively transforms tables into one-line string representation.
-Main purpose to print function argument list in docstring."
-  (if (utils.list? x)
-      (.. "(" (table.concat (icollect [_ v (ipairs x)]
-                              (deep-tostring v))
-                            " ") ")")
-      (utils.sequence? x)
-      (.. "[" (table.concat (icollect [_ v (ipairs x)]
-                              (deep-tostring v))
-                            " ") "]")
-      (utils.table? x)
-      (.. "{" (table.concat (icollect [k v (utils.stablepairs x)]
-                              (.. (deep-tostring k true) " "
-                                  (deep-tostring v)))
-                            " ") "}")
-      (and key? (utils.string? x) (x:find "^[-%w?\\^_!$%&*+./@:|<=>]+$"))
-      (.. ":" x)
-      (utils.string? x)
-      (-> (string.format "%q" x)
-          (: :gsub "\\\"" "\\\\\"")
-          (: :gsub "\"" "\\\""))
-      (tostring x)))
+(fn ->stack [stack tbl]
+  ;; append all keys and values of the table to the stack
+  (each [k v (pairs tbl)]
+    (doto stack (table.insert k) (table.insert v)))
+  stack)
 
-(fn set-fn-metadata [arg-list docstring parent fn-name]
+(fn literal? [val]
+  ;; checks if value doesn't contain any list expr.  Lineriazes nested
+  ;; tables into a stack, traversing it unil it meets a list or the
+  ;; stack is exhausted.
+  (var res true)
+  (if (utils.list? val)
+      (set res false)
+      (utils.table? val)
+      (let [stack (->stack [] val)]
+        (each [_ elt (ipairs stack)
+               :until (not res)]
+          (if (utils.list? elt)
+              (set res false)
+              (utils.table? elt)
+              (->stack stack elt)))))
+  res)
+
+(fn compile-value [v]
+  ;; compiles literal value to a string
+  (let [opts {:nval 1 :tail false}
+        scope (compiler.make-scope)
+        chunk []
+        [[v]] (compiler.compile1 v scope chunk opts)]
+    v))
+
+(fn insert-meta [meta k v]
+  ;; prepares the key and compiles the value if necessary and inserts
+  ;; it to the metadata sequence: (insert-meta [] :foo {:bar [1 2 3]})
+  ;; produces ["\"foo\"" "{bar = {1, 2, 3}}"]
+  (let [view-opts {:escape-newlines? true
+                   :line-length math.huge
+                   :one-line? true}]
+    (compiler.assert
+     (= (type k) :string)
+     (: "expected string keys in metadata table, got: %s"
+        :format (view k view-opts)))
+    (compiler.assert
+     (literal? v)
+     (: "expected literal value in metadata table, got: %s %s"
+        :format (view k view-opts) (view v view-opts)))
+    (doto meta
+      (table.insert (view k))
+      (table.insert (if (= :string (type v))
+                        (view v view-opts)
+                        (compile-value v))))))
+
+(fn insert-arglist [meta arg-list]
+  ;; Inserts a properly formatted arglist to the metadata table.  Does
+  ;; double viewing to quote the resulting string after first view
+  (let [view-opts {:one-line? true
+                   :escape-newlines? true
+                   :line-length math.huge}]
+    (doto meta
+      (table.insert "\"fnl/arglist\"")
+      (table.insert
+       (.. "{"
+           (-> arg-list
+               (utils.map #(view (view $ view-opts)))
+               (table.concat ", "))
+           "}")))))
+
+(fn set-fn-metadata [f-metadata parent fn-name]
   (when utils.root.options.useMetadata
-    (let [args (utils.map arg-list #(: "\"%s\"" :format (deep-tostring $)))
-          meta-fields ["\"fnl/arglist\"" (.. "{" (table.concat args ", ") "}")]]
-      (when docstring
-        (table.insert meta-fields "\"fnl/docstring\"")
-        (table.insert meta-fields (.. "\""
-                                      (-> docstring
-                                          (: :gsub "%s+$" "")
-                                          (: :gsub "\\" "\\\\")
-                                          (: :gsub "\n" "\\n")
-                                          (: :gsub "\"" "\\\""))
-                                      "\"")))
+    (let [meta-fields []]
+      (each [k v (utils.stablepairs f-metadata)]
+        (if (= k :fnl/arglist)
+            (insert-arglist meta-fields v)
+            (insert-meta meta-fields k v)))
       (let [meta-str (: "require(\"%s\").metadata" :format
                         (or utils.root.options.moduleName :fennel))]
         (compiler.emit parent
@@ -224,8 +259,7 @@ Main purpose to print function argument list in docstring."
                  ast)
   (compiler.emit parent f-chunk ast)
   (compiler.emit parent :end ast)
-  (set-fn-metadata f-metadata.fnl/arglist f-metadata.fnl/docstring
-                   parent fn-name)
+  (set-fn-metadata f-metadata parent fn-name)
   (utils.hook :fn ast f-scope)
   (utils.expr fn-name :sym))
 
@@ -240,24 +274,32 @@ Main purpose to print function argument list in docstring."
     (compile-named-fn ast f-scope f-chunk parent index fn-name true
                       arg-name-list f-metadata)))
 
+(fn maybe-metadata [ast pred handler mt index]
+  ;; check if conditions for metadata literal are met.  The index must
+  ;; not be the last in the ast, and the expression at the index must
+  ;; conform to pred.  If conditions are met the handler is called
+  ;; with metadata table and expression.  Returns metadata table and
+  ;; an index.
+  (let [index* (+ index 1)
+        index*-before-ast-end? (< index* (length ast))
+        expr (. ast index*)]
+    (if (and index*-before-ast-end? (pred expr))
+        (values (handler mt expr) index*)
+        (values mt index))))
+
 (fn get-function-metadata [ast arg-list index]
   ;; Get function metadata from ast and put it in a table.  Detects if
-  ;; the next expression after a argument list is either a string or a
-  ;; table, and copies values into function metadata table.
-  (let [f-metadata {:fnl/arglist arg-list}
-        index* (+ index 1)
-        expr (. ast index*)]
-    (if (and (utils.string? expr)
-             (< index* (length ast)))
-        (values (doto f-metadata
-                  (tset :fnl/docstring expr))
-                index*)
-        (and (utils.table? expr)
-             (< index* (length ast)))
-        (values (collect [k v (pairs expr) :into f-metadata]
-                  (values k v))
-                index*)
-        (values f-metadata index))))
+  ;; the next expression after the argument list is either a string or
+  ;; a table, and copies values into function metadata table.  If it
+  ;; is a string, checks if the next one is a table and combines them.
+  (->> (values {:fnl/arglist arg-list} index)
+       (maybe-metadata
+        ast utils.string?
+        #(doto $1 (tset :fnl/docstring $2)))
+       (maybe-metadata
+        ast utils.kv-table?
+        #(collect [k v (pairs $2) :into $1]
+           (values k v)))))
 
 (fn SPECIALS.fn [ast scope parent]
   (let [f-scope (doto (compiler.make-scope scope)
@@ -271,30 +313,46 @@ Main purpose to print function argument list in docstring."
     (compiler.assert (or (not multi) (not multi.multi-sym-method-call))
                      (.. "unexpected multi symbol " (tostring fn-name)) fn-sym)
 
-    (fn get-arg-name [arg]
-      (if (utils.varg? arg)
+    (fn destructure-arg [arg]
+      (let [raw (utils.sym (compiler.gensym scope))
+            declared (compiler.declare-local raw [] f-scope ast)]
+        (compiler.destructure arg raw ast f-scope f-chunk
+                              {:declaration true
+                               :nomulti true
+                               :symtype :arg})
+        declared))
+
+    (fn destructure-amp [i]
+      (compiler.assert (= i (- (length arg-list) 1))
+                       "expected rest argument before last parameter"
+                       (. arg-list (+ i 1)) arg-list)
+      (set f-scope.vararg true)
+      (compiler.destructure (. arg-list (length arg-list)) [(utils.varg)]
+                            ast f-scope f-chunk
+                            {:declaration true
+                             :nomulti true
+                             :symtype :arg})
+      "...")
+
+    (fn get-arg-name [arg i]
+      (if f-scope.vararg nil ; if we already handled & rest
+          (utils.varg? arg)
           (do
             (compiler.assert (= arg (. arg-list (length arg-list)))
                              "expected vararg as last parameter" ast)
             (set f-scope.vararg true)
             "...")
+          (utils.sym? arg :&) (destructure-amp i)
           (and (utils.sym? arg) (not= (tostring arg) :nil)
                (not (utils.multi-sym? (tostring arg))))
           (compiler.declare-local arg [] f-scope ast)
-          (utils.table? arg)
-          (let [raw (utils.sym (compiler.gensym scope))
-                declared (compiler.declare-local raw [] f-scope ast)]
-            (compiler.destructure arg raw ast f-scope f-chunk
-                                  {:declaration true
-                                   :nomulti true
-                                   :symtype :arg})
-            declared)
+          (utils.table? arg) (destructure-arg arg)
           (compiler.assert false
                            (: "expected symbol for function parameter: %s"
                               :format (tostring arg))
                            (. ast index))))
 
-    (let [arg-name-list (utils.map arg-list get-arg-name)
+    (let [arg-name-list (icollect [i a (ipairs arg-list)] (get-arg-name a i))
           (f-metadata index) (get-function-metadata ast arg-list index)]
       (if fn-name
           (compile-named-fn ast f-scope f-chunk parent index fn-name local?
@@ -424,6 +482,7 @@ and lacking args will be nil, use lambda for arity-checked functions." true)
 
 (fn disambiguate? [rootstr parent]
   (or (rootstr:match "^{")
+      (rootstr:match "^%(")
       (match (get-prev-line parent)
         prev-line (prev-line:match "%)$"))))
 
@@ -564,10 +623,9 @@ the condition evaluates to truthy. Similar to cond in other lisps.")
 
 (fn SPECIALS.each [ast scope parent]
   (compiler.assert (<= 3 (length ast)) "expected body expression" (. ast 1))
-  (let [binding (compiler.assert (utils.table? (. ast 2))
-                                 "expected binding table" ast)
-        _ (compiler.assert (<= 2 (length binding))
-                           "expected binding and iterator" binding)
+  (compiler.assert (utils.table? (. ast 2)) "expected binding table" ast)
+  (compiler.assert (<= 2 (length (. ast 2))) "expected binding and iterator" ast)
+  (let [binding (setmetatable (utils.copy (. ast 2)) (getmetatable (. ast 2)))
         until-condition (remove-until-condition binding)
         iter (table.remove binding (length binding))
         ;; last item is iterator call
@@ -632,10 +690,10 @@ order, but can be used with any iterator." true)
              true)
 
 (fn for* [ast scope parent]
-  (let [ranges (compiler.assert (utils.table? (. ast 2))
-                                "expected binding table" ast)
-        until-condition (remove-until-condition (. ast 2))
-        binding-sym (table.remove (. ast 2) 1)
+  (compiler.assert (utils.table? (. ast 2)) "expected binding table" ast)
+  (let [ranges (setmetatable (utils.copy (. ast 2)) (getmetatable (. ast 2)))
+        until-condition (remove-until-condition ranges)
+        binding-sym (table.remove ranges 1)
         sub-scope (compiler.make-scope scope)
         range-args []
         chunk []]
@@ -643,7 +701,9 @@ order, but can be used with any iterator." true)
                      (: "unable to bind %s %s" :format (type binding-sym)
                         (tostring binding-sym)) (. ast 2))
     (compiler.assert (<= 3 (length ast)) "expected body expression" (. ast 1))
-    (compiler.assert (<= (length ranges) 3) "unexpected arguments" (. ranges 4))
+    (compiler.assert (<= (length ranges) 3) "unexpected arguments" ranges)
+    (compiler.assert (< 1 (length ranges))
+                     "expected range to include start and stop" ranges)
     (for [i 1 (math.min (length ranges) 3)]
       (tset range-args i (tostring (. (compiler.compile1 (. ranges i) scope
                                                          parent {:nval 1}) 1))))
@@ -720,10 +780,11 @@ Method name doesn't have to be known at compile-time; if it is, use
 (tbl:method-name ...) instead.")
 
 (fn SPECIALS.comment [ast _ parent]
-  (let [els []]
-    (for [i 2 (length ast)]
-      (table.insert els (view (. ast i) {:one-line? true})))
-    (compiler.emit parent (.. "--[[ " (table.concat els " ") " ]]") ast)))
+  (let [c (-> (icollect [i elt (ipairs ast)]
+                (if (not= i 1) (view (. ast i) {:one-line? true})))
+              (table.concat " ")
+              (: :gsub "%]%]" "]\\]"))]
+    (compiler.emit parent (.. "--[[ " c " ]]") ast)))
 
 (doc-special :comment ["..."] "Comment which will be emitted in Lua output." true)
 
@@ -747,15 +808,20 @@ Method name doesn't have to be known at compile-time; if it is, use
       (tset args i (compiler.declare-local (utils.sym (.. "$" i)) [] f-scope
                                            ast)))
     ;; recursively walk the AST, transforming $... into ...
-
-    (fn walker [idx node parent-node]
-      (if (and (utils.sym? node) (= (tostring node) "$..."))
+    (fn walker [idx node ?parent-node]
+      (if (utils.sym? node "$...")
           (do
-            (tset parent-node idx (utils.varg))
-            (set f-scope.vararg true))
-          (or (utils.list? node) (utils.table? node))))
+            (set f-scope.vararg true)
+            (if ?parent-node
+                (tset ?parent-node idx (utils.varg))
+                (utils.varg)))
+          (or (and (utils.list? node)
+                   (or (not ?parent-node)
+                       ;; don't descend into child functions
+                       (not (utils.sym? (. node 1) :hashfn))))
+              (utils.table? node))))
 
-    (utils.walk-tree (. ast 2) walker)
+    (utils.walk-tree ast walker)
     ;; compile body
     (compiler.compile1 (. ast 2) f-scope f-chunk {:tail true})
     (let [max-used (hashfn-max-used f-scope 1 0)]
@@ -781,6 +847,8 @@ Method name doesn't have to be known at compile-time; if it is, use
   (let [call (and (utils.list? ast) (tostring (. ast 1)))]
     (if (and (or (= :or name) (= :and name)) (< 1 i)
              ;; dangerous specials (or a macro which could be anything)
+             ;; TODO: this misses a ton of things
+             ;; https://github.com/bakpakin/Fennel/issues/422
              (or (. mac call) (= :set call) (= :tset call) (= :global call)))
         (utils.list (utils.sym :do) ast)
         ast)))
@@ -799,7 +867,9 @@ Method name doesn't have to be known at compile-time; if it is, use
       0 (utils.expr (doto zero-arity
                       (compiler.assert "Expected more than 0 arguments" ast))
                     :literal)
-      1 (if unary-prefix
+      1 (if (utils.varg? (. ast 2))
+            (compiler.assert false "tried to use vararg with operator" ast)
+            unary-prefix
             (.. "(" unary-prefix padded-op (. operands 1) ")")
             (. operands 1))
       _ (.. "(" (table.concat operands padded-op) ")"))))
@@ -876,6 +946,15 @@ Only works in Lua 5.3+ or LuaJIT with the --use-bit-lib flag.")
 (doc-special :bxor [:x1 :x2 "..."] "Bitwise XOR of any number of arguments.
 Only works in Lua 5.3+ or LuaJIT with the --use-bit-lib flag.")
 
+(fn SPECIALS.bnot [ast scope parent]
+  (compiler.assert (= (length ast) 2) "expected one argument" ast)
+  (let [[value] (compiler.compile1 (. ast 2) scope parent {:nval 1})]
+    (if utils.root.options.useBitLib
+        (.. "bit.bnot(" (tostring value) ")")
+        (.. "~(" (tostring value) ")"))))
+
+(doc-special :bnot [:x] "Bitwise negation; only works in Lua 5.3+ or LuaJIT with the --use-bit-lib flag.")
+
 (doc-special ".." [:a :b "..."]
              "String concatenation operator; works the same as Lua but accepts more arguments.")
 
@@ -884,6 +963,19 @@ Only works in Lua 5.3+ or LuaJIT with the --use-bit-lib flag.")
   (let [[lhs] (compiler.compile1 lhs-ast scope parent {:nval 1})
         [rhs] (compiler.compile1 rhs-ast scope parent {:nval 1})]
     (string.format "(%s %s %s)" (tostring lhs) op (tostring rhs))))
+
+(fn idempotent-comparator [op chain-op ast scope parent]
+  "Compile a multi-arity comparison to a binary Lua comparison. Optimized
+  variant for values not at risk of double-eval."
+  (let [vals (fcollect [i 2 (length ast)]
+               (tostring (. (compiler.compile1 (. ast i) scope parent
+                                               {:nval 1})
+                            1)))
+        comparisons (fcollect [i 1 (- (length vals) 1)]
+                      (string.format "(%s %s %s)"
+                                     (. vals i) op (. vals (+ i 1))))
+        chain (string.format " %s " (or chain-op :and))]
+    (.. "(" (table.concat comparisons chain) ")")))
 
 (fn double-eval-protected-comparator [op chain-op ast scope parent]
   "Compile a multi-arity comparison to a binary Lua comparison."
@@ -896,10 +988,9 @@ Only works in Lua 5.3+ or LuaJIT with the --use-bit-lib flag.")
       (table.insert vals (tostring (. (compiler.compile1 (. ast i) scope parent
                                                          {:nval 1})
                                       1))))
-    (for [i 1 (- (length arglist) 1)]
-      (table.insert comparisons
-                    (string.format "(%s %s %s)" (. arglist i) op
-                                   (. arglist (+ i 1)))))
+    (fcollect [i 1 (- (length arglist) 1) :into comparisons]
+      (string.format "(%s %s %s)" (. arglist i) op
+                     (. arglist (+ i 1))))
     ;; The function call here introduces some overhead, but it is the only way
     ;; to compile this safely while preventing both double-evaluation of
     ;; side-effecting values and early evaluation of values which should never
@@ -915,6 +1006,8 @@ Only works in Lua 5.3+ or LuaJIT with the --use-bit-lib flag.")
       (compiler.assert (< 2 (length ast)) "expected at least two arguments" ast)
       (if (= 3 (length ast))
           (native-comparator op ast scope parent)
+          (utils.every? [(unpack ast 2)] utils.idempotent-expr?)
+          (idempotent-comparator op ?chain-op ast scope parent)
           (double-eval-protected-comparator op ?chain-op ast scope parent)))
 
     (tset SPECIALS name opfn))
@@ -938,8 +1031,6 @@ Only works in Lua 5.3+ or LuaJIT with the --use-bit-lib flag.")
 
 (define-unary-special :not "not ")
 (doc-special :not [:x] "Logical operator; works the same as Lua.")
-(define-unary-special :bnot "~")
-(doc-special :bnot [:x] "Bitwise negation; only works in Lua 5.3+ or LuaJIT with the --use-bit-lib flag.")
 (define-unary-special :length "#")
 (doc-special :length [:x] "Returns the length of a table or string.")
 
@@ -1045,8 +1136,8 @@ Only works in Lua 5.3+ or LuaJIT with the --use-bit-lib flag.")
 (local [dirsep pathsep pathmark]
        (icollect [c (string.gmatch (or package.config "") "([^\n]+)")] c))
 (local pkg-config {:dirsep (or dirsep "/")
-                   :pathmark (or pathmark ";")
-                   :pathsep (or pathsep "?")})
+                   :pathmark (or pathmark "?")
+                   :pathsep (or pathsep ";")})
 
 (fn escapepat [str]
   "Escape a string for safe use in a Lua pattern."
@@ -1285,12 +1376,14 @@ Lua output. The module must be a string literal and resolvable at compile time."
         opts (utils.copy utils.root.options)]
     (set opts.scope (compiler.make-scope compiler.scopes.compiler))
     (set opts.allowedGlobals (current-global-names env))
-    ((load-code (compiler.compile ast opts) (wrap-env env)) opts.module-name
-                                                            ast.filename)))
+    ((assert (load-code (compiler.compile ast opts) (wrap-env env)))
+     opts.module-name ast.filename)))
 
 (fn SPECIALS.macros [ast scope parent]
   (compiler.assert (= (length ast) 2) "Expected one table argument" ast)
-  (add-macros (eval-compiler* (. ast 2) scope parent) ast scope parent))
+  (let [macro-tbl (eval-compiler* (. ast 2) scope parent)]
+    (compiler.assert (utils.table? macro-tbl) "Expected one table argument" ast)
+    (add-macros macro-tbl ast scope parent)))
 
 (doc-special :macros
              ["{:macro-name-1 (fn [...] ...) ... :macro-name-N macro-body-N}"]
@@ -1306,6 +1399,11 @@ Lua output. The module must be a string literal and resolvable at compile time."
 (doc-special :eval-compiler ["..."]
              "Evaluate the body at compile-time. Use the macro system instead if possible."
              true)
+
+(fn SPECIALS.unquote [ast]
+  (compiler.assert false "tried to use unquote outside quote" ast))
+
+(doc-special :unquote ["..."] "Evaluate the argument even if it's in a quoted form.")
 
 {:doc doc*
  : current-global-names

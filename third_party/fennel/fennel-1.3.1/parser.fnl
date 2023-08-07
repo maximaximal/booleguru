@@ -7,7 +7,7 @@
 
 (fn granulate [getchunk]
   "Convert a stream of chunks to a stream of bytes.
-Also returns a second function to clear the buffer in the byte stream"
+Also returns a second function to clear the buffer in the byte stream."
   (var (c index done?) (values "" 1 false))
   (values (fn [parser-state]
             (when (not done?)
@@ -22,9 +22,10 @@ Also returns a second function to clear the buffer in the byte stream"
                                               (c:byte))
                     _ (set done? true))))) #(set c "")))
 
-(fn string-stream [str]
+(fn string-stream [str ?options]
   "Convert a string into a stream of bytes."
   (let [str (str:gsub "^#!" ";;")] ; replace shebang with comment
+    (when ?options (set ?options.source str))
     (var index 1)
     (fn []
       (let [r (str:byte index)]
@@ -95,16 +96,17 @@ Also returns a second function to clear the buffer in the byte stream"
                                (or line "?") col
                                source utils.root.reset))
         (utils.root.reset)
-        (if (or unfriendly (not _G.io) (not _G.io.read))
+        (if unfriendly
             (error (string.format "%s:%s:%s Parse error: %s"
                                   filename (or line "?") col msg) 0)
-            (friend.parse-error msg filename (or line "?") col source)))))
+            (friend.parse-error msg filename (or line "?") col source options)))))
 
   (fn parse-stream []
     (var (whitespace-since-dispatch done? retval) true)
 
     (fn set-source-fields [source]
-      (set (source.byteend source.endcol) (values byteindex (- col 1))))
+      (set (source.byteend source.endcol source.endline)
+           (values byteindex (- col 1) line)))
 
     (fn dispatch [v]
       "Dispatch when we complete a value"
@@ -141,7 +143,7 @@ Also returns a second function to clear the buffer in the byte stream"
           comments
           (do (ungetb 10)
               (dispatch (utils.comment (table.concat contents)
-                                       {:line (- line 1) :filename filename})))))
+                                       {: line : filename})))))
 
     (fn open-table [b]
       (when (not whitespace-since-dispatch)
@@ -154,14 +156,16 @@ Also returns a second function to clear the buffer in the byte stream"
       (dispatch (setmetatable list (getmetatable (utils.list)))))
 
     (fn close-sequence [tbl]
-      (let [val (utils.sequence (unpack tbl))]
+      (let [mt (getmetatable (utils.sequence))]
         ;; for table literals we can't store file/line/offset source
         ;; data in fields on the table itself, because the AST node
         ;; *is* the table, and the fields would show up in the
         ;; compiled output. keep them on the metatable instead.
         (each [k v (pairs tbl)]
-          (tset (getmetatable val) k v))
-        (dispatch val)))
+          (when (not= :number (type k))
+            (tset mt k v)
+            (tset tbl k nil)))
+        (dispatch (setmetatable tbl mt))))
 
     (fn add-comment-at [comments index node]
       (match (. comments index)
@@ -169,8 +173,8 @@ Also returns a second function to clear the buffer in the byte stream"
         _ (tset comments index [node])))
 
     (fn next-noncomment [tbl i]
-      (if (utils.comment? (. tbl i))
-          (next-noncomment tbl (+ i 1))
+      (if (utils.comment? (. tbl i)) (next-noncomment tbl (+ i 1))
+          (utils.sym? (. tbl i) ":") (tostring (. tbl (+ i 1)))
           (. tbl i)))
 
     (fn extract-comments [tbl]
@@ -227,7 +231,8 @@ Also returns a second function to clear the buffer in the byte stream"
             (close-curly-table top))))
 
     (fn parse-string-loop [chars b state]
-      (table.insert chars b)
+      (when b
+        (table.insert chars (string.char b)))
       (let [state (match [state b]
                     [:base 92] :backslash
                     [:base 34] :done
@@ -244,11 +249,11 @@ Also returns a second function to clear the buffer in the byte stream"
 
     (fn parse-string []
       (table.insert stack {:closer 34})
-      (let [chars [34]]
+      (let [chars ["\""]]
         (when (not (parse-string-loop chars (getb) :base))
           (badend))
         (table.remove stack)
-        (let [raw (string.char (unpack chars))
+        (let [raw (table.concat chars)
               formatted (raw:gsub "[\a-\r]" escape-char)]
           (match ((or (rawget _G :loadstring) load) (.. "return " formatted))
             load-fn (dispatch (load-fn))
@@ -269,7 +274,7 @@ Also returns a second function to clear the buffer in the byte stream"
     (fn parse-sym-loop [chars b]
       (if (and b (sym-char? b))
           (do
-            (table.insert chars b)
+            (table.insert chars (string.char b))
             (parse-sym-loop chars (getb)))
           (do
             (when b
@@ -315,7 +320,7 @@ Also returns a second function to clear the buffer in the byte stream"
 
     (fn parse-sym [b] ; not just syms actually...
       (let [source {:bytestart byteindex : filename : line :col (- col 1)}
-            rawstr (string.char (unpack (parse-sym-loop [b] (getb))))]
+            rawstr (table.concat (parse-sym-loop [(string.char b)] (getb)))]
         (set-source-fields source)
         (if (= rawstr :true)
             (dispatch true)
@@ -356,7 +361,7 @@ On success, returns true and the AST node. Returns nil when it reaches the end."
     (assert (= :string (type filename))
             "expected filename as second argument to parser")
     (if (= :string (type stream-or-string))
-        (parser-fn (string-stream stream-or-string) filename options)
+        (parser-fn (string-stream stream-or-string options) filename options)
         (parser-fn stream-or-string filename options))))
 
 {: granulate : parser : string-stream : sym-char?}
