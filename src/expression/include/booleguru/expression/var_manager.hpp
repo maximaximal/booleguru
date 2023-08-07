@@ -49,14 +49,19 @@ class var_manager : public manager<var_ref, var_manager> {
   inline void init() {
     auto top_id = get_id(variable{ "⊤" });
     auto bot_id = get_id(variable{ "⊥" });
-    assert(top_id == 1);
-    assert(bot_id == 2);
+    assert(top_id == LITERAL_TOP);
+    assert(bot_id == LITERAL_BOTTOM);
   }
 
   public:
   using base = manager<var_ref, var_manager>;
   using base::base;
   friend class manager;
+
+  enum {
+    LITERAL_TOP    = 1,
+    LITERAL_BOTTOM = 2,
+  };
 
   void push_namespace(std::string ns) { namespace_.push_back(ns); }
   void pop_namespace() { namespace_.pop_back(); }
