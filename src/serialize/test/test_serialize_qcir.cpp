@@ -29,13 +29,13 @@ TEST_CASE("Serialize simple example QCIR formula") {
   auto op_g1_ = ops->get(op(op_type::And, op_x1.get_id(), op_x2.get_id()));
   auto op_g1 = ops->get(op(op_type::And, op_g1_.get_id(), op_x3.get_id()));
 
-  auto op_g2_ = ops->get(op(op_type::Exists, var_x2.get_id(), op_g1.get_id()));
-  auto op_g2 = ops->get(op(op_type::Exists, var_x1.get_id(), op_g2_.get_id()));
+  auto op_g2_ = ops->get(op(op_type::Exists, op_x2.get_id(), op_g1.get_id()));
+  auto op_g2 = ops->get(op(op_type::Exists, op_x1.get_id(), op_g2_.get_id()));
 
   auto op_g3 = op_z && op_g2;
 
   auto op_complete =
-    ops->get(op(op_type::Forall, var_z.get_id(), op_g3.get_id()));
+    ops->get(op(op_type::Forall, op_z.get_id(), op_g3.get_id()));
 
   std::stringstream o;
   booleguru::serialize::qcir serializer(o);
@@ -77,13 +77,13 @@ TEST_CASE("Serialize simple example QCIR formula with some NOTs") {
   auto op_g1_ = ops->get(op(op_type::And, op_x1.get_id(), op_x2.get_id()));
   auto op_g1 = ops->get(op(op_type::And, op_g1_.get_id(), op_x3.get_id()));
 
-  auto op_g2_ = ops->get(op(op_type::Exists, var_x2.get_id(), op_g1.get_id()));
-  auto op_g2 = ops->get(op(op_type::Exists, var_x1.get_id(), op_g2_.get_id()));
+  auto op_g2_ = ops->get(op(op_type::Exists, op_x2.get_id(), op_g1.get_id()));
+  auto op_g2 = ops->get(op(op_type::Exists, op_x1.get_id(), op_g2_.get_id()));
 
   auto op_g3 = !(op_z && !op_g2);
 
   auto op_complete =
-    ops->get(op(op_type::Forall, var_z.get_id(), op_g3.get_id()));
+    ops->get(op(op_type::Forall, op_z.get_id(), op_g3.get_id()));
 
   std::stringstream o;
   booleguru::serialize::qcir serializer(o);
@@ -125,10 +125,10 @@ TEST_CASE("Serialize simple prenex example QCIR formula") {
   auto op_g2 = !op_v1 && !op_v2 && op_v3;
   auto op_ = op_g1 || op_g2;
 
-  auto ex_v3 = ops->get(op(op_type::Exists, var_v3.get_id(), op_.get_id()));
-  auto ex_v2 = ops->get(op(op_type::Exists, var_v2.get_id(), ex_v3.get_id()));
+  auto ex_v3 = ops->get(op(op_type::Exists, op_v3.get_id(), op_.get_id()));
+  auto ex_v2 = ops->get(op(op_type::Exists, op_v2.get_id(), ex_v3.get_id()));
   auto forall_v1 =
-    ops->get(op(op_type::Forall, var_v1.get_id(), ex_v2.get_id()));
+    ops->get(op(op_type::Forall, op_v1.get_id(), ex_v2.get_id()));
 
   std::stringstream o;
   booleguru::serialize::qcir serializer(o);
