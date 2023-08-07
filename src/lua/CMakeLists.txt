@@ -16,8 +16,15 @@ function(create_resources dir output)
     set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${bin})
     # Replace filename spaces & extension separator for C compatibility
     string(REGEX REPLACE "\\.| |-" "_" filename ${filename})
+    get_property(using_luajit GLOBAL PROPERTY USING_LUAJIT)
+    if(using_luajit)
+        message(STATUS "Convert lua script ${bin} to bytecode prior to embedding using LuaJIT")
+        execute_process(COMMAND luajit -b ${bin} /tmp/booleguru-luajit-bytecode.bin)
+        file(READ /tmp/booleguru-luajit-bytecode.bin filedata HEX)
+    else()
+        file(READ ${bin} filedata HEX)
+    endif()
     # Read hex data from file
-    file(READ ${bin} filedata HEX)
     # Convert hex data for C compatibility
     string(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1," filedata ${filedata})
     # Append data to output file
