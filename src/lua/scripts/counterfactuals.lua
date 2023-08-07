@@ -5,7 +5,7 @@ function counterfactuals(formulas_in_theory, var_count, nesting_depth, clauses_p
   assert(nesting_depth)
   assert(clauses_per_formula)
   assert(vars_per_clause)
-  assert(var_count >= clauses_per_formula)
+  --assert(var_count >= clauses_per_formula)
 
   if seed ~= nil then
     math.randomseed(seed)
@@ -53,6 +53,28 @@ function counterfactuals(formulas_in_theory, var_count, nesting_depth, clauses_p
   V = generate_vars()
 
   phi = shuffle_and_negate(shallow_copy(V))
+
+  local phi_extended = {}
+
+  if(var_count < nesting_depth) then
+    for i=0, #phi do
+      phi_extended[i] = phi[i]
+    end
+    for i=#phi+1, nesting_depth do
+
+      local j = i * math.random()
+      j = j - j%1
+      local selected = V[math.random(var_count)]
+
+      if(math.random() < 0.5) then
+        phi_extended[i] = selected
+      else
+        phi_extended[i] = ~selected
+      end
+      
+    end
+    phi = phi_extended
+  end
 
   S = {}
   U = {}
@@ -274,7 +296,12 @@ function counterfactuals(formulas_in_theory, var_count, nesting_depth, clauses_p
 
   -- function for Psi_(k+1)
   function W(k)
-    local inner = impl(sum_table(M(k-1)) & phi[k-1], phi[k])
+    local temp_inner = sum_table(M(k-1)) & phi[k-1]
+    local inner = impl(temp_inner, phi[k])
+    --print("phi k:")
+    --print(phi[k])
+    --print("phi k-1:")
+    --print(phi[k-1])
     return quantify_table(forall, V, inner)
   end
 
