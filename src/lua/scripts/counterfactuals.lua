@@ -20,7 +20,7 @@ function counterfactuals(formulas_in_theory, var_count, nesting_depth, clauses_p
       if(math.random() < 0.5) then
         array[j], array[i] = array[i], array[j]
       else
-        array[j], array[i] = ~array[i], array[j]
+        array[j], array[i] = -array[i], array[j]
       end
     end
     return array
@@ -69,9 +69,9 @@ function counterfactuals(formulas_in_theory, var_count, nesting_depth, clauses_p
       if(math.random() < 0.5) then
         phi_extended[i] = selected
       else
-        phi_extended[i] = ~selected
+        phi_extended[i] = -selected
       end
-      
+
     end
     phi = phi_extended
   end
@@ -106,9 +106,9 @@ function counterfactuals(formulas_in_theory, var_count, nesting_depth, clauses_p
     assert(#a == #b)
     assert(#a >= 1)
     local res = {}
-    res[0] = impl(a[0], b[0]) & ~impl(b[0], a[0])
+    res[0] = impl(a[0], b[0]) * -impl(b[0], a[0])
     for i = 1,#a do
-      res[i] = impl(a[i], b[i]) & ~impl(b[i], a[i])
+      res[i] = impl(a[i], b[i]) * -impl(b[i], a[i])
     end
     return res
   end
@@ -127,7 +127,7 @@ function counterfactuals(formulas_in_theory, var_count, nesting_depth, clauses_p
     local var = random_select_var(previous_vars)
     local flip = math.random(1,2)
     if flip == 2 then
-      var = ~var
+      var = -var
     end
     return var
   end
@@ -151,7 +151,7 @@ function counterfactuals(formulas_in_theory, var_count, nesting_depth, clauses_p
     table.insert(clause_lits, clause.id)
     for i = 2,vars_per_clause do
       local l = random_select_var_maybe_notted(previous_vars)
-      clause = clause | l
+      clause = clause + l
       table.insert(clause_lits, l.id)
     end
 
@@ -174,7 +174,7 @@ function counterfactuals(formulas_in_theory, var_count, nesting_depth, clauses_p
         clause, new_lits = generate_clause()
       until(not match_clause_lits(lits, new_lits))
       table.insert(lits, new_lits)
-      formula = formula & clause
+      formula = formula * clause
     end
 
     return formula
@@ -223,7 +223,7 @@ function counterfactuals(formulas_in_theory, var_count, nesting_depth, clauses_p
     assert(#t >= 1)
     local a = t[0]
     for i = 1,#t do
-      a = a & t[i]
+      a = a * t[i]
     end
     return a
   end
@@ -254,16 +254,16 @@ function counterfactuals(formulas_in_theory, var_count, nesting_depth, clauses_p
 
     local S_i_bak = S[i]
     S[i] = U[i]
-    local impl1 = impl(sum_table(M(i)), ~phi[i])
+    local impl1 = impl(sum_table(M(i)), -phi[i])
     local right = quantify_table(forall, V, impl1)
     S[i] = S_i_bak
 
-    local p = quantify_table(exists, V, sum_table(M(i)) & phi[i])
+    local p = quantify_table(exists, V, sum_table(M(i)) * phi[i])
 
     local impl2 = impl(left, right)
     local f = quantify_table(forall, U[i], impl2)
 
-    return p & f
+    return p * f
   end
 
   psi = {}
@@ -296,7 +296,7 @@ function counterfactuals(formulas_in_theory, var_count, nesting_depth, clauses_p
 
   -- function for Psi_(k+1)
   function W(k)
-    local temp_inner = sum_table(M(k-1)) & phi[k-1]
+    local temp_inner = sum_table(M(k-1)) * phi[k-1]
     local inner = impl(temp_inner, phi[k])
     --print("phi k:")
     --print(phi[k])
@@ -312,7 +312,7 @@ function counterfactuals(formulas_in_theory, var_count, nesting_depth, clauses_p
   end
 
   function NGT(i)
-    local step1 = PHI(i) & PSI(i+1)
+    local step1 = PHI(i) * PSI(i+1)
     local quant = quantify_table(exists, S[i], step1)
     return quant
   end
