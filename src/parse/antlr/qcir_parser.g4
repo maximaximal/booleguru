@@ -30,7 +30,7 @@ options { tokenVocab=qcir_lexer; }
 }
 
 formula returns [op_ref op]
-    : q=qcir { $op = (*ops)[$q.output_id]; } EOF
+    : EOL* q=qcir { $op = (*ops)[$q.output_id]; } EOF
     ;
 
 qcir returns [uint32_t output_id]
@@ -56,7 +56,7 @@ qcir returns [uint32_t output_id]
     ;
 
 format_id
-    : FORMAT_ID EOL
+    : FORMAT_ID EOL+
     ;
 
 qblock returns [std::vector<Qblock_quantContext *> qblock_quants]
@@ -64,13 +64,13 @@ qblock returns [std::vector<Qblock_quantContext *> qblock_quants]
     ;
 
 qblock_free
-    : FREE LPAR vl=var_list RPAR EOL
+    : FREE LPAR vl=var_list RPAR EOL+
         { for (auto var : $vl.vars) free_variables.push_back(var->id); }
     ;
 
 qblock_quant returns [op_type ot, std::vector<VariableContext *> vars]
     : ( EXISTS { $ot = op_type::Exists; } | FORALL { $ot = op_type::Forall; } )
-      LPAR vl=var_list RPAR EOL
+      LPAR vl=var_list RPAR EOL+
         { $vars = $vl.vars; }
     ;
 
@@ -78,7 +78,7 @@ qblock_quant returns [op_type ot, std::vector<VariableContext *> vars]
 // quantifier prefix. The prefix is prepended at the end.
 // NOTE: Output gates allow for literals, e.g. 'output(-a3)'!
 output_statement returns [std::string name]
-    : OUTPUT LPAR IDENT RPAR EOL { $name = std::move($IDENT.text); }
+    : OUTPUT LPAR IDENT RPAR EOL+ { $name = std::move($IDENT.text); }
     ;
 
 gate_statement returns [std::string gvar, uint32_t id]
@@ -116,7 +116,7 @@ gate_statement returns [std::string gvar, uint32_t id]
                   $id = ops->get_id(op(op_type::Forall, $id, (*vc)->id));
               }
             }
-    ) RPAR ( EOL | EOF )
+    ) RPAR ( EOL+ | EOF )
     ;
 
 // Since for quantifier gates we need to parse the full list to get to the
@@ -130,7 +130,7 @@ var_list returns [std::vector<VariableContext *> vars]
 lit_list [op_type ot, uint32_t empty_id] returns [uint32_t id]
     : l0=literal { $id = $l0.id; }
         ( COMMA ln=literal { $id = ops->get_id(op(ot, $id, $ln.id)); } )*
-    | { $id = empty_id; }
+    | { $id = ops->get_id(op(op_type::Var, empty_id, 0)); }
     ;
 
 // Literals always create a node in the binary tree.

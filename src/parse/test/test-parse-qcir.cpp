@@ -16,7 +16,19 @@ TEST_CASE("Parse example QCIR formulas") {
                                     "exists(c)\n"
                                     "output(g2)\n"
                                     "g1 = and(a, b)\n"
-                                    "g2 = or(g1, c)");
+                                    "g2 = or(g1, c)",
+
+                                    "# Just some comment..?\n"
+                                    "#QCIR-14 23\n"
+                                    "output(g)\n\n"
+                                    "g = or()\n\n",
+
+                                    "# Just some comment..?\n"
+                                    "#  QCIR-13  \n"
+                                    " # Some more comments here,\n"
+                                    "# and here\n"
+                                    "output( g )\n\n"
+                                    "g=and()");
   auto is = isviewstream(input);
   qcir parser(is);
   auto res = parser();
@@ -36,5 +48,5 @@ TEST_CASE("Parse example QCIR formulas") {
   CAPTURE(res.message);
   REQUIRE(res);
 
-  printf("%s\n", stringified.c_str());
+  // printf("%s\n", stringified.c_str());
 }

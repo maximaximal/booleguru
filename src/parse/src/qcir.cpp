@@ -47,5 +47,4 @@ qcir::operator()() {
   }
   return {};
 }
-
 }
