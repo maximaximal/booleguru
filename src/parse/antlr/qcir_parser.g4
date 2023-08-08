@@ -34,51 +34,42 @@ formula returns [op_ref op]
     ;
 
 qcir returns [uint32_t output_id]
-    : format_id
-      qb=qblock
-      outs=output_statement
-      ( gs=gate_statement { gate_variables[$gs.gvar] = $gs.id; } )*
+    : FORMAT_ID EOL+
+      ( qblock_free EOL+ )?
+      ( qb+=qblock_quant EOL+ )*
+      outs=output_statement EOL+
+      ( gs=gate_statement { gate_variables[$gs.gvar] = $gs.id; }
+           ( EOL+ | ( EOL* EOF ) ) )*
         { $output_id = gate_variables[$outs.name];
           // Reverse-iterate the quantifier statements, to preserve the binary
           // tree prefix order. (We add quantifiers from top-down, but we add
           // them from bottom-up!)
-          for (auto qblock_quant = $qb.qblock_quants.rbegin();
-               qblock_quant != $qb.qblock_quants.rend();
-               ++qblock_quant) {
+          for (auto qblock_quant = $qb.rbegin();
+               qblock_quant != $qb.rend(); ++qblock_quant) {
             op_type ot = (*qblock_quant)->ot;
             for (auto var = (*qblock_quant)->vars.rbegin();
-                 var != (*qblock_quant)->vars.rend();
-                 ++var) {
+                 var != (*qblock_quant)->vars.rend(); ++var) {
               $output_id = ops->get_id(op(ot, (*var)->id, $output_id));
             }
           }
         }
     ;
 
-format_id
-    : FORMAT_ID EOL+
-    ;
-
-qblock returns [std::vector<Qblock_quantContext *> qblock_quants]
-    : qblock_free? qb+=qblock_quant* { $qblock_quants = $qb; }
-    ;
-
 qblock_free
-    : FREE LPAR vl=var_list RPAR EOL+
+    : FREE LPAR vl=var_list RPAR
         { for (auto var : $vl.vars) free_variables.push_back(var->id); }
     ;
 
 qblock_quant returns [op_type ot, std::vector<VariableContext *> vars]
     : ( EXISTS { $ot = op_type::Exists; } | FORALL { $ot = op_type::Forall; } )
-      LPAR vl=var_list RPAR EOL+
-        { $vars = $vl.vars; }
+      LPAR vl=var_list RPAR { $vars = $vl.vars; }
     ;
 
 // We use this literal ID as the root node of the binary tree, excluding the
 // quantifier prefix. The prefix is prepended at the end.
 // NOTE: Output gates allow for literals, e.g. 'output(-a3)'!
 output_statement returns [std::string name]
-    : OUTPUT LPAR IDENT RPAR EOL+ { $name = std::move($IDENT.text); }
+    : OUTPUT LPAR IDENT RPAR { $name = std::move($IDENT.text); }
     ;
 
 gate_statement returns [std::string gvar, uint32_t id]
@@ -116,7 +107,7 @@ gate_statement returns [std::string gvar, uint32_t id]
                   $id = ops->get_id(op(op_type::Forall, $id, (*vc)->id));
               }
             }
-    ) RPAR ( EOL+ | EOF )
+    ) RPAR
     ;
 
 // Since for quantifier gates we need to parse the full list to get to the
