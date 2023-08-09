@@ -15,17 +15,22 @@ options { tokenVocab=qcir_lexer; }
 @header {
     #include <booleguru/expression/op_manager.hpp>
     #include <booleguru/expression/var_manager.hpp>
+    #include <booleguru/util/concat.hpp>
 
-    using op          = booleguru::expression::op;
-    using op_ref      = booleguru::expression::op_ref;
-    using op_type     = booleguru::expression::op_type;
-    using op_manager  = booleguru::expression::op_manager;
-    using var_manager = booleguru::expression::var_manager;
+    using namespace booleguru;
+
+    using op          = expression::op;
+    using op_ref      = expression::op_ref;
+    using op_type     = expression::op_type;
+    using op_manager  = expression::op_manager;
+    using var_ref     = expression::var_ref;
+    using var_manager = expression::var_manager;
 }
 
 @members {
     std::shared_ptr<op_manager> ops;
-    std::vector<uint32_t> free_variables;
+    std::unordered_map<std::string, var_ref> free_variables;
+    std::unordered_map<std::string, var_ref> quantified_variables;
     std::unordered_map<std::string, uint32_t> gate_variables;
 }
 
@@ -57,12 +62,22 @@ qcir returns [uint32_t output_id]
 
 qblock_free
     : FREE LPAR vl=var_list RPAR
-        { for (auto var : $vl.vars) free_variables.push_back(var->id); }
+        { for (auto var : $vl.vars) {
+            var_ref ref = ops->vars()[var->var_id];
+            free_variables[ref->name] = ref;
+          }
+        }
     ;
 
 qblock_quant returns [op_type ot, std::vector<VariableContext *> vars]
     : ( EXISTS { $ot = op_type::Exists; } | FORALL { $ot = op_type::Forall; } )
-      LPAR vl=var_list RPAR { $vars = $vl.vars; }
+      LPAR vl=var_list RPAR
+        { $vars = $vl.vars;
+          for (auto var : $vl.vars) {
+            var_ref ref = ops->vars()[var->var_id];
+            quantified_variables[ref->name] = ref;
+          }
+        }
     ;
 
 // We use this literal ID as the root node of the binary tree, excluding the
@@ -73,7 +88,15 @@ output_statement returns [std::string name]
     ;
 
 gate_statement returns [std::string gvar, uint32_t id]
-    : IDENT { $gvar = std::move($IDENT.text); } EQ (
+    : IDENT
+        { $gvar = std::move($IDENT.text);
+          if (quantified_variables.contains($gvar)) {
+            notifyErrorListeners(util::concat(
+              "Quantified variable '", $gvar, "' clashes with gate "
+              "variable definition\n"));
+          }
+        }
+        EQ (
           AND LPAR ll=lit_list[op_type::And, var_manager::LITERAL_TOP]
             { $id = $ll.id; }
         | OR  LPAR ll=lit_list[op_type::Or,  var_manager::LITERAL_BOTTOM]
@@ -126,20 +149,22 @@ lit_list [op_type ot, uint32_t empty_id] returns [uint32_t id]
 
 // Literals always create a node in the binary tree.
 literal returns [uint32_t id]
-    : NEG var=variable { $id = ops->get_id(op(op_type::Not, $var.id, 0)); }
-    | var=variable     { $id = $var.id; }
+    : ( NEG var=variable { $id = ops->get_id(op(op_type::Not, $var.id, 0)); }
+          | var=variable { $id = $var.id; } )
+        { if (!quantified_variables.contains($var.text)
+        }
     ;
 
 // Variables only reserve a spot in the variable manager, without creating a
 // variable node in the binary tree.
-variable returns [uint32_t id]
+variable returns [uint32_t id, uint32_t var_id, std::string text]
     : IDENT
-        { std::string const &text = $IDENT.text;
-          if (gate_variables.contains(text)) {
-            $id = gate_variables[text];
+        { $text = $IDENT.text;
+          if (gate_variables.contains($text)) {
+            $id = gate_variables[$text];
           } else {
-            $id = ops->get_id(op(op_type::Var,
-                                 ops->vars().get_id({ std::move(text) }), 0));
+            $var_id = ops->vars().get_id({ std::move($text) });
+            $id = ops->get_id(op(op_type::Var, $var_id, 0));
           }
         }
     ;

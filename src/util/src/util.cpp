@@ -1,3 +1,4 @@
+#include <cstring>
 #include <iostream>
 
 #include <booleguru/util/die.hpp>

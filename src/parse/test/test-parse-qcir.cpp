@@ -10,10 +10,10 @@
 
 using namespace booleguru::parse;
 
-TEST_CASE("Parse example QCIR formulas") {
+TEST_CASE("Parse example QCIR formulas", "[parser][qcir]") {
   std::string_view input = GENERATE("#QCIR-G14\n"
                                     "forall(a, b)\n"
-                                    "exists(c)\n"
+                                    "exists(g1)\n"
                                     "output(g2)\n"
                                     "g1 = and(a, b)\n"
                                     "g2 = or(g1, c)",
