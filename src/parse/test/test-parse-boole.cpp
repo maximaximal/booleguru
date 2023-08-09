@@ -44,13 +44,8 @@ TEST_CASE("Parse example boole formulas and check the resulting expressions") {
   boole parser(is);
   auto res = parser();
 
-  std::stringstream s;
-  if(res)
-    s << *res;
-  else
-    s << "((#no-expr#))";
   std::string inputs(input);
-  std::string stringified = s.str();
+  std::string stringified = res->to_string();
 
   CAPTURE(inputs);
   if(res) {
