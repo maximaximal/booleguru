@@ -1,5 +1,6 @@
 add_subdirectory(ankerl)
 add_subdirectory(antlr)
+add_subdirectory(fmt)
 
 find_package(LuaJIT)
 if(LUAJIT_FOUND)
