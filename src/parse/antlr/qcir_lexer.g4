@@ -27,7 +27,6 @@ DIGIT  : '0'..'9' ;
 LETTER : 'a'..'z' | 'A'..'Z' ;
 
 // Comments (including format ID) and whitespace
-FORMAT_ID    : '#' ( 'QCIR-G14' | 'QCIR-14'  | 'QCIR-13'  ) DIGIT? ;
-LINE_COMMENT : '#' ~( '\r' | '\n' )* -> channel(HIDDEN) ;
+FORMAT_ID    : '#' ( 'QCIR-G14' | 'QCIR-14'  | 'QCIR-13'  ) WS NUMBER? WS? EOL ;
+LINE_COMMENT : '#' ~( '\r' | '\n' )* EOL -> channel(HIDDEN) ;
 WS           : ( ' ' | '\t' )+ -> channel(HIDDEN) ;
-

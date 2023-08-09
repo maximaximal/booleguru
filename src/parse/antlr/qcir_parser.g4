@@ -56,7 +56,7 @@ qcir returns [uint32_t output_id]
     ;
 
 format_id
-    : FORMAT_ID EOL
+    : FORMAT_ID
     ;
 
 qblock returns [std::vector<Qblock_quantContext *> qblock_quants]
@@ -152,4 +152,3 @@ variable returns [uint32_t id]
           }
         }
     ;
-
