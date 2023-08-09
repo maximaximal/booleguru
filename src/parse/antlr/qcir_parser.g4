@@ -13,6 +13,8 @@ options { tokenVocab=qcir_lexer; }
  */
 
 @header {
+    #include <ankerl/unordered_dense.h>
+
     #include <booleguru/expression/op_manager.hpp>
     #include <booleguru/expression/var_manager.hpp>
     #include <booleguru/util/concat.hpp>
@@ -29,9 +31,10 @@ options { tokenVocab=qcir_lexer; }
 
 @members {
     std::shared_ptr<op_manager> ops;
-    std::unordered_map<std::string, var_ref> free_variables;
-    std::unordered_map<std::string, var_ref> quantified_variables;
-    std::unordered_map<std::string, uint32_t> gate_variables;
+    // TODO: Use uint32_t IDs as values
+    ankerl::unordered_dense::map<std::string, var_ref> free_variables;
+    ankerl::unordered_dense::map<std::string, var_ref> quantified_variables;
+    ankerl::unordered_dense::map<std::string, uint32_t> gate_variables;
 }
 
 formula returns [op_ref op]
@@ -90,7 +93,7 @@ output_statement returns [std::string name]
 gate_statement returns [std::string gvar, uint32_t id]
     : IDENT
         { $gvar = std::move($IDENT.text);
-          if (quantified_variables.contains($gvar)) {
+          if (quantified_variables.count($gvar)) {
             notifyErrorListeners(util::concat(
               "Quantified variable '", $gvar, "' clashes with gate "
               "variable definition\n"));
@@ -151,7 +154,8 @@ lit_list [op_type ot, uint32_t empty_id] returns [uint32_t id]
 literal returns [uint32_t id]
     : ( NEG var=variable { $id = ops->get_id(op(op_type::Not, $var.id, 0)); }
           | var=variable { $id = $var.id; } )
-        { if (!quantified_variables.contains($var.text)
+        { if (!quantified_variables.count($var.text))
+            ; // TODO: Fixme
         }
     ;
 
@@ -160,7 +164,7 @@ literal returns [uint32_t id]
 variable returns [uint32_t id, uint32_t var_id, std::string text]
     : IDENT
         { $text = $IDENT.text;
-          if (gate_variables.contains($text)) {
+          if (gate_variables.count($text)) {
             $id = gate_variables[$text];
           } else {
             $var_id = ops->vars().get_id({ std::move($text) });
@@ -168,4 +172,3 @@ variable returns [uint32_t id, uint32_t var_id, std::string text]
           }
         }
     ;
-
