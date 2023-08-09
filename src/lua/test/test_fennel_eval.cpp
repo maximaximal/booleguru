@@ -24,5 +24,5 @@ TEST_CASE("Build a simple formula through fennel") {
   REQUIRE(std::holds_alternative<op_ref>(ret));
   op_ref expr = std::get<op_ref>(ret);
   REQUIRE(expr.to_string() == "a & b");
-  ret = ctx.eval_fennel("(b-and *last-op* (b-var \"c\"))", expr);
+  ret = ctx.eval_fennel("(b-and ** (b-var \"c\"))", expr);
 }

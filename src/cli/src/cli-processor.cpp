@@ -158,8 +158,8 @@ cli_processor::consume_eventual_lisp_arguments(expression::op_ref last_op) {
     if(cmd[0] == '(') {
       // Some real lisp expression! Evaluate the whole thing.
     } else {
-      // Just one thing, call that with *last-op* as parameter.
-      cmd = "(" + cmd + " *last-op*)";
+      // Just one thing, call that with ** as parameter.
+      cmd = "(" + cmd + " **)";
     }
     ensure_lua_initialized();
     auto ret = lua_->eval_fennel(cmd.c_str(), last_op);
