@@ -4,11 +4,15 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
 
+#include <booleguru/expression/literals.hpp>
+#include <booleguru/expression/op_manager.hpp>
 #include <booleguru/parse/qcir.hpp>
 #include <booleguru/parse/result.hpp>
 #include <booleguru/util/istringviewstream.hpp>
 
 using namespace booleguru::parse;
+using namespace booleguru::expression::literals;
+using booleguru::expression::op_manager;
 
 static const std::string_view test1 = R"(#QCIR-G14
 forall(a, b)
@@ -38,10 +42,7 @@ TEST_CASE("Parse example QCIR formulas", "[parser][qcir]") {
   qcir parser(is);
   auto res = parser();
 
-  std::string inputs(input);
-  std::string stringified = res->to_string();
-
-  CAPTURE(inputs);
+  CAPTURE(input);
   if(res) {
     CAPTURE(*res);
   }
@@ -49,4 +50,24 @@ TEST_CASE("Parse example QCIR formulas", "[parser][qcir]") {
   REQUIRE(res);
 
   // printf("%s\n", stringified.c_str());
+}
+
+TEST_CASE("Parse and check small QCIR formulas", "[parser][qcir]") {
+  auto is = isviewstream(test1);
+  std::shared_ptr<op_manager> ops = std::make_shared<op_manager>();
+  qcir parser(is, ops);
+  auto res = parser();
+  REQUIRE(res);
+
+  auto g2_res = *res;
+
+  // Build the same formula manually afterwards.
+  auto a = "a"_var(ops);
+  auto b = "b"_var(ops);
+  auto c = "c"_var(ops);
+  auto g1 = a && b;
+  auto g2 = g1 || c;
+  auto quantified_g2 = forall(a, forall(b, exists(c, g2)));
+
+  REQUIRE(g2_res == quantified_g2);
 }
