@@ -8,14 +8,15 @@
 #include <sstream>
 #include <string>
 
-#include <booleguru/util/stdiobuf.hpp>
 #include <booleguru/cli/input_file.hpp>
 #include <booleguru/expression/op_manager.hpp>
 #include <booleguru/expression/var_manager.hpp>
 #include <booleguru/parse/base.hpp>
 #include <booleguru/parse/boole.hpp>
 #include <booleguru/parse/luascript.hpp>
+#include <booleguru/parse/qcir.hpp>
 #include <booleguru/parse/qdimacs.hpp>
+#include <booleguru/util/stdiobuf.hpp>
 #ifdef BOOLEGURU_PARSE_PY
 #include <booleguru/parse/pythonscript.hpp>
 #endif
@@ -194,8 +195,11 @@ input_file::produce_parser(std::istream& is) {
     case argument::smtlib2: {
       throw std::runtime_error("SMTLIB Not supported yet!");
     }
-    case argument::qcir:
-      throw std::runtime_error("QCIR Not supported yet!");
+    case argument::qcir: {
+      is >> std::noskipws;
+      auto qcir = std::make_unique<parse::qcir>(is, ops_);
+      return qcir;
+    }
     case argument::boole: {
       is >> std::noskipws;
       auto boole = std::make_unique<parse::boole>(is, ops_);
