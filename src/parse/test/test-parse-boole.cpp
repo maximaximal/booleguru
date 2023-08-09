@@ -84,7 +84,7 @@ TEST_CASE("Parse formula containing lisp code") {
     "f(b-and (b-var \"a\") (b-var \"b\")) :(b-and (b-var \"a\") (b-var \"b\"))",
     "f(b-and (b-var \"a\") (b-var \"b\")) :(b-and (b-var \"aa\") (b-var "
     "\"bb\")) :(b-and (b-var \"a\") (b-var \"b\"))",
-    "f(b-and (b-var \"a\") (b-var \"b_\")) :(b-var-rename *last-op* \"b_\" \"b\")");
+    "f(b-and (b-var \"a\") (b-var \"b_\")) :(b-var-rename ** \"b_\" \"b\")");
   std::string inputs(input);
   auto is = isviewstream(input);
   boole parser(is);
