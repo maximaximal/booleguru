@@ -10,36 +10,36 @@
 
 using namespace booleguru::parse;
 
+static const std::string_view test1 = R"(#QCIR-G14
+forall(a, b)
+exists(c)
+output(g2)
+g1 = and(a, b)
+g2 = or(g1, c)
+)";
+
+static const std::string_view test2 = R"(# Just some comment..?
+#QCIR-G14 23
+output(g)
+g = or()
+)";
+
+static const std::string_view test3 = R"(# Just some comment..?
+#  QCIR-G13
+ # More comments
+# More
+output( g )
+g=and()
+)";
+
 TEST_CASE("Parse example QCIR formulas", "[parser][qcir]") {
-  std::string_view input = GENERATE("#QCIR-G14\n"
-                                    "forall(a, b)\n"
-                                    "exists(g1)\n"
-                                    "output(g2)\n"
-                                    "g1 = and(a, b)\n"
-                                    "g2 = or(g1, c)",
-
-                                    "# Just some comment..?\n"
-                                    "#QCIR-14 23\n"
-                                    "output(g)\n\n"
-                                    "g = or()\n\n",
-
-                                    "# Just some comment..?\n"
-                                    "#  QCIR-13  \n"
-                                    " # Some more comments here,\n"
-                                    "# and here\n"
-                                    "output( g )\n\n"
-                                    "g=and()");
+  const std::string_view input = GENERATE(test1, test2, test3);
   auto is = isviewstream(input);
   qcir parser(is);
   auto res = parser();
 
-  std::stringstream s;
-  if(res)
-    s << *res;
-  else
-    s << "((#no-expr#))";
   std::string inputs(input);
-  std::string stringified = s.str();
+  std::string stringified = res->to_string();
 
   CAPTURE(inputs);
   if(res) {
