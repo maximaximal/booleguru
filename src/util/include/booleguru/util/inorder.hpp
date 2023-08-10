@@ -10,7 +10,7 @@ namespace booleguru::util {
  * This traversal does not modify the tree itself, it just traverses.
  *
  * The reference must be bool-comparable: False means it is NULL. */
-template<typename Ref, typename LLINK, typename RLINK>
+template<typename Ref, typename LLINK_T, typename RLINK_T>
 class inorder {
   std::stack<Ref> A;
 
@@ -24,7 +24,14 @@ class inorder {
   };
   state s;
 
+  LLINK_T LLINK;
+  RLINK_T RLINK;
+
   public:
+  inorder(LLINK_T llink, RLINK_T rlink)
+    : LLINK(llink)
+    , RLINK(rlink) {}
+
   template<typename Visitor>
   inline void operator()(Ref root, Visitor visit) {
     P = root;
@@ -40,7 +47,8 @@ class inorder {
         case T2:
           if(!P)
             s = T4;
-          s = T3;
+          else
+            s = T3;
           break;
         case T3:
           A.emplace(P);

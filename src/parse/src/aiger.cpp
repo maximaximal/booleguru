@@ -3,7 +3,6 @@
 #include <stack>
 
 #include <fmt/format.h>
-#include <fmt/ranges.h>
 
 #include <booleguru/expression/op_manager.hpp>
 #include <booleguru/expression/var_manager.hpp>
@@ -51,7 +50,6 @@ aiger::parse_aag(std::istringstream& header) {
   std::string line_buf;
   std::string symbol;
   while(std::getline(in_, line_buf)) {
-    println("Line: {}", line_buf);
     std::istringstream line(line_buf);
     // Three possibilities: A single literal, an AND gate (three literals) or a
     // symbol (one symbol / name and one literal).
@@ -143,35 +141,50 @@ aiger::build() {
     std::stack<uint32_t> ops;
 
     auto visit = [this, &ops, root](unsigned node) {
-      println("Visit node {}", node);
       using namespace expression;
       if(node < number_of_inputs_ + 1) {
         // Input node! This is just a variable.
-      } else if(node < number_of_inputs_ + number_of_latches_ +
-                         number_of_outputs_ + 1) {
+        var_ref::ref var_id = variables[node - 1];
+        if(var_id == 0)
+          var_id = vars_->get_id(variable{ std::to_string(var_id) });
+        op_ref::ref v = ops_->get_id(op(op_type::Var, var_id, 0));
+        ops.emplace(v);
+      } else if(node <
+                number_of_inputs_ + number_of_latches_ + number_of_outputs_) {
         // Output node! This may be directly a variable or a negated variable,
         // depending on what's saved in negated_outputs.
         assert(node == root);
-        if(negated_outputs[node]) {
+        if(negated_outputs[node - 1]) {
           ops.emplace(ops_->get_id(op(op_type::Not, ops.top(), 0)));
         } else {
           // Nothing needed - the top op stays as it is.
         }
       } else {
         // And gate!
-        println("Traverse And Gate!");
+        op_ref::ref r = ops.top();
+        ops.pop();
+        op_ref::ref l = ops.top();
+        ops.pop();
+
+        auto& g = gates[node - gates_offset()];
+        if(g.l & 0b1u)
+          l = ops_->get_id(op(op_type::Not, l, 0));
+        if(g.r & 0b1u)
+          r = ops_->get_id(op(op_type::Not, r, 0));
+
+        ops.emplace(ops_->get_id(op(op_type::And, l, r)));
       }
     };
 
     // The right shift is required because of the encoding of negations.
     auto llink = [this](unsigned n) {
-      if(n > gates_offset())
+      if(n >= gates_offset())
         return gates[n - gates_offset()].l >> 1u;
       else
         return 0u;
     };
     auto rlink = [this](unsigned n) {
-      if(n > gates_offset())
+      if(n >= gates_offset())
         return gates[n - gates_offset()].r >> 1u;
       else
         return 0u;
@@ -180,7 +193,9 @@ aiger::build() {
                                                                          rlink);
     traverse(root, visit);
 
-    return error("not implemented yet");
+    assert(ops.size());
+
+    return generate_result((*ops_)[ops.top()]);
   } else {
     return error("number of outputs > 1 not supported yet");
   }

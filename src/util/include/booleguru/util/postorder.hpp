@@ -33,6 +33,7 @@ class postorder {
   postorder(LLINK_T llink, RLINK_T rlink)
     : LLINK(llink)
     , RLINK(rlink) {}
+
   template<typename Visitor>
   inline void operator()(Ref root, Visitor visit) {
     P = root;
@@ -49,7 +50,8 @@ class postorder {
         case T2:
           if(!P)
             s = T4;
-          s = T3;
+          else
+            s = T3;
           break;
         case T3:
           A.emplace_back(P);

@@ -28,7 +28,7 @@ TEST_CASE("Parse simple aiger files with AND gates and symbols", "[aiger]") {
   aiger parser(is);
   auto res = parser();
 
-  CAPTURE(res.message);
+  CAPTURE(res->to_string());
 
   REQUIRE(res);
 }
