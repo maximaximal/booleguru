@@ -9,6 +9,7 @@
 #include <booleguru/expression/var_manager.hpp>
 #include <booleguru/parse/aiger.hpp>
 #include <booleguru/parse/result.hpp>
+#include <booleguru/util/postorder.hpp>
 
 template<>
 struct fmt::formatter<booleguru::parse::aiger::gate> {
@@ -16,14 +17,7 @@ struct fmt::formatter<booleguru::parse::aiger::gate> {
   template<typename Context>
   constexpr auto format(booleguru::parse::aiger::gate const& g,
                         Context& ctx) const {
-    char sign = ' ';
-    if(g.inverted)
-      sign = '-';
-
-    if(g.is_and())
-      return format_to(ctx.out(), "{}(and {} {})", sign, g.l, g.r);
-    else
-      return format_to(ctx.out(), "{}(var)", sign);
+    return format_to(ctx.out(), "(and {} {})", g.l, g.r);
   }
 };
 
@@ -49,7 +43,9 @@ aiger::parse_aag(std::istringstream& header) {
     return error("latches not supported", 4);
   }
 
-  gates_.resize(maximum_variable_index_ + 1);
+  gates.resize(number_of_and_gates_);
+  negated_outputs.resize(number_of_outputs_);
+  variables.resize(number_of_inputs_ + number_of_outputs_);
 
   // The format itself is line-based.
   std::string line_buf;
@@ -101,21 +97,22 @@ aiger::parse_aag(std::istringstream& header) {
             fmt::format("variable {} bigger than max variable index {}",
                         var,
                         maximum_variable_index_));
-        if(var <= number_of_inputs_) {// Input line
-          gates_[var].inverted = (l1 & 0b1u) == 0b1u;
+        if(var <= number_of_inputs_) {// Don't care about input lines, they are
+                                      // redundant in this interpretation of
+                                      // AIGER.
         } else if(var <= number_of_inputs_ + number_of_latches_) {// latch lines
           return error("latches not supported", 4);
         } else if(var <= number_of_inputs_ + number_of_latches_ +
                            number_of_outputs_) {// output lines
-          gates_[var].inverted = (l1 & 0b1u) == 0b1u;
+          negated_outputs[var - outputs_offset() - 1] = (l1 & 0b1u) == 0b1u;
         }
       } else if((line >> l3).fail()) {
         // We have a latch.
         return error("latches not supported", 4);
       } else {
-        unsigned var = l1 >> 1u;
-        gates_[var].l = l2;
-        gates_[var].r = l3;
+        unsigned var = (l1 >> 1u) - gates_offset();
+        gates[var].l = l2;
+        gates[var].r = l3;
       }
     }
   }
@@ -129,11 +126,10 @@ aiger::parse_aig() {
 
 void
 aiger::remember_symbol(unsigned gate, const std::string& symbol) {
-  // Remembering symbols is very annoying, as the symbol table is only trailing
-  // at the end. This means we have to save up all the symbols we want to swap
-  // and finally swap all variables in one go.
-  uint32_t var_id = vars_->get_id(expression::variable{ symbol });
-  gates_[gate].var_id = var_id;
+  if(gate < number_of_inputs_ + number_of_outputs_) {
+    uint32_t var_id = vars_->get_id(expression::variable{ symbol });
+    variables[gate] = var_id;
+  }
 }
 
 result
@@ -144,68 +140,51 @@ aiger::build() {
     // This is the archetypical formula of one output and many inputs. Build it
     // like a boolean expression by operating on two stacks.
     unsigned root = outputs_offset() + 1;
-    std::stack<unsigned> s;
-    s.emplace(root);
-    std::cout << "Root: " << root << ", Gate size: " << gates_.size()
-              << std::endl;
+    std::stack<uint32_t> ops;
 
-    println("Gates: {}", fmt::join(gates_, ", "));
-
-    unsigned prev = 0;
-    while(!s.empty()) {
-      unsigned current = s.top();
-      s.pop();
-      println("Current: {}", current);
-      if(!prev || left(prev) == current || right(prev) == current) {
-        if(auto l = left(current))
-          s.emplace(l >> 1u);
-        else if(auto r = right(current))
-          s.emplace(r >> 1u);
-        else {
-          s.pop();
-
-          // visit current
-          std::cout << current << std::endl;
-        }
-      } else if(left(current) == prev) {
-        if(auto r = right(current)) {
-          s.emplace(r >> 1u);
+    auto visit = [this, &ops, root](unsigned node) {
+      println("Visit node {}", node);
+      using namespace expression;
+      if(node < number_of_inputs_ + 1) {
+        // Input node! This is just a variable.
+      } else if(node < number_of_inputs_ + number_of_latches_ +
+                         number_of_outputs_ + 1) {
+        // Output node! This may be directly a variable or a negated variable,
+        // depending on what's saved in negated_outputs.
+        assert(node == root);
+        if(negated_outputs[node]) {
+          ops.emplace(ops_->get_id(op(op_type::Not, ops.top(), 0)));
         } else {
-          s.pop();
-
-          // visit current
-          std::cout << current << std::endl;
+          // Nothing needed - the top op stays as it is.
         }
-      } else if(right(current) == prev) {
-        s.pop();
-
-        std::cout << current << std::endl;
+      } else {
+        // And gate!
+        println("Traverse And Gate!");
       }
-      prev = current;
-    }
+    };
+
+    // The right shift is required because of the encoding of negations.
+    auto llink = [this](unsigned n) {
+      if(n > gates_offset())
+        return gates[n - gates_offset()].l >> 1u;
+      else
+        return 0u;
+    };
+    auto rlink = [this](unsigned n) {
+      if(n > gates_offset())
+        return gates[n - gates_offset()].r >> 1u;
+      else
+        return 0u;
+    };
+    util::postorder<unsigned, decltype(llink), decltype(rlink)> traverse(llink,
+                                                                         rlink);
+    traverse(root, visit);
+
     return error("not implemented yet");
   } else {
     return error("number of outputs > 1 not supported yet");
   }
   return error("not implemented yet");
-}
-
-unsigned
-aiger::left(unsigned var) const {
-  assert(var < gates_.size());
-  if(gates_[var].is_and())
-    return gates_[var].l;
-  else
-    return 0;
-}
-
-unsigned
-aiger::right(unsigned var) const {
-  assert(var < gates_.size());
-  if(gates_[var].is_and())
-    return gates_[var].r;
-  else
-    return 0;
 }
 
 result

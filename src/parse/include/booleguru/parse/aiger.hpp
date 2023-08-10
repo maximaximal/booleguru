@@ -9,13 +9,8 @@ namespace booleguru::parse {
 class aiger : public base {
   public:
   struct gate {
-    bool inverted = false;
     unsigned l = 0;
     unsigned r = 0;
-    uint32_t var_id;
-    inline bool is_and() const { return r != 0; }
-    inline bool is_var() const { return r == 0; }
-
     gate() = default;
   };
 
@@ -30,13 +25,18 @@ class aiger : public base {
   unsigned outputs_offset() const {
     return number_of_inputs_ + number_of_latches_;
   }
+  unsigned gates_offset() const {
+    return number_of_inputs_ + number_of_latches_ + number_of_outputs_;
+  }
 
-  std::vector<gate> gates_;
+  // All variables, i.e. inputs and outputs. Gates not included.
+  std::vector<uint32_t> variables;
+  // All and gates. These have a gates_offset.
+  std::vector<gate> gates;
+  // Negations for output variables. This should only be of size 1, usually.
+  std::vector<bool> negated_outputs;
 
-  unsigned left(unsigned var) const;
-  unsigned right(unsigned var) const;
-
-  result parse_aag(std::istringstream &header);
+  result parse_aag(std::istringstream& header);
   result parse_aig();
 
   /** Save a symbol in the symbol table, remember the variable it resolves
