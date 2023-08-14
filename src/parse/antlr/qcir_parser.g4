@@ -133,7 +133,7 @@ gate_statement returns [std::string gvar, uint32_t id]
             { // This *must* crash if there is no first element, see 'var_list'
               // rule for context.
               auto vars = $vl.vars;
-              assert(vars.size() > 1);
+              assert(vars.size() > 0);
               $id = ops->get_id(op(op_type::Exists, $l.id, vars.front()->id));
               for (auto vc = vars.begin() + 1; vc != vars.end(); ++vc) {
                   $id = ops->get_id(op(op_type::Exists, $id, (*vc)->id));
@@ -142,7 +142,7 @@ gate_statement returns [std::string gvar, uint32_t id]
         | FORALL LPAR vl=var_list SEMICOLON l=literal
             { // See option above.
               auto vars = $vl.vars;
-              assert(vars.size() > 1);
+              assert(vars.size() > 0);
               $id = ops->get_id(op(op_type::Forall, $l.id, vars.front()->id));
               for (auto vc = vars.begin() + 1; vc != vars.end(); ++vc) {
                   $id = ops->get_id(op(op_type::Forall, $id, (*vc)->id));
