@@ -29,7 +29,10 @@ fragment DIGIT  : '0'..'9' ;
 fragment LETTER : 'a'..'z' | 'A'..'Z' ;
 
 // Format ID, a special form of a comment, should match before LINE_COMMENT
-FORMAT_ID : '#' WS? ( 'QCIR-G14' | 'QCIR-14'  | 'QCIR-13' ) WS? NUMBER? WS? ;
+FORMAT_ID_G14 : '#' WS? 'QCIR-G14' WS? NUMBER? WS? ;
+FORMAT_ID_14  : '#' WS? 'QCIR-14'  WS? NUMBER? WS? ;
+FORMAT_ID_13  : '#' WS? 'QCIR-13'  WS? NUMBER? WS? ;
+FORMAT_ID_ILL : '#' WS? 'QCIR' WS? '-'? WS? 'G'? NUMBER? WS? NUMBER? WS? ;
 
 // Tokens sent to other channels, we don't need these in the parser, but might
 // want to do something with them

@@ -23,13 +23,13 @@ g2 = or(g1, c)
 )";
 
 static const std::string_view test2 = R"(# Just some comment..?
-#QCIR-G14 23
+#QCIR-14 23
 output(g)
 g = or()
 )";
 
 static const std::string_view test3 = R"(# Just some comment..?
-#  QCIR-G13
+#  QCIR-13
  # More comments
 # More
 output( g )

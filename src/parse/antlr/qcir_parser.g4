@@ -42,7 +42,7 @@ formula returns [op_ref op]
     ;
 
 qcir returns [uint32_t output_id]
-    : FORMAT_ID EOL+
+    : format_id EOL+
       ( qblock_free EOL+ )?
       ( qb+=qblock_quant EOL+ )*
       outs=output_statement EOL+
@@ -63,6 +63,16 @@ qcir returns [uint32_t output_id]
           // Handle negated output
           if ($outs.negated)
             $output_id = ops->get_id(op(op_type::Not, $output_id, 0));
+        }
+    ;
+
+format_id
+    : FORMAT_ID_G14
+    | FORMAT_ID_14
+    | FORMAT_ID_13
+    | FORMAT_ID_ILL
+        { notifyErrorListeners(fmt::format(
+            "Unknown format ID '{}'", $FORMAT_ID_ILL.text));
         }
     ;
 
@@ -99,9 +109,9 @@ gate_statement returns [std::string gvar, uint32_t id]
         { $gvar = std::move($IDENT.text);
           if (quantified_variables.count($gvar)) {
             notifyErrorListeners(fmt::format(
-                "Quantified variable '{}' clashes with gate variable"
-                " definition of same name",
-                $gvar));
+              "Quantified variable '{}' clashes with gate variable"
+              " definition of same name",
+              $gvar));
           }
         }
         EQ (
