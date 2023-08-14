@@ -26,7 +26,7 @@ add_library(booleguru-parse-antlr OBJECT
 )
 
 target_link_libraries(booleguru-parse-antlr PUBLIC antlr4_static)
-target_link_libraries(booleguru-parse-antlr PUBLIC booleguru-expression booleguru-lua)
+target_link_libraries(booleguru-parse-antlr PUBLIC booleguru-expression booleguru-lua fmt::fmt)
 target_include_directories(booleguru-parse-antlr PUBLIC ${ANTLR4_INCLUDE_DIR})
 
 set(SRCS

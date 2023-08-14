@@ -14,10 +14,10 @@ options { tokenVocab=qcir_lexer; }
 
 @header {
     #include <ankerl/unordered_dense.h>
+    #include <fmt/format.h>
 
     #include <booleguru/expression/op_manager.hpp>
     #include <booleguru/expression/var_manager.hpp>
-    #include <booleguru/util/concat.hpp>
 
     using namespace booleguru;
 
@@ -32,8 +32,8 @@ options { tokenVocab=qcir_lexer; }
 @members {
     std::shared_ptr<op_manager> ops;
     // TODO: Use uint32_t IDs as values
-    ankerl::unordered_dense::map<std::string, var_ref> free_variables;
-    ankerl::unordered_dense::map<std::string, var_ref> quantified_variables;
+    ankerl::unordered_dense::map<std::string, uint32_t> free_variables;
+    ankerl::unordered_dense::map<std::string, uint32_t> quantified_variables;
     ankerl::unordered_dense::map<std::string, uint32_t> gate_variables;
 }
 
@@ -50,7 +50,7 @@ qcir returns [uint32_t output_id]
            ( EOL+ | ( EOL* EOF ) ) )*
         { $output_id = gate_variables[$outs.name];
           // Reverse-iterate the quantifier statements, to preserve the binary
-          // tree prefix order. (We add quantifiers from top-down, but we add
+          // tree prefix order. (We parse quantifiers from top-down, but we add
           // them from bottom-up!)
           for (auto qblock_quant = $qb.rbegin();
                qblock_quant != $qb.rend(); ++qblock_quant) {
@@ -60,6 +60,9 @@ qcir returns [uint32_t output_id]
               $output_id = ops->get_id(op(ot, (*var)->id, $output_id));
             }
           }
+          // Handle negated output
+          if ($outs.negated)
+            $output_id = ops->get_id(op(op_type::Not, $output_id, 0));
         }
     ;
 
@@ -67,7 +70,7 @@ qblock_free
     : FREE LPAR vl=var_list RPAR
         { for (auto var : $vl.vars) {
             var_ref ref = ops->vars()[var->var_id];
-            free_variables[ref->name] = ref;
+            free_variables[ref->name] = var->var_id;
           }
         }
     ;
@@ -78,7 +81,7 @@ qblock_quant returns [op_type ot, std::vector<VariableContext *> vars]
         { $vars = $vl.vars;
           for (auto var : $vl.vars) {
             var_ref ref = ops->vars()[var->var_id];
-            quantified_variables[ref->name] = ref;
+            quantified_variables[ref->name] = var->var_id;
           }
         }
     ;
@@ -86,17 +89,19 @@ qblock_quant returns [op_type ot, std::vector<VariableContext *> vars]
 // We use this literal ID as the root node of the binary tree, excluding the
 // quantifier prefix. The prefix is prepended at the end.
 // NOTE: Output gates allow for literals, e.g. 'output(-a3)'!
-output_statement returns [std::string name]
-    : OUTPUT LPAR IDENT RPAR { $name = std::move($IDENT.text); }
+output_statement returns [std::string name, bool negated]
+    : OUTPUT LPAR { $negated = false; } ( NEG { $negated = !$negated; } )*
+      IDENT RPAR { $name = std::move($IDENT.text); }
     ;
 
 gate_statement returns [std::string gvar, uint32_t id]
     : IDENT
         { $gvar = std::move($IDENT.text);
           if (quantified_variables.count($gvar)) {
-            notifyErrorListeners(util::concat(
-              "Quantified variable '", $gvar, "' clashes with gate "
-              "variable definition\n"));
+            notifyErrorListeners(fmt::format(
+                "Quantified variable '{}' clashes with gate variable"
+                " definition of same name",
+                $gvar));
           }
         }
         EQ (
