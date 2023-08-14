@@ -34,6 +34,7 @@ set(SRCS
   src/boole.cpp
   src/qdimacs.cpp
   src/qcir.cpp
+  src/aiger.cpp
   src/smtlib2.cpp
   src/luascript.cpp
 )
@@ -61,7 +62,7 @@ target_include_directories(booleguru-parse PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/in
 target_link_libraries(booleguru-parse PUBLIC booleguru-expression booleguru-util booleguru-lua)
 
 target_link_libraries(booleguru-parse PRIVATE $<TARGET_OBJECTS:booleguru-parse-antlr>)
-target_link_libraries(booleguru-parse PRIVATE antlr4_static)
+target_link_libraries(booleguru-parse PRIVATE antlr4_static fmt::fmt)
 target_include_directories(booleguru-parse PRIVATE ${ANTLR4_INCLUDE_DIR})
 
 # Not done automatically.

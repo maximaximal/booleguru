@@ -17,7 +17,7 @@ lua_context::get_var(const std::string& name) {
 }
 
 auto
-fennel_s(sol::state& s, const std::string& fennel) -> auto {
+fennel_s(sol::state& s, const std::string& fennel) -> auto{
   const std::string name = s["fennel"]["mangle"](fennel);
   return s[name];
 }
@@ -149,13 +149,13 @@ lua_context::register_booleguru_types() {
     &helpers::rename,
     "rename_map",
     &helpers::rename_map,
-    sol::meta_function::bitwise_and,
+    sol::meta_function::multiplication,
     sol::resolve<op_ref(op_ref, op_ref)>(operator&&),
-    sol::meta_function::bitwise_or,
+    sol::meta_function::addition,
     sol::resolve<op_ref(op_ref, op_ref)>(operator||),
-    sol::meta_function::bitwise_not,
+    sol::meta_function::unary_minus,
     sol::resolve<op_ref(op_ref)>(operator!),
-    sol::meta_function::bitwise_xor,
+    sol::meta_function::division,
     sol::resolve<op_ref(op_ref, op_ref)>(operator^),
     sol::meta_function::concatenation,
     sol::overload(
