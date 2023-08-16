@@ -23,7 +23,7 @@ NEG       : '-' ;
 EOL       : '\n' | '\r' | '\r\n' ;
 
 // Identifiers and numbers
-IDENT  : ( '_' | DIGIT | LETTER )+ ;
+IDENT  : ( '_' | NUMBER | LETTER )+ ;
 NUMBER : DIGIT+ ;
 fragment DIGIT  : '0'..'9' ;
 fragment LETTER : 'a'..'z' | 'A'..'Z' ;
