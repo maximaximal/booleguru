@@ -12,15 +12,24 @@ function counterfactuals(formulas_in_theory, var_count, nesting_depth, clauses_p
   end
 
   function shuffle_and_negate(array)
+
+    temparray = {}
+    for i = 0, #array do
+      local selected = V[math.random(var_count)]
+      temparray[i] = selected
+    end
+
+
     -- fisher-yates
     for i = 0,#array do
-      local j = i * math.random()
-      j = j - j%1
+      --local j = i * math.random()
+      --j = j - j%1
+      
 
       if(math.random() < 0.5) then
-        array[j], array[i] = array[i], array[j]
+        array[i] = temparray[i]
       else
-        array[j], array[i] = -array[i], array[j]
+        array[i] = -temparray[i]
       end
     end
     return array
