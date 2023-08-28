@@ -1,3 +1,7 @@
+io = require "io"
+
+function print(...) io.stderr:write(table.concat({...}, '\9') .. '\n') end
+
 function counterfactuals(formulas_in_theory, var_count, nesting_depth, clauses_per_formula, vars_per_clause, seed)
   -- Needs parameters
   assert(formulas_in_theory)
@@ -63,6 +67,9 @@ function counterfactuals(formulas_in_theory, var_count, nesting_depth, clauses_p
 
   phi = shuffle_and_negate(shallow_copy(V))
 
+
+  --print_table(phi)
+
   local phi_extended = {}
 
   if(var_count < nesting_depth) then
@@ -80,10 +87,10 @@ function counterfactuals(formulas_in_theory, var_count, nesting_depth, clauses_p
       else
         phi_extended[i] = -selected
       end
-
     end
     phi = phi_extended
   end
+  --print_table(phi)
 
   S = {}
   U = {}
