@@ -6,7 +6,7 @@
 #include <stdexcept>
 #include <type_traits>
 
-#include <iostream>
+#include <fmt/format.h>
 
 #include "booleguru/transform/output_to_op.hpp"
 #include "booleguru/transform/output_to_qdimacs.hpp"
@@ -147,8 +147,9 @@ tseitin<O>::operator()(expression::op_ref o) {
 
   o_.end_prefix();
 
-  for(const auto& e : mgr.objects()) {
-    const expression::op& op = e.first;
+  for(size_t i = 0; i < mgr.size(); ++i) {
+    auto &e = mgr.objects()[i];
+    const expression::op op = e.first;
     ref t = o_.op_ref_to_ref(op, e.second);
 
     if(!op.mark)
