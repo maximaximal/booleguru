@@ -146,7 +146,7 @@ aiger::build() {
         // Input node! This is just a variable.
         var_ref::ref var_id = variables[node - 1];
         if(var_id == 0)
-          var_id = vars_->get_id(variable{ std::to_string(var_id) });
+          var_id = vars_->get_id(variable{ std::to_string(node) });
         op_ref::ref v = ops_->get_id(op(op_type::Var, var_id, 0));
         ops.emplace(v);
       } else if(node <
