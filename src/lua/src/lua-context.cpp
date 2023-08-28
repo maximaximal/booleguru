@@ -1,10 +1,12 @@
-#include "booleguru/expression/literals.hpp"
 #include <cstdlib>
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
+#include <fmt/format.h>
+
 #include <booleguru/lua/lua-context.hpp>
 
+#include <booleguru/expression/literals.hpp>
 #include <booleguru/expression/op_manager.hpp>
 
 #ifdef EMSCRIPTEN
@@ -81,9 +83,6 @@ lua_context::lua_context(std::shared_ptr<expression::op_manager> ops)
 }
 
 #undef SEP
-
-lua_context::lua_context()
-  : lua_context(std::make_shared<expression::op_manager>()) {}
 
 lua_context::~lua_context() {}
 
@@ -181,8 +180,26 @@ lua_context::eval(std::string_view code) {
 
 lua_context::eval_result
 lua_context::eval(std::string_view code, const expression::op_ref& last_op) {
-  (*state_)["last_op"] = last_op;
+  (*state_)["**"] = last_op;
   return eval(code);
+}
+
+expression::op_ref
+lua_context::eval_fennel_to_op_or_throw(std::string_view code,
+                                        expression::op_ref last_op) {
+  auto res = eval_fennel(code, last_op);
+  if(std::string* s = std::get_if<std::string>(&res)) {
+    throw fennel_error(*s);
+  }
+  if(expression::op_ref* op = std::get_if<expression::op_ref>(&res)) {
+    return *op;
+  }
+  return expression::op_ref();
+}
+
+expression::op_ref
+lua_context::eval_fennel_to_op_or_throw(std::string_view code) {
+  return eval_fennel_to_op_or_throw(code, expression::op_ref());
 }
 
 }

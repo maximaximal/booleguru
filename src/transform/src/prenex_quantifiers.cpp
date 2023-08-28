@@ -52,7 +52,13 @@ prenex_quantifier::operator()(op_ref o) {
   uint32_t new_root = o.get_mgr().traverse_postorder_with_stack(
     o.get_id(), [this](expression::op_manager* ops, uint32_t o) -> uint32_t {
       return walk((*ops)[o]).get_id();
-    });
+  });
+
+  if(new_root == o.get_id()) {
+    // No quantifiers had to be removed, the op is already devoid of
+    // quantifiers! Can directly return the same op ref.
+    return o;
+  }
 
   uint32_t qt_root = o.get_mgr().getobj(new_root).user_int32;
 

@@ -17,6 +17,8 @@ target_include_directories(booleguru-transform PUBLIC ${CMAKE_CURRENT_SOURCE_DIR
 
 target_link_libraries(booleguru-transform PUBLIC booleguru-expression booleguru-util)
 
+target_link_libraries(booleguru-transform PRIVATE fmt)
+
 if(TARGET Catch2::Catch2)
   add_subdirectory(test)
 endif()

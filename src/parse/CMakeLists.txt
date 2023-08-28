@@ -33,9 +33,13 @@ add_library(booleguru-parse-antlr OBJECT
   ${ANTLR_cli_parser_CXX_OUTPUTS}
 )
 
+target_link_libraries(booleguru-parse-antlr PRIVATE fmt)
 target_link_libraries(booleguru-parse-antlr PUBLIC antlr4_static)
 target_link_libraries(booleguru-parse-antlr PUBLIC booleguru-expression booleguru-lua)
-target_include_directories(booleguru-parse-antlr PUBLIC ${ANTLR4_INCLUDE_DIR})
+target_include_directories(booleguru-parse-antlr PUBLIC
+  ${ANTLR4_INCLUDE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
 
 set(SRCS
   src/base.cpp
@@ -44,6 +48,7 @@ set(SRCS
   src/aiger.cpp
   src/smtlib2.cpp
   src/luascript.cpp
+  src/cli.cpp
 )
 
 if(TARGET booleguru-py-embed)
@@ -63,6 +68,8 @@ target_include_directories(booleguru-parse PRIVATE SYSTEM ${ANTLR_smtlib2_lexer_
 target_include_directories(booleguru-parse PRIVATE SYSTEM ${ANTLR_smtlib2_parser_OUTPUT_DIR})
 target_include_directories(booleguru-parse PRIVATE SYSTEM ${ANTLR_qcir_lexer_OUTPUT_DIR})
 target_include_directories(booleguru-parse PRIVATE SYSTEM ${ANTLR_qcir_parser_OUTPUT_DIR})
+target_include_directories(booleguru-parse PRIVATE SYSTEM ${ANTLR_cli_lexer_OUTPUT_DIR})
+target_include_directories(booleguru-parse PRIVATE SYSTEM ${ANTLR_cli_parser_OUTPUT_DIR})
 
 target_include_directories(booleguru-parse PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 

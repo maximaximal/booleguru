@@ -1,11 +1,11 @@
 #pragma once
 
+#include <booleguru/parse/type.hpp>
+
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "argument.hpp"
 
 namespace booleguru::expression {
 class op_ref;
@@ -14,6 +14,10 @@ class op_manager;
 
 namespace booleguru::parse {
 class base;
+}
+
+namespace booleguru::lua {
+class lua_context;
 }
 
 namespace booleguru::cli {
@@ -29,17 +33,13 @@ class input_file {
   std::string path_;
   std::string name_;
 
-  // Default arguments for input files.
-  argument::param_variant args_[argument::keywords::count_] = {
-    argument::boole, /* type */
-    false,           /* eval */
-    ""               /* variable namespace */
-  };
-
   struct internal;
   std::unique_ptr<internal> internal_;
   std::unique_ptr<parse::base> parser_;
   std::shared_ptr<expression::op_manager> ops_;
+  std::shared_ptr<lua::lua_context> lua_;
+  parse::type type_ = parse::type::boole;
+  bool eval_ = false;
 
   std::istream& produce_istream();
   std::istream& produce_istream_from_popen(std::string command,
@@ -47,14 +47,13 @@ class input_file {
   std::string find_in_path(std::string command);
 
   std::unique_ptr<parse::base> produce_parser(std::istream& is);
-  bool check_filename_extension_ = true;
 
   bool file_matches_signature(std::string path, int* sig);
 
   public:
   input_file(std::string_view path,
-             const std::vector<argument>& args,
-             std::shared_ptr<expression::op_manager> ops);
+             std::shared_ptr<expression::op_manager> ops,
+             std::shared_ptr<lua::lua_context> lua);
   ~input_file();
 
   expression::op_ref process();

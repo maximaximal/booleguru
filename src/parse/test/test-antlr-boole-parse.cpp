@@ -14,7 +14,7 @@ using namespace antlr4;
 
 TEST_CASE("Use the ANTLR4 boole parser directly") {
   std::shared_ptr<op_manager> ops = std::make_shared<op_manager>();
-  std::shared_ptr<lua_context> lua_ctx = std::make_shared<lua_context>();
+  std::shared_ptr<lua_context> lua_ctx = std::make_shared<lua_context>(ops);
 
   std::string_view input_str = GENERATE("a & b",
                                         "a & !b",

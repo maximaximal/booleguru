@@ -64,6 +64,7 @@ endif()
 target_link_libraries(booleguru-lua PUBLIC
   booleguru-expression booleguru-transform booleguru-util booleguru-solve)
 target_link_libraries(booleguru-lua PUBLIC lua lua-header sol2 ${CMAKE_DL_LIBS})
+target_link_libraries(booleguru-lua PRIVATE fmt)
 
 if(TARGET Catch2::Catch2)
   add_subdirectory(test)

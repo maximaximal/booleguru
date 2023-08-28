@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <variant>
@@ -16,6 +17,10 @@ class state;
 }
 
 namespace booleguru::lua {
+struct fennel_error : std::invalid_argument {
+  using std::invalid_argument::invalid_argument;
+};
+
 class lua_context {
   std::shared_ptr<expression::op_manager> ops_;
   std::unique_ptr<sol::state> state_;
@@ -32,7 +37,6 @@ class lua_context {
 
   public:
   lua_context(std::shared_ptr<expression::op_manager> ops);
-  lua_context();
   ~lua_context();
 
   using eval_result =
@@ -41,6 +45,10 @@ class lua_context {
   eval_result eval_fennel(std::string_view code);
   eval_result eval_fennel(std::string_view code,
                           const expression::op_ref& last_op);
+
+  expression::op_ref eval_fennel_to_op_or_throw(std::string_view code,
+                                                expression::op_ref last_op);
+  expression::op_ref eval_fennel_to_op_or_throw(std::string_view code);
 
   eval_result eval(std::string_view code);
   eval_result eval(std::string_view code, const expression::op_ref& last_op);

@@ -29,7 +29,7 @@ class output_to_op {
   public:
   using initarg = expression::op_manager&;
   using TransformResult = expression::op_ref;
-  explicit output_to_op(initarg mgr)
+  explicit output_to_op(initarg &mgr)
     : mgr(mgr) {}
 
   void problem(int32_t variables, int32_t clauses) {

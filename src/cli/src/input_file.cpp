@@ -4,11 +4,10 @@
 #include <cstring>
 #include <filesystem>
 #include <fstream>
-#include <iostream>
 #include <sstream>
 #include <string>
+#include <iostream>
 
-#include <booleguru/util/stdiobuf.hpp>
 #include <booleguru/cli/input_file.hpp>
 #include <booleguru/expression/op_manager.hpp>
 #include <booleguru/expression/var_manager.hpp>
@@ -16,6 +15,7 @@
 #include <booleguru/parse/boole.hpp>
 #include <booleguru/parse/luascript.hpp>
 #include <booleguru/parse/qdimacs.hpp>
+#include <booleguru/util/stdiobuf.hpp>
 #ifdef BOOLEGURU_PARSE_PY
 #include <booleguru/parse/pythonscript.hpp>
 #endif
@@ -29,7 +29,7 @@ static int bz2sig[] = { 0x42, 0x5A, 0x68, EOF };
 static int gzsig[] = { 0x1F, 0x8B, EOF };
 static int sig7z[] = { 0x37, 0x7A, 0xBC, 0xAF, 0x27, 0x1C, EOF };
 static int lzmasig[] = { 0x5D, 0x00, 0x00, 0x80, 0x00, EOF };
-static int zstdsig[] = { 0xFD, 0x2F, 0xB5, 0x28, EOF };
+static int zstdsig[] = { 0x28, 0xb5, 0x2f, 0xfd, EOF };
 
 struct input_file::internal {
   struct popen_variant {
@@ -69,17 +69,11 @@ struct input_file::internal {
 };
 
 input_file::input_file(std::string_view path,
-                       const std::vector<argument>& args,
-                       std::shared_ptr<expression::op_manager> ops)
+                       std::shared_ptr<expression::op_manager> ops,
+                       std::shared_ptr<lua::lua_context> lua)
   : path_(path)
-  , ops_(ops) {
-  for(const auto arg : args) {
-    args_[arg.keyword] = arg.param;
-
-    if(arg.keyword == argument::type)
-      check_filename_extension_ = false;
-  }
-}
+  , ops_(ops)
+  , lua_(lua) {}
 
 input_file::~input_file() {}
 
@@ -102,15 +96,7 @@ input_file::process() {
   // expression.
 
   parser_ = produce_parser(produce_istream());
-  std::string_view variable_namespace =
-    std::get<std::string_view>(args_[argument::variable_namespace]);
-  if(variable_namespace.length() > 0) {
-    ops_->vars().push_namespace(std::string(variable_namespace));
-  }
   auto res = (*parser_)();
-  if(variable_namespace.length() > 0) {
-    ops_->vars().pop_namespace();
-  }
   if(!res) {
     std::stringstream s;
     s << res;
@@ -124,7 +110,6 @@ std::istream&
 input_file::produce_istream() {
   if(path_ == "-" || path_ == "/dev/stdin") {
     name_ = "-";
-    check_filename_extension_ = false;
     return std::cin;
   }
 
@@ -173,44 +158,42 @@ input_file::produce_istream_from_popen(std::string command, std::string args) {
 
 std::unique_ptr<parse::base>
 input_file::produce_parser(std::istream& is) {
-  if(check_filename_extension_) {
-    if(name_.ends_with(".smtlib2") || name_.ends_with(".smt") ||
-       name_.ends_with(".smtlib")) {
-      args_[argument::type] = argument::smtlib2;
-    } else if(name_.ends_with(".boole") || name_.ends_with(".limboole")) {
-      args_[argument::type] = argument::boole;
-    } else if(name_.ends_with(".dimacs") || name_.ends_with(".qdimacs")) {
-      args_[argument::type] = argument::qdimacs;
-    } else if(name_.ends_with(".qcir")) {
-      args_[argument::type] = argument::qcir;
-    } else if(name_.ends_with(".py")) {
-      args_[argument::type] = argument::py;
-    } else if(name_.ends_with(".lua")) {
-      args_[argument::type] = argument::lua;
-    }
+  if(name_.ends_with(".smtlib2") || name_.ends_with(".smt") ||
+     name_.ends_with(".smtlib")) {
+    type_ = parse::type::smtlib;
+  } else if(name_.ends_with(".boole") || name_.ends_with(".limboole")) {
+    type_ = parse::type::boole;
+  } else if(name_.ends_with(".dimacs") || name_.ends_with(".qdimacs")) {
+    type_ = parse::type::qdimacs;
+  } else if(name_.ends_with(".qcir")) {
+    type_ = parse::type::qcir;
+  } else if(name_.ends_with(".py")) {
+    type_ = parse::type::py;
+  } else if(name_.ends_with(".lua")) {
+    type_ = parse::type::lua;
   }
 
-  switch(std::get<argument::input_types>(args_[argument::type])) {
-    case argument::smtlib2: {
+  switch(type_) {
+    case parse::type::smtlib: {
       throw std::runtime_error("SMTLIB Not supported yet!");
     }
-    case argument::qcir:
+    case parse::type::qcir:
       throw std::runtime_error("QCIR Not supported yet!");
-    case argument::boole: {
+    case parse::type::boole: {
       is >> std::noskipws;
-      auto boole = std::make_unique<parse::boole>(is, ops_);
-      boole->eval(std::get<bool>(args_[argument::eval]));
+      auto boole = std::make_unique<parse::boole>(is, ops_->vars_ptr(), ops_, lua_);
+      boole->eval(eval_);
       return boole;
     }
-    case argument::lua: {
+    case parse::type::lua: {
       is >> std::noskipws;
-      auto lua = std::make_unique<parse::luascript>(is, ops_);
+      auto lua = std::make_unique<parse::luascript>(is, ops_->vars_ptr(), ops_, lua_);
       return lua;
     }
-    case argument::py: {
+    case parse::type::py: {
 #ifdef BOOLEGURU_PARSE_PY
       is >> std::noskipws;
-      auto py = std::make_unique<parse::pythonscript>(is, ops_);
+      auto py = std::make_unique<parse::pythonscript>(is, ops_->vars_ptr(), ops_, lua_);
       return py;
 #else
       throw std::runtime_error("No support for Python parsing built in! "
@@ -218,9 +201,9 @@ input_file::produce_parser(std::istream& is) {
 #endif
     }
 
-    case argument::qdimacs:
+    case parse::type::qdimacs:
       is >> std::noskipws;
-      return std::make_unique<parse::qdimacs>(is, ops_);
+      return std::make_unique<parse::qdimacs>(is, ops_->vars_ptr(), ops_, lua_);
     default:
       throw std::runtime_error("Hit some unsupported input file!");
   }

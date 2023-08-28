@@ -11,7 +11,7 @@ using namespace booleguru::lua;
 using namespace booleguru::expression;
 
 TEST_CASE("Evaluate simple fennel code") {
-  lua_context ctx;
+  lua_context ctx(std::make_shared<op_manager>());
   auto ret = ctx.eval_fennel("(+ 1 1)");
   REQUIRE(ret.index() == 1);
   REQUIRE(std::holds_alternative<long int>(ret));
@@ -19,7 +19,7 @@ TEST_CASE("Evaluate simple fennel code") {
 }
 
 TEST_CASE("Build a simple formula through fennel") {
-  lua_context ctx;
+  lua_context ctx(std::make_shared<op_manager>());
   auto ret = ctx.eval_fennel("(b-and (b-var \"a\") (b-var \"b\"))");
   REQUIRE(std::holds_alternative<op_ref>(ret));
   op_ref expr = std::get<op_ref>(ret);

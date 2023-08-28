@@ -7,6 +7,7 @@
 
 #include <booleguru/parse/boole.hpp>
 #include <booleguru/parse/result.hpp>
+#include <booleguru/parse/type.hpp>
 #include <booleguru/serialize/qcir.hpp>
 #include <booleguru/serialize/smtlib2.hpp>
 
@@ -73,7 +74,7 @@ print_version() {
 #undef str
 
 int
-main(int argc, char* argv[]) {
+main(int argc, const char* argv[]) {
   if(argc > 1) {
     std::string_view arg1 = argv[1];
     if(arg1 == "--help") {
@@ -90,18 +91,17 @@ main(int argc, char* argv[]) {
 
   auto result = cli.process();
 
-  argument::input_types t =
-    std::get<argument::input_types>(cli.output_arg(argument::type));
+  parse::type t = cli.output_type();
   switch(t) {
-    case cli::argument::qcir: {
+    case parse::type::qcir: {
       serialize::qcir qcir_out(std::cout);
       qcir_out(result);
       return EXIT_SUCCESS;
     }
-    case cli::argument::boole:
+    case parse::type::boole:
       std::cout << result << std::endl;
       return EXIT_SUCCESS;
-    case cli::argument::qdimacs: {
+    case parse::type::qdimacs: {
       if(result->is_cnf) {
         transform::output_to_qdimacs o(std::cout);
         o.serialize_cnf_op(result);
@@ -111,12 +111,12 @@ main(int argc, char* argv[]) {
       }
       return EXIT_SUCCESS;
     }
-    case cli::argument::smtlib2: {
+    case parse::type::smtlib: {
       serialize::smtlib2 s(std::cout);
       s(result);
       return EXIT_SUCCESS;
     }
-    case cli::argument::none:
+    case parse::type::none:
       return EXIT_SUCCESS;
     default:
       std::cerr << "Unsupported output type." << std::endl;
