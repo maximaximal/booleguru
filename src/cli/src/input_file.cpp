@@ -1,12 +1,13 @@
+#include "booleguru/parse/aiger.hpp"
 #include <cerrno>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <sstream>
 #include <string>
-#include <iostream>
 
 #include <booleguru/cli/input_file.hpp>
 #include <booleguru/expression/op_manager.hpp>
@@ -167,6 +168,8 @@ input_file::produce_parser(std::istream& is) {
     type_ = parse::type::qdimacs;
   } else if(name_.ends_with(".qcir")) {
     type_ = parse::type::qcir;
+  } else if(name_.ends_with(".aag") || name_.ends_with(".aig")) {
+    type_ = parse::type::aiger;
   } else if(name_.ends_with(".py")) {
     type_ = parse::type::py;
   } else if(name_.ends_with(".lua")) {
@@ -177,23 +180,31 @@ input_file::produce_parser(std::istream& is) {
     case parse::type::smtlib: {
       throw std::runtime_error("SMTLIB Not supported yet!");
     }
+    case parse::type::aiger: {
+      auto aiger =
+        std::make_unique<parse::aiger>(is, ops_->vars_ptr(), ops_, lua_);
+      return aiger;
+    }
     case parse::type::qcir:
       throw std::runtime_error("QCIR Not supported yet!");
     case parse::type::boole: {
       is >> std::noskipws;
-      auto boole = std::make_unique<parse::boole>(is, ops_->vars_ptr(), ops_, lua_);
+      auto boole =
+        std::make_unique<parse::boole>(is, ops_->vars_ptr(), ops_, lua_);
       boole->eval(eval_);
       return boole;
     }
     case parse::type::lua: {
       is >> std::noskipws;
-      auto lua = std::make_unique<parse::luascript>(is, ops_->vars_ptr(), ops_, lua_);
+      auto lua =
+        std::make_unique<parse::luascript>(is, ops_->vars_ptr(), ops_, lua_);
       return lua;
     }
     case parse::type::py: {
 #ifdef BOOLEGURU_PARSE_PY
       is >> std::noskipws;
-      auto py = std::make_unique<parse::pythonscript>(is, ops_->vars_ptr(), ops_, lua_);
+      auto py =
+        std::make_unique<parse::pythonscript>(is, ops_->vars_ptr(), ops_, lua_);
       return py;
 #else
       throw std::runtime_error("No support for Python parsing built in! "

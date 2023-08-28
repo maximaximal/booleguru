@@ -142,6 +142,7 @@ aiger::build() {
 
     auto visit = [this, &ops, root](unsigned node) {
       using namespace expression;
+      fmt::println("Node: {}", node);
       if(node < number_of_inputs_ + 1) {
         // Input node! This is just a variable.
         var_ref::ref var_id = variables[node - 1];
@@ -157,7 +158,15 @@ aiger::build() {
         if(negated_outputs[node - 1]) {
           ops.emplace(ops_->get_id(op(op_type::Not, ops.top(), 0)));
         } else {
-          // Nothing needed - the top op stays as it is.
+          // Nothing needed - the top op stays as it is, except if there is
+          // none. Then insert this variable.
+          if(ops.empty()) {
+            var_ref::ref var_id = variables[node - 1];
+            if(var_id == 0)
+              var_id = vars_->get_id(variable{ std::to_string(node) });
+            op_ref::ref v = ops_->get_id(op(op_type::Var, var_id, 0));
+            ops.emplace(v);
+          }
         }
       } else {
         // And gate!
@@ -178,13 +187,13 @@ aiger::build() {
 
     // The right shift is required because of the encoding of negations.
     auto llink = [this](unsigned n) {
-      if(n >= gates_offset())
+      if(n >= gates_offset() && (n - gates_offset()) < gates.size())
         return gates[n - gates_offset()].l >> 1u;
       else
         return 0u;
     };
     auto rlink = [this](unsigned n) {
-      if(n >= gates_offset())
+      if(n >= gates_offset() && (n - gates_offset()) < gates.size())
         return gates[n - gates_offset()].r >> 1u;
       else
         return 0u;
@@ -193,7 +202,7 @@ aiger::build() {
                                                                          rlink);
     traverse(root, visit);
 
-    assert(ops.size());
+    assert(ops.size() > 0);
 
     return generate_result((*ops_)[ops.top()]);
   } else {
