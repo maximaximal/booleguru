@@ -20,6 +20,8 @@ class aiger : public base {
   unsigned number_of_latches_ = 0;
   unsigned number_of_outputs_ = 0;
   unsigned number_of_and_gates_ = 0;
+  unsigned output_ = 0;
+  bool negate_output_ = false;
 
   unsigned latches_offset() const { return number_of_inputs_; }
   unsigned outputs_offset() const {
