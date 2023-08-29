@@ -39,7 +39,7 @@ static_assert(convert_idx(6) == 5);
 static_assert(convert_idx(7) == 5);
 
 result
-aiger::parse(bool binary) {
+aiger::parse_ascii() {
   gates.resize(number_of_and_gates_);
   negated_outputs.resize(number_of_outputs_);
   negated_outputs.assign(number_of_outputs_, false);
@@ -148,7 +148,7 @@ aiger::parse(bool binary) {
   return build();
 }
 
-void
+result
 aiger::parse_binary() {
   return error("binary not yet implemented");
 }

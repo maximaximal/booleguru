@@ -89,37 +89,41 @@ main(int argc, const char* argv[]) {
   // Preliminary stuff, just for testing!!
   cli::cli_processor cli(argc, argv);
 
-  auto result = cli.process();
+  try {
+    auto result = cli.process();
 
-  parse::type t = cli.output_type();
-  switch(t) {
-    case parse::type::qcir: {
-      serialize::qcir qcir_out(std::cout);
-      qcir_out(result);
-      return EXIT_SUCCESS;
-    }
-    case parse::type::boole:
-      std::cout << result << std::endl;
-      return EXIT_SUCCESS;
-    case parse::type::qdimacs: {
-      if(result->is_cnf) {
-        transform::output_to_qdimacs o(std::cout);
-        o.serialize_cnf_op(result);
-      } else {
-        transform::tseitin<transform::output_to_qdimacs> qdimacs(std::cout);
-        qdimacs(result);
+    parse::type t = cli.output_type();
+    switch(t) {
+      case parse::type::qcir: {
+        serialize::qcir qcir_out(std::cout);
+        qcir_out(result);
+        return EXIT_SUCCESS;
       }
-      return EXIT_SUCCESS;
+      case parse::type::boole:
+        std::cout << result << std::endl;
+        return EXIT_SUCCESS;
+      case parse::type::qdimacs: {
+        if(result->is_cnf) {
+          transform::output_to_qdimacs o(std::cout);
+          o.serialize_cnf_op(result);
+        } else {
+          transform::tseitin<transform::output_to_qdimacs> qdimacs(std::cout);
+          qdimacs(result);
+        }
+        return EXIT_SUCCESS;
+      }
+      case parse::type::smtlib: {
+        serialize::smtlib2 s(std::cout);
+        s(result);
+        return EXIT_SUCCESS;
+      }
+      case parse::type::none:
+        return EXIT_SUCCESS;
+      default:
+        std::cerr << "Unsupported output type." << std::endl;
     }
-    case parse::type::smtlib: {
-      serialize::smtlib2 s(std::cout);
-      s(result);
-      return EXIT_SUCCESS;
-    }
-    case parse::type::none:
-      return EXIT_SUCCESS;
-    default:
-      std::cerr << "Unsupported output type." << std::endl;
+  } catch(std::exception& e) {
+    std::cerr << "Exception: " << e.what() << std::endl;
   }
 
   return EXIT_SUCCESS;
