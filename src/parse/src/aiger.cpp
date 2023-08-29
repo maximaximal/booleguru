@@ -64,7 +64,7 @@ aiger::parse(bool binary) {
     // says if the variable is notted or not. In order to map this to fixed TRUE
     // and FALSE constants, the index 0 (which is invalid by itself) is shifted
     // to 1 and remembered to be the constant 1 index in internal variables.
-    int l1 = 0;
+    unsigned int l1 = 0;
 
     if(line_buf[0] == 'i' || line_buf[0] == 'l' || line_buf[0] == 'o') {
       // Must be a symbol!
