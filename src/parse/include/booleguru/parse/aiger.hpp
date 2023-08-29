@@ -38,8 +38,8 @@ class aiger : public base {
   // Negations for output variables. This should only be of size 1, usually.
   std::vector<bool> negated_outputs;
 
-  result parse_aag(std::istringstream& header);
-  result parse_aig();
+  result parse_ascii();
+  result parse_binary();
 
   /** Save a symbol in the symbol table, remember the variable it resolves
    * to. */

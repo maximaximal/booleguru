@@ -39,27 +39,7 @@ static_assert(convert_idx(6) == 5);
 static_assert(convert_idx(7) == 5);
 
 result
-aiger::parse_aag(std::istringstream& header) {
-
-  // The header contains all required meta-information.
-  if((header >> maximum_variable_index_).fail())
-    return error("could not extract maximum variable index", 2);
-  if((header >> number_of_inputs_).fail())
-    return error("could not extract number of inputs", 2);
-  if((header >> number_of_latches_).fail())
-    return error("could not extract number of latches", 2);
-  if((header >> number_of_outputs_).fail())
-    return error("could not extract number of outputs", 2);
-  if((header >> number_of_and_gates_).fail())
-    return error("could not extract number of and gates", 2);
-
-  if(number_of_latches_ > 0) {
-    return error("latches not supported", 4);
-  }
-  if(number_of_outputs_ != 1) {
-    return error("number of outputs may only be 1", 5);
-  }
-
+aiger::parse(bool binary) {
   gates.resize(number_of_and_gates_);
   negated_outputs.resize(number_of_outputs_);
   negated_outputs.assign(number_of_outputs_, false);
@@ -167,9 +147,10 @@ aiger::parse_aag(std::istringstream& header) {
 
   return build();
 }
-result
-aiger::parse_aig() {
-  return error("AIGER files in 'aig' not supported yet.");
+
+void
+aiger::parse_binary() {
+  return error("binary not yet implemented");
 }
 
 void
@@ -287,14 +268,34 @@ aiger::operator()() {
   if(!std::getline(in_, header_line))
     return error("cannot read first line");
   std::istringstream header(header_line);
+
   std::string format;
   if((header >> format).fail())
     return error("cannot read format from first line");
 
+  // The header contains all required meta-information.
+  if((header >> maximum_variable_index_).fail())
+    return error("could not extract maximum variable index", 2);
+  if((header >> number_of_inputs_).fail())
+    return error("could not extract number of inputs", 2);
+  if((header >> number_of_latches_).fail())
+    return error("could not extract number of latches", 2);
+  if((header >> number_of_outputs_).fail())
+    return error("could not extract number of outputs", 2);
+  if((header >> number_of_and_gates_).fail())
+    return error("could not extract number of and gates", 2);
+
+  if(number_of_latches_ > 0) {
+    return error("latches not supported", 4);
+  }
+  if(number_of_outputs_ != 1) {
+    return error("number of outputs may only be 1", 5);
+  }
+
   if(format == "aig") {
-    return parse_aig();
+    return parse_binary();
   } else if(format == "aag") {
-    return parse_aag(header);
+    return parse_ascii();
   }
   return error("Invalid AIGER format! Needs to be 'aig' or 'aag'");
 }
