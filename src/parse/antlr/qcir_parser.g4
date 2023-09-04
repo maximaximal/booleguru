@@ -62,6 +62,9 @@ qcir returns [uint32_t output_id]
       outs=output_statement EOL+
       ( gate_statement ( EOL+ | ( EOL* EOF ) ) )*
         { $output_id = gate_variables[$outs.name];
+          // Handle negated output
+          if ($outs.negated)
+            $output_id = ops->get_id(op(op_type::Not, $output_id, 0));
           // Reverse-iterate the quantifier statements, to preserve the binary
           // tree prefix order. (We parse quantifiers from top-down, but we add
           // them from bottom-up!)
@@ -71,9 +74,6 @@ qcir returns [uint32_t output_id]
               $output_id = ops->get_id(op(ot, var->id, $output_id));
             }
           }
-          // Handle negated output
-          if ($outs.negated)
-            $output_id = ops->get_id(op(op_type::Not, $output_id, 0));
           // Now, we can make sure that no variables were left undefined, we
           // need to do this at the end because a quantifier gate might come
           // after a variable usage...
