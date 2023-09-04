@@ -48,6 +48,7 @@ print_help() {
   cout << "SUPPORTED INPUT FORMATS:\n";
   cout << "  (Q)DIMACS\n";
   cout << "  Infix Logic Format (Limboole-esque)\n";
+  cout << "  QCIR\n";
   cout << "\n";
   cout << "SUPPORTED OUTPUT FORMATS (as [output-args]):\n";
   cout << "  --dimacs, --qdimacs\n";
