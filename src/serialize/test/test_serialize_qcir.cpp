@@ -140,13 +140,13 @@ TEST_CASE("Serialize simple prenex example QCIR formula") {
   const char* expected = R"(#QCIR-G14 6
 # 1 v1
 # 2 v2
-# 4 v3
+# 3 v3
 forall(1)
-exists(2, 4)
+exists(2, 3)
 output(6)
-3 = and(1, 2)
-5 = and(-1, -2, 4)
-6 = or(3, 5)
+4 = and(1, 2)
+5 = and(-1, -2, 3)
+6 = or(4, 5)
 )";
 
   REQUIRE(o.str() == expected);
@@ -203,13 +203,13 @@ TEST_CASE("Non prenex non CNF to QCIR") {
   CAPTURE(o.str());
 
   const char* expected = R"(#QCIR-G14 6
-# 1 x
-# 2 z
-forall(2)
+# 1 z
+# 2 x
+forall(1)
 output(6)
-3 = xor(1, 2)
-4 = exists(1; 3)
-5 = xor(2, 4)
+3 = xor(2, 1)
+4 = exists(2; 3)
+5 = xor(1, 4)
 6 = and(4, 5)
 )";
 
