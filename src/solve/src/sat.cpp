@@ -118,8 +118,8 @@ xcc_sat_solver_init(xcc_sat_solver* solver,
     solver->outfd_handle = fdopen(solver->outfd[0], "r");
     assert(solver->outfd_handle);
 
-    solver->assignments =
-      (char*)realloc(solver->assignments, sizeof(char) * (variables + 1));
+    solver->assignments
+      = (char*)realloc(solver->assignments, sizeof(char) * (variables + 1));
   } else {
     // Child
     dup2(solver->infd[0], STDIN_FILENO);

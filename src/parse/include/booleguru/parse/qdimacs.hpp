@@ -11,7 +11,8 @@ class qdimacs : public base {
   enum phase {
     header,
     prefix_and_matrix,
-  } phase_ = header;
+  } phase_
+    = header;
 
   int varcount_ = -1;
   int clausecount_ = -1;

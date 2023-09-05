@@ -20,8 +20,8 @@ class cli : public base {
 
   virtual result operator()() override;
 
-  using parse_file_function =
-    std::function<expression::op_ref(std::string_view)>;
+  using parse_file_function
+    = std::function<expression::op_ref(std::string_view)>;
   void parse_file_using(parse_file_function fun) {
     parse_file_function_ = fun;
   };

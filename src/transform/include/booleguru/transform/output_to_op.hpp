@@ -29,7 +29,7 @@ class output_to_op {
   public:
   using initarg = expression::op_manager&;
   using TransformResult = expression::op_ref;
-  explicit output_to_op(initarg &mgr)
+  explicit output_to_op(initarg& mgr)
     : mgr(mgr) {}
 
   void problem(int32_t variables, int32_t clauses) {
@@ -70,8 +70,7 @@ class output_to_op {
   }
 
   inline ref not_op(ref id) {
-    return mgr.get_id(
-      expression::op(expression::op_type::Not, id, 0));
+    return mgr.get_id(expression::op(expression::op_type::Not, id, 0));
   }
 
   void insert_mapping_comment(ref id, std::string_view name) {

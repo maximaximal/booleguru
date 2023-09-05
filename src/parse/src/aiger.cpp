@@ -107,11 +107,11 @@ aiger::parse_ascii() {
               fmt::format("variable {} bigger than max variable index {}",
                           l1 >> 1u,
                           maximum_variable_index_));
-        } else if(number_of_latches_ > 0 && line_num >= number_of_inputs_ &&
-                  line_num <= number_of_inputs_ + number_of_latches_) {
+        } else if(number_of_latches_ > 0 && line_num >= number_of_inputs_
+                  && line_num <= number_of_inputs_ + number_of_latches_) {
           return error("latches not supported", 4);
-        } else if(line_num <
-                  number_of_outputs_ + number_of_inputs_ + number_of_latches_) {
+        } else if(line_num < number_of_outputs_ + number_of_inputs_
+                               + number_of_latches_) {
           // Output line. Only save the last one.
           output_ = convert_idx(l1);
           // Negation only has to be added if this is not just a constant.
@@ -190,9 +190,9 @@ aiger::build() {
           var_id = vars_->get_id(variable{ std::to_string(node - 2) });
         op_ref::ref v = ops_->get_id(op(op_type::Var, var_id, 0));
         ops.emplace(v);
-      } else if(node >= number_of_inputs_ + 2 + number_of_latches_ +
-                          number_of_outputs_ &&
-                number_of_and_gates_ > 0) {
+      } else if(node >= number_of_inputs_ + 2 + number_of_latches_
+                          + number_of_outputs_
+                && number_of_and_gates_ > 0) {
         // And gate!
         assert(!ops.empty());
         op_ref::ref r = ops.top();
@@ -210,9 +210,9 @@ aiger::build() {
         ops.emplace(ops_->get_id(op(op_type::And, l, r)));
       }
 
-      if(node >= number_of_inputs_ + 2 && node < number_of_inputs_ +
-                                                   number_of_latches_ +
-                                                   number_of_outputs_ + 2) {
+      if(node >= number_of_inputs_ + 2
+         && node < number_of_inputs_ + number_of_latches_ + number_of_outputs_
+                     + 2) {
         // Output node! This may be directly a variable or a negated variable,
         // depending on what's saved in negated_outputs.
         if(ops.empty()) {

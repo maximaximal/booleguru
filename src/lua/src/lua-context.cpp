@@ -18,8 +18,8 @@ extern more_data_cb js_more_data_cb;
 static void
 prepare_state(sol::state& s) {
   const std::string package_path = s["package"]["path"];
-  s["package"]["path"] = package_path + (!package_path.empty() ? ";" : "") +
-                         std::string(BOOLEGURU_LUA_AUTOSTART_DIR) + "/?.lua";
+  s["package"]["path"] = package_path + (!package_path.empty() ? ";" : "")
+                         + std::string(BOOLEGURU_LUA_AUTOSTART_DIR) + "/?.lua";
 }
 #else
 #include <scripts.h>

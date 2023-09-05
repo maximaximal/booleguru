@@ -13,10 +13,10 @@ class handle {
 
   public:
   handle(std::shared_ptr<op_manager> ops)
-  : ops_(ops) {}
+    : ops_(ops) {}
 
-  static handle& global(
-    std::shared_ptr<op_manager> ops = std::make_shared<op_manager>()) {
+  static handle& global(std::shared_ptr<op_manager> ops
+                        = std::make_shared<op_manager>()) {
     if(!instance_)
       instance_ = std::make_unique<handle>(ops);
     return *instance_;
@@ -91,8 +91,8 @@ exists(var_ref variable, op_ref sub_tree) {
   if(!std::is_constant_evaluated()) {
     assert(&variable.get_mgr() == &sub_tree.get_mgr().vars());
   }
-  op_ref var_op =
-    sub_tree.get_mgr().get(op(op_type::Var, variable.get_id(), 0));
+  op_ref var_op
+    = sub_tree.get_mgr().get(op(op_type::Var, variable.get_id(), 0));
   return exists(var_op, sub_tree);
 }
 
@@ -112,8 +112,8 @@ forall(var_ref variable, op_ref sub_tree) {
   if(!std::is_constant_evaluated()) {
     assert(&variable.get_mgr() == &sub_tree.get_mgr().vars());
   }
-  op_ref var_op =
-    sub_tree.get_mgr().get(op(op_type::Var, variable.get_id(), 0));
+  op_ref var_op
+    = sub_tree.get_mgr().get(op(op_type::Var, variable.get_id(), 0));
   return forall(var_op, sub_tree);
 }
 

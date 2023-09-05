@@ -87,8 +87,8 @@ tseitin<O>::operator()(expression::op_ref o) {
   // int32_t means that references actually map to literals in a solver call /
   // QDIMACS output. This also requires the problem to be initiated.
   if constexpr(std::is_same_v<ref, int32_t>) {
-    auto [num_clauses, num_variables] =
-      compute_number_of_clauses_and_variables_in_marked(o, o_);
+    auto [num_clauses, num_variables]
+      = compute_number_of_clauses_and_variables_in_marked(o, o_);
     o_.problem(num_variables, num_clauses);
   }
 
@@ -148,7 +148,7 @@ tseitin<O>::operator()(expression::op_ref o) {
   o_.end_prefix();
 
   for(size_t i = 0; i < mgr.size(); ++i) {
-    auto &e = mgr.objects()[i];
+    auto& e = mgr.objects()[i];
     const expression::op op = e.first;
     ref t = o_.op_ref_to_ref(op, e.second);
 

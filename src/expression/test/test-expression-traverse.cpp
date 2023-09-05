@@ -114,6 +114,6 @@ TEST_CASE("Stackful Postorder expression tree traversal with modification 3") {
       return i;
     });
 
-  std::string s{ops[root].to_string()};
+  std::string s{ ops[root].to_string() };
   REQUIRE(s.find("<-") == std::string::npos);
 }

@@ -12,10 +12,10 @@ keyword_from_string_view(std::string_view str, std::string_view& param) {
     return argument::eval;
   else if(str == "type")
     return argument::type;
-  else if(str == "qcir" || str == "smtlib2" || str == "smtlib" ||
-          str == "smt" || str == "dimacs" || str == "qdimacs" ||
-          str == "boole" || str == "limboole" || str == "lua" || str == "py" ||
-          str == "python" || str == "null") {
+  else if(str == "qcir" || str == "smtlib2" || str == "smtlib" || str == "smt"
+          || str == "dimacs" || str == "qdimacs" || str == "boole"
+          || str == "limboole" || str == "lua" || str == "py" || str == "python"
+          || str == "null") {
     param = str;
     return argument::type;
   } else if(str == "ns" || str == "namespace") {
@@ -32,8 +32,8 @@ variant_from_param(argument::keywords k, std::string_view param) {
   argument::param_variant v;
   switch(k) {
     case argument::eval:
-      if(param == "true" || param == "1" || param == "yes" || param == "y" ||
-         param == "t" || param == "on" || param == "")
+      if(param == "true" || param == "1" || param == "yes" || param == "y"
+         || param == "t" || param == "on" || param == "")
         return true;
       return false;
     case argument::type:
@@ -67,8 +67,8 @@ argument::argument(std::string_view arg, std::string_view param)
 }
 argument::argument(std::string_view arg)
   : argument(
-      arg.find('=') != std::string_view::npos ? arg.substr(0, arg.find('='))
-                                              : arg,
-      arg.find('=') != std::string_view::npos ? arg.substr(arg.find('=') + 1)
-                                              : "") {}
+    arg.find('=') != std::string_view::npos ? arg.substr(0, arg.find('='))
+                                            : arg,
+    arg.find('=') != std::string_view::npos ? arg.substr(arg.find('=') + 1)
+                                            : "") {}
 }

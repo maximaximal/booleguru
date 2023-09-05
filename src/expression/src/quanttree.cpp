@@ -110,16 +110,16 @@ quanttree::add(op_type quant_type, uint32_t var) {
 
 uint32_t
 quanttree::add(uint32_t left, uint32_t right) {
-  if(left == std::numeric_limits<uint32_t>::max() &&
-     right == std::numeric_limits<uint32_t>::max()) {
+  if(left == std::numeric_limits<uint32_t>::max()
+     && right == std::numeric_limits<uint32_t>::max()) {
     return std::numeric_limits<uint32_t>::max();
   }
-  if(left != std::numeric_limits<uint32_t>::max() &&
-     right == std::numeric_limits<uint32_t>::max()) {
+  if(left != std::numeric_limits<uint32_t>::max()
+     && right == std::numeric_limits<uint32_t>::max()) {
     return left;
   }
-  if(left == std::numeric_limits<uint32_t>::max() &&
-     right != std::numeric_limits<uint32_t>::max()) {
+  if(left == std::numeric_limits<uint32_t>::max()
+     && right != std::numeric_limits<uint32_t>::max()) {
     return right;
   }
   size_t s = v.size();
@@ -664,11 +664,11 @@ quanttree::should_inline_EupAdown(direction dir,
   assert(possible_inline.is_path());
 
   if(dir == direction::downwards)
-    return pos.p.type == op_type::Exists &&
-           pos.p.type == possible_inline.p.type;
+    return pos.p.type == op_type::Exists
+           && pos.p.type == possible_inline.p.type;
   if(dir == direction::upwards)
-    return pos.p.type == op_type::Forall &&
-           pos.p.type == possible_inline.p.type;
+    return pos.p.type == op_type::Forall
+           && pos.p.type == possible_inline.p.type;
   return false;
 }
 bool
@@ -679,11 +679,11 @@ quanttree::should_inline_EdownAup(direction dir,
   assert(possible_inline.is_path());
 
   if(dir == direction::downwards)
-    return pos.p.type == op_type::Forall &&
-           pos.p.type == possible_inline.p.type;
+    return pos.p.type == op_type::Forall
+           && pos.p.type == possible_inline.p.type;
   if(dir == direction::upwards)
-    return pos.p.type == op_type::Exists &&
-           pos.p.type == possible_inline.p.type;
+    return pos.p.type == op_type::Exists
+           && pos.p.type == possible_inline.p.type;
   return false;
 }
 

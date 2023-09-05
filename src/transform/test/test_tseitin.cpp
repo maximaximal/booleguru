@@ -3,8 +3,8 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <booleguru/expression/literals.hpp>
-#include <booleguru/transform/output_to_qdimacs.hpp>
 #include <booleguru/transform/output_to_op.hpp>
+#include <booleguru/transform/output_to_qdimacs.hpp>
 #include <booleguru/transform/tseitin.hpp>
 
 using namespace booleguru::expression;

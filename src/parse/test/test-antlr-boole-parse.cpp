@@ -1,8 +1,8 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
 
-#include <booleguru/util/istringviewstream.hpp>
 #include <booleguru/lua/lua-context.hpp>
+#include <booleguru/util/istringviewstream.hpp>
 
 #include <boole_lexer.h>
 #include <boole_parser.h>

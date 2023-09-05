@@ -39,8 +39,8 @@ class lua_context {
   lua_context(std::shared_ptr<expression::op_manager> ops);
   ~lua_context();
 
-  using eval_result =
-    std::variant<std::monostate, long int, std::string, expression::op_ref>;
+  using eval_result
+    = std::variant<std::monostate, long int, std::string, expression::op_ref>;
 
   eval_result eval_fennel(std::string_view code);
   eval_result eval_fennel(std::string_view code,

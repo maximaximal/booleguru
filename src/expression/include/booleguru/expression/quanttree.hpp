@@ -91,10 +91,10 @@ class quanttree {
     std::ostream& stream(std::ostream&, const op_manager* ops) const;
   };
 
-  using should_inline_checker =
-    bool (*)(direction dir,
-             const quanttree::entry& pos,
-             const quanttree::entry& possible_inline);
+  using should_inline_checker
+    = bool (*)(direction dir,
+               const quanttree::entry& pos,
+               const quanttree::entry& possible_inline);
 
   private:
   using qvec_t = std::vector<entry>;

@@ -75,18 +75,18 @@ class manager {
   constexpr inline size_t size() const { return objects_map_.size(); }
 
   constexpr inline R insert(T&& obj) {
-    assert(static_cast<int32_t>(counter_) <
-           std::numeric_limits<int32_t>::max());
+    assert(static_cast<int32_t>(counter_)
+           < std::numeric_limits<int32_t>::max());
     ref idx = static_cast<C*>(this)->insert_id(std::move(obj));
     return (*this)[idx];
   }
   constexpr inline ref insert_id(T&& obj) {
-    assert(static_cast<int32_t>(counter_) <
-           std::numeric_limits<int32_t>::max());
+    assert(static_cast<int32_t>(counter_)
+           < std::numeric_limits<int32_t>::max());
     size_t idx = counter_++;
     if(idx == std::numeric_limits<uint32_t>::max() - 1) {
-      util::die("Reached limit of manager !! Have " + std::to_string(counter_) +
-                " elements in store. Try GC or something else.");
+      util::die("Reached limit of manager !! Have " + std::to_string(counter_)
+                + " elements in store. Try GC or something else.");
     }
     objects_map_.insert(std::make_pair(std::move(obj), idx));
     return idx;

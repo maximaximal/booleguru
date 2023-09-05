@@ -42,8 +42,8 @@ class var_manager : public manager<var_ref, var_manager> {
       return obj;
     else
       return variable{ std::accumulate(
-                         namespace_.begin(), namespace_.end(), std::string{}) +
-                       obj.name };
+                         namespace_.begin(), namespace_.end(), std::string{})
+                       + obj.name };
   }
 
   inline void init() {
@@ -59,7 +59,7 @@ class var_manager : public manager<var_ref, var_manager> {
   friend class manager;
 
   enum {
-    LITERAL_TOP    = 1,
+    LITERAL_TOP = 1,
     LITERAL_BOTTOM = 2,
   };
 

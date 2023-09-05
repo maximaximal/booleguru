@@ -43,6 +43,9 @@ class op_manager : public manager<op_ref, op_manager> {
   inline std::shared_ptr<var_manager> vars_ptr() { return vars_; }
   inline const var_manager& vars() const { return *vars_; }
 
+  op_ref top();
+  op_ref bottom();
+
   using modifier = std::function<void(const op&)>;
   void modify_ops(modifier&& mod);
   void unmark();

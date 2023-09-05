@@ -52,7 +52,7 @@ prenex_quantifier::operator()(op_ref o) {
   uint32_t new_root = o.get_mgr().traverse_postorder_with_stack(
     o.get_id(), [this](expression::op_manager* ops, uint32_t o) -> uint32_t {
       return walk((*ops)[o]).get_id();
-  });
+    });
 
   if(new_root == o.get_id()) {
     // No quantifiers had to be removed, the op is already devoid of
@@ -63,8 +63,8 @@ prenex_quantifier::operator()(op_ref o) {
   uint32_t qt_root = o.get_mgr().getobj(new_root).user_int32;
 
   i_->qt.prenex(qt_root, i_->checker);
-  op_ref prepended =
-    i_->qt.prepend_marked_to_op(qt_root, o.get_mgr()[new_root]);
+  op_ref prepended
+    = i_->qt.prepend_marked_to_op(qt_root, o.get_mgr()[new_root]);
   return prepended;
 }
 
@@ -105,8 +105,8 @@ prenex_quantifier::walk(expression::op_ref o) {
 
 expression::op_ref
 prenex_quantifier::walk_quant(expression::op_ref o) {
-  assert(o->type == expression::op_type::Forall ||
-         o->type == expression::op_type::Exists);
+  assert(o->type == expression::op_type::Forall
+         || o->type == expression::op_type::Exists);
   assert(o.left()->type == expression::op_type::Var);
 
   const auto old_v = o.get_mgr()[o->quant.v]->var;
@@ -119,10 +119,10 @@ prenex_quantifier::walk_quant(expression::op_ref o) {
   // variable). Unbound variables are free, i.e. they have never been quantified
   // before.
 
-  auto bound_v =
-    o.get_mgr().get(expression::op(expression::op_type::Var, old_v.v, bound));
-  bound_v->user_int32 =
-    static_cast<uint32_t>(std::numeric_limits<uint32_t>::max());
+  auto bound_v
+    = o.get_mgr().get(expression::op(expression::op_type::Var, old_v.v, bound));
+  bound_v->user_int32
+    = static_cast<uint32_t>(std::numeric_limits<uint32_t>::max());
 
   op_ref e = o.right();
   uint32_t user_int32 = i_->qt.add((expression::op_type)o->type,
@@ -151,8 +151,8 @@ prenex_quantifier::walk_quant(expression::op_ref o) {
 
   // This invariant has to hold in order for the value carrying through the
   // int32_t field of an op to be valid.
-  static_assert(std::numeric_limits<uint32_t>::max() ==
-                static_cast<uint32_t>(
+  static_assert(std::numeric_limits<uint32_t>::max()
+                == static_cast<uint32_t>(
                   static_cast<int32_t>(std::numeric_limits<uint32_t>::max())));
 
   return e;
@@ -161,8 +161,8 @@ prenex_quantifier::walk_quant(expression::op_ref o) {
 expression::op_ref
 prenex_quantifier::walk_not(expression::op_ref o) {
   o->user_int32 = o.get_mgr().getobj(o->un.c).user_int32;
-  if(static_cast<uint32_t>(o->user_int32) !=
-     std::numeric_limits<uint32_t>::max())
+  if(static_cast<uint32_t>(o->user_int32)
+     != std::numeric_limits<uint32_t>::max())
     i_->qt.flip_downwards(static_cast<uint32_t>(o->user_int32));
   return o;
 }
@@ -170,11 +170,11 @@ prenex_quantifier::walk_not(expression::op_ref o) {
 // This eliminates impls of the form ->
 expression::op_ref
 prenex_quantifier::walk_impl(expression::op_ref o) {
-  op_ref left =
-    o.get_mgr().get(expression::op(expression::op_type::Not, o->left(), 0));
+  op_ref left
+    = o.get_mgr().get(expression::op(expression::op_type::Not, o->left(), 0));
 
-  if(static_cast<uint32_t>(o.left()->user_int32) !=
-     std::numeric_limits<uint32_t>::max())
+  if(static_cast<uint32_t>(o.left()->user_int32)
+     != std::numeric_limits<uint32_t>::max())
     i_->qt.flip_downwards(static_cast<uint32_t>(o.left()->user_int32));
 
   op_ref impl = o.get_mgr().get(
@@ -187,11 +187,11 @@ prenex_quantifier::walk_impl(expression::op_ref o) {
 // This eliminates impls of the form <-
 expression::op_ref
 prenex_quantifier::walk_lpmi(expression::op_ref o) {
-  op_ref right =
-    o.get_mgr().get(expression::op(expression::op_type::Not, o->right(), 0));
+  op_ref right
+    = o.get_mgr().get(expression::op(expression::op_type::Not, o->right(), 0));
 
-  if(static_cast<uint32_t>(o.right()->user_int32) !=
-     std::numeric_limits<uint32_t>::max())
+  if(static_cast<uint32_t>(o.right()->user_int32)
+     != std::numeric_limits<uint32_t>::max())
     i_->qt.flip_downwards(static_cast<uint32_t>(o.right()->user_int32));
 
   op_ref impl = o.get_mgr().get(

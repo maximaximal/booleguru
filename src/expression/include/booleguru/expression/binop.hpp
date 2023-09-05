@@ -1,14 +1,16 @@
 #pragma once
 
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 
 namespace booleguru::expression {
 struct binop {
   uint32_t l = 0;
   uint32_t r = 0;
 
-  inline constexpr binop(uint32_t l, uint32_t r) : l(l), r(r) {}
+  inline constexpr binop(uint32_t l, uint32_t r)
+    : l(l)
+    , r(r) {}
 
   inline constexpr size_t hash() const {
     return 4017271 * static_cast<size_t>(l) + 70200511 * static_cast<size_t>(r);

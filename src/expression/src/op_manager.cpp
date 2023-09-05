@@ -101,14 +101,14 @@ op_tostr_visit(std::ostream& o,
   op_type inner_type = exprs.getobj(expr.e).type;
 
   const bool outer_parens = [parent_type]() {
-    if(parent_type == op_type::Exists || parent_type == op_type::Forall ||
-       parent_type == op_type::None)
+    if(parent_type == op_type::Exists || parent_type == op_type::Forall
+       || parent_type == op_type::None)
       return false;
     return true;
   }();
   const bool inner_parens = [inner_type]() {
-    if(inner_type == op_type::Exists || inner_type == op_type::Forall ||
-       inner_type == op_type::None)
+    if(inner_type == op_type::Exists || inner_type == op_type::Forall
+       || inner_type == op_type::None)
       return false;
     return true;
   }();
@@ -199,11 +199,11 @@ op_manager::insert_id(T&& obj) {
     case op_type::And: {
       const auto& l = getobj(obj.left());
       const auto& r = getobj(obj.right());
-      obj.is_cnf = ((l.is_cnf || l.is_ors) && r.is_ors) ||
-                   (l.is_ors && (r.is_cnf || r.is_ors)) ||
-                   (l.is_cnf && r.is_cnf);
-      obj.is_prenex =
-        (l.is_prenex && !l.is_quant()) && (r.is_prenex && !r.is_quant());
+      obj.is_cnf = ((l.is_cnf || l.is_ors) && r.is_ors)
+                   || (l.is_ors && (r.is_cnf || r.is_ors))
+                   || (l.is_cnf && r.is_cnf);
+      obj.is_prenex
+        = (l.is_prenex && !l.is_quant()) && (r.is_prenex && !r.is_quant());
       // And should just keep the and_inside it already has from the op
       // constructor.
       break;
@@ -222,8 +222,8 @@ op_manager::insert_id(T&& obj) {
       const auto& l = getobj(obj.left());
       const auto& r = getobj(obj.right());
       obj.and_inside = l.and_inside || r.and_inside;
-      obj.is_prenex =
-        (l.is_prenex && !l.is_quant()) && (r.is_prenex && !r.is_quant());
+      obj.is_prenex
+        = (l.is_prenex && !l.is_quant()) && (r.is_prenex && !r.is_quant());
       break;
     }
     case op_type::Not: {
@@ -257,6 +257,14 @@ op_manager::insert_id(T&& obj) {
   }
 
   return base::insert_id(std::move(obj));
+}
+op_ref
+op_manager::top() {
+  return get(op(op_type::Var, var_manager::LITERAL_TOP, 0));
+}
+op_ref
+op_manager::bottom() {
+  return get(op(op_type::Var, var_manager::LITERAL_BOTTOM, 0));
 }
 void
 op_manager::modify_ops(modifier&& mod) {

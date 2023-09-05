@@ -19,9 +19,7 @@ struct visitor {
     return static_cast<Derived*>(this)->post_action(out);
   }
 
-  inline ReturnType post_action(op_ref o) {
-    return o;
-  }
+  inline ReturnType post_action(op_ref o) { return o; }
 
   inline ReturnType visit(op_ref o) {
     using namespace expression;

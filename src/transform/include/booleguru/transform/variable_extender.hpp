@@ -11,8 +11,8 @@ struct variable_extender : public visitor<variable_extender> {
 
   inline op_ref walk_var(op_ref e) {
     auto& oldvar = e.get_mgr().vars().getobj(e->var.v);
-    auto newvar =
-      e.get_mgr().vars().get(expression::variable{ oldvar.name + suffix });
+    auto newvar
+      = e.get_mgr().vars().get(expression::variable{ oldvar.name + suffix });
     return e.get_mgr().get(
       expression::op(expression::op_type::Var, newvar.get_id(), 0));
   };

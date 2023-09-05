@@ -3,6 +3,4 @@
 
 #include <booleguru/lua/lua-context.hpp>
 
-TEST_CASE("Evaluate simple lua code") {
-
-}
+TEST_CASE("Evaluate simple lua code") {}
