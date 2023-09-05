@@ -24,7 +24,7 @@ options { tokenVocab=cli_lexer; }
   std::shared_ptr<lua::lua_context> lua;
 
   using parse_file_function =
-    std::function<expression::op_ref(std::string_view)>;
+    std::function<expression::op_ref(std::string_view, booleguru::parse::type)>;
   parse_file_function parse_file_function_;
 
   parse::type out_type = parse::type::boole;
@@ -88,8 +88,11 @@ expr returns [uint32_t o]:
     | ID { auto text = $ID.text;
            uint32_t var_id = ops->vars().get_id(variable{std::move(text)});
            $o = ops->get_id(op(op_type::Var, var_id, 0)); }
-    | p=PATH { if(!parse_file_function_) throw std::invalid_argument("missing parse file function in CLI parser!");
-            $o = parse_file_function_($p.text).get_id(); }
+    | {parse::type file_format = parse::type::boole;} (fo=format {file_format = $fo.t;})?
+        p=PATH {
+            if(!parse_file_function_)
+              throw std::invalid_argument("missing parse file function in CLI parser!");
+            $o = parse_file_function_($p.text, file_format).get_id(); }
     | FENNEL_SUBST f=MATCHING_PAREN {
             auto res3 = lua->eval_fennel_to_op_or_throw("(" + $f.text + ")");
             if(res3.valid()) {

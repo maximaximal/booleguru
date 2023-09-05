@@ -1,16 +1,18 @@
 lexer grammar boole_lexer;
 
-AND : '&' | '&&' | '\u2227';
-OR : '/' | '|' | '||' | '\u2228';
-NOT : '!' | '-' | '~' ;
-XOR : '^';
+AND : '&' | '&&' | '∧';
+OR : '/' | '|' | '||' | '∨';
+NOT : '!' | '-' | '~' | '¬';
+XOR : '^' | '⊕' | '↮';
 LPAR : '(' ;
 RPAR : ')' ;
-IMPL : '->' ;
+IMPL : '->' | '⇒' ;
 LPMI : '<-' ;
 EQUI : '<->' ;
-FORALL : '#' | '@' | '\u2200' ;
-EXISTS : '?' | '\u2203';
+TOP : '\u8868' | '⊤';
+BOTTOM : '\u8869' | '⊥';
+FORALL : '#' | '@' | '∀';
+EXISTS : '?' | '∃';
 
 FENNEL_SUBST : ( ':F(' | ':(' | ':f(' | 'f:(' | 'L:(' ) { pushMode(CODE); };
 FENNEL : ( 'F(' | 'f(' ) { pushMode(CODE); };

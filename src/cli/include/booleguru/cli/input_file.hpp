@@ -56,6 +56,8 @@ class input_file {
              std::shared_ptr<lua::lua_context> lua);
   ~input_file();
 
+  void type(parse::type t) { type_ = t; }
+
   expression::op_ref process();
 };
 }

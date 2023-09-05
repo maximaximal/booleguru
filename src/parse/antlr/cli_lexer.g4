@@ -6,7 +6,7 @@ lexer grammar cli_lexer;
 
 AND : '--and' | '\u2227' | '&';
 OR : '--or'| '/' | '\u2228' | '|';
-NOT : '!' | '-' | '~' ;
+NOT : '!' | '~' ;
 XOR : '--xor';
 LPAR : '(' | '[' | '{' | '--lpar';
 RPAR : ')' | ']' | '}' | '--rpar';
@@ -29,7 +29,7 @@ FENNEL_CALL : ( ':' ) { pushMode(CALL); };
 EOL_FENNEL_SUBST : ( '::' ) { pushMode(EOL_CODE); };
 
 ID : [0-9A-Za-z\u0080-\u2199\u22FF-\uFFFF_'"\][]+ {!std::filesystem::exists(getText());}? ;
-PATH : '-' | ( ( '.' | '/' )? [./0-9A-Za-z\u0080-\u2199\u22FF-\uFFFF_'"\][]+ {std::filesystem::exists(getText());}? ) ;
+PATH : ( '.' | '/' )? [-./0-9A-Za-z\u0080-\u2199\u22FF-\uFFFF_'"\][]+ {getText() == "-" || std::filesystem::exists(getText());}? ;
 
 WS : [ \t\f]+ -> skip ;
 

@@ -48,6 +48,8 @@ expr returns [uint32_t o]:
                                 varop_id,
                                 $r.o));
         }
+    | TOP { $o = ops->top().get_id(); }
+    | BOTTOM { $o = ops->bottom().get_id(); }
     | ID { auto text = $ID.text;
            uint32_t var_id = ops->vars().get_id(variable{std::move(text)});
            $o = ops->get_id(op(op_type::Var, var_id, 0)); }
