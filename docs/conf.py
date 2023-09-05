@@ -1,7 +1,11 @@
 extensions = [
+    'sphinx_a4doc',
     "breathe",
     "sphinx.ext.autosectionlabel",
 ]
+
+from os.path import dirname
+a4_base_path = dirname(__file__) + '/../src/parse/antlr/'
 
 html_sidebars = {
     '**': [
