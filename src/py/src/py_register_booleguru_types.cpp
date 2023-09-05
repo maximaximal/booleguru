@@ -11,6 +11,10 @@ using namespace booleguru::expression;
 using namespace booleguru::lua;
 using namespace booleguru::lua::helpers;
 
+// This is trying to follow
+// https://z3prover.github.io/api/html/namespacez3py.html with a custom spin to
+// support booleguru's variants.
+
 PYBIND11_MODULE(pybooleguru, m) {
   m.doc() = "booleguru: boolean formula multitool";
 
@@ -64,6 +68,14 @@ PYBIND11_MODULE(pybooleguru, m) {
       "__xor__",
       [](op_ref& l, op_ref& r) { return l ^ r; },
       pybind11::is_operator())
+    .def(
+      "__eq__",
+      [](op_ref& l, op_ref& r) { return helpers::binop<op_type::Equi>(l, r); },
+      pybind11::is_operator())
+    .def(
+      "__hash__",
+      [](const op_ref& self) { return self.hash(); },
+      pybind11::is_operator())
 
     .def_property_readonly("v", &helpers::get_op_varop_v)
     .def_property_readonly("q", &helpers::get_op_varop_q)
@@ -72,20 +84,33 @@ PYBIND11_MODULE(pybooleguru, m) {
     .def_property_readonly("is_ors", &helpers::get_op_is_ors)
     .def_property_readonly("is_cnf", &helpers::get_op_is_cnf);
 
-  m.def("v", get_variable_from_global_handle);
-  m.def("exists", &helpers::binop<op_type::Exists>);
-  m.def("forall", &helpers::binop<op_type::Forall>);
-  m.def("equi", &helpers::binop<op_type::Equi>);
-  m.def("impl", &helpers::binop<op_type::Impl>);
-  m.def("lpmi", &helpers::binop<op_type::Lpmi>);
-  m.def("xor", &helpers::binop<op_type::Xor>);
-  m.def("b_and", &helpers::binop<op_type::And>);
-  m.def("b_or", &helpers::binop<op_type::Or>);
-  m.def("b_not", &helpers::unop<op_type::Not>);
+  m.def("Bool", get_variable_from_global_handle);
+  m.def("Bools", get_variables_from_global_handle);
+  m.def("Exists", &helpers::binop<op_type::Exists>);
+  m.def("Forall", &helpers::binop<op_type::Forall>);
+  m.def("Equivalence", &helpers::binop<op_type::Equi>);
+  m.def("Implies", &helpers::binop<op_type::Impl>);
+  m.def("Lpmi", &helpers::binop<op_type::Lpmi>);
+  m.def("Xor", &helpers::binop<op_type::Xor>);
+  m.def("And", &helpers::binop<op_type::And>);
+  m.def("Or", &helpers::binop<op_type::Or>);
+  m.def("Not", &helpers::unop<op_type::Not>);
 
   m.def("prenex",
         &helpers::prenex,
         pybind11::arg("op"),
         pybind11::arg("kind") = transform::prenex_quantifier::Eup_Aup,
         pybind11::arg("animation_path") = "");
+
+  m.def("bsolve",
+        &helpers::solve_sat,
+        pybind11::arg("op"),
+        pybind11::arg("solver") = "kissat",
+        pybind11::arg("args") = std::vector<std::string>({ "-q" }));
+
+  m.def("solve",
+        &helpers::solve_sat_to_resultmap,
+        pybind11::arg("op"),
+        pybind11::arg("solver") = "kissat",
+        pybind11::arg("args") = std::vector<std::string>({ "-q" }));
 }

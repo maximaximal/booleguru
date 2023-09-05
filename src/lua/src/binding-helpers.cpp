@@ -1,4 +1,6 @@
 #include <booleguru/lua/binding-helpers.hpp>
+#include <booleguru/transform/tseitin.hpp>
+#include <booleguru/util/istringviewstream.hpp>
 
 #include <booleguru/expression/literals.hpp>
 
@@ -90,6 +92,19 @@ get_variable_from_global_handle(const std::string& name) {
   return expression::literals::proxy<expression::op_manager>(name);
 }
 
+std::vector<expression::op_ref>
+get_variables_from_global_handle(const std::string& names) {
+  isviewstream in(names);
+  std::vector<expression::op_ref> ops;
+  std::string name;
+  while(std::getline(in, name, ' ')) {
+    if(name.size() > 0) {
+      ops.emplace_back(get_variable_from_global_handle(name));
+    }
+  }
+  return ops;
+}
+
 expression::op_ref
 prenex(expression::op_ref o,
        transform::prenex_quantifier::kind kind,
@@ -105,5 +120,13 @@ solve_sat(expression::op_ref o,
           std::vector<std::string> args) {
   solve::sat s(solver, args);
   return s.solve(o);
+}
+
+std::optional<std::unordered_map<expression::op_ref, bool>>
+solve_sat_to_resultmap(expression::op_ref o,
+                       std::string solver,
+                       std::vector<std::string> args) {
+  solve::sat s(solver, args);
+  return s.solve_resultmap(o);
 }
 }

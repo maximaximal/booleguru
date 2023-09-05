@@ -14,7 +14,8 @@
 namespace booleguru::transform {
 static std::pair<int32_t, int32_t>
 compute_number_of_clauses_and_variables_in_marked(const expression::op_ref& o,
-                                                  auto o_) {
+                                                  auto o_,
+                                                  bool mappings) {
   const expression::op_manager& mgr = o.get_mgr();
 
   int32_t num_clauses = 1;
@@ -53,8 +54,9 @@ compute_number_of_clauses_and_variables_in_marked(const expression::op_ref& o,
       case expression::op_type::Var:
         ++num_variables;
         op.user_int32 = num_variables;
-        o_.insert_mapping_comment(op.user_int32,
-                                  o.get_mgr().vars()[op.var.v]->name);
+        if(mappings)
+          o_.insert_mapping_comment(op.user_int32,
+                                    o.get_mgr().vars()[op.var.v]->name);
         break;
       case expression::op_type::None:
         [[fallthrough]];
@@ -88,7 +90,8 @@ tseitin<O>::operator()(expression::op_ref o) {
   // QDIMACS output. This also requires the problem to be initiated.
   if constexpr(std::is_same_v<ref, int32_t>) {
     auto [num_clauses, num_variables]
-      = compute_number_of_clauses_and_variables_in_marked(o, o_);
+      = compute_number_of_clauses_and_variables_in_marked(
+        o, o_, mapping_comments_);
     o_.problem(num_variables, num_clauses);
   }
 

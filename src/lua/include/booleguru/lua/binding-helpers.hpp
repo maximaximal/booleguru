@@ -1,5 +1,7 @@
 #pragma once
 
+#include <unordered_map>
+
 #include <booleguru/solve/result.hpp>
 
 #include <booleguru/expression/op.hpp>
@@ -98,6 +100,9 @@ get_variable_from_manager(const std::string& name, expression::op_manager& mgr);
 expression::op_ref
 get_variable_from_global_handle(const std::string& name);
 
+std::vector<expression::op_ref>
+get_variables_from_global_handle(const std::string& names);
+
 expression::op_ref
 prenex(expression::op_ref o,
        transform::prenex_quantifier::kind kind,
@@ -107,6 +112,11 @@ std::optional<expression::op_ref>
 solve_sat(expression::op_ref o,
           std::string solver = "kissat",
           std::vector<std::string> args = { "-q" });
+
+std::optional<std::unordered_map<expression::op_ref, bool>>
+solve_sat_to_resultmap(expression::op_ref o,
+                       std::string solver = "kissat",
+                       std::vector<std::string> args = { "-q" });
 
 inline std::optional<expression::op_ref>
 solve_sat_default_args(expression::op_ref o) {

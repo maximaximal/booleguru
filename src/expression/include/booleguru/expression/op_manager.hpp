@@ -3,6 +3,7 @@
 #include <cassert>
 #include <functional>
 #include <memory>
+#include <stdint.h>
 #include <type_traits>
 
 #include <iostream>
@@ -24,6 +25,13 @@ class op_ref : public reference<op, op_manager> {
   op_ref right();
 
   std::string to_string() const;
+
+  inline size_t hash() const {
+    size_t hash = reinterpret_cast<intptr_t>(&get_mgr());
+    hash <<= 32u;
+    hash |= get_id();
+    return hash;
+  }
 };
 
 class op_manager : public manager<op_ref, op_manager> {
@@ -190,4 +198,13 @@ operator^(op_ref l, op_ref r) {
 
 std::ostream&
 operator<<(std::ostream& o, const op_ref& e);
+}
+
+namespace std {
+template<>
+struct hash<booleguru::expression::op_ref> {
+  size_t operator()(const booleguru::expression::op_ref& x) const noexcept {
+    return x.hash();
+  }
+};
 }
