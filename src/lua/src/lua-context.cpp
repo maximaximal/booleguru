@@ -48,7 +48,16 @@ prepare_state(sol::state& s) {
 namespace booleguru::lua {
 lua_context::lua_context(std::shared_ptr<expression::op_manager> ops)
   : ops_(ops)
-  , state_(std::make_unique<sol::state>()) {
+  , state_(std::make_unique<sol::state>()) {}
+
+lua_context::~lua_context() {}
+
+void
+lua_context::ensure_fully_initialized() {
+  if(fully_initialized_)
+    return;
+  fully_initialized_ = true;
+
   state_->open_libraries(sol::lib::base,
                          sol::lib::coroutine,
                          sol::lib::package,
@@ -83,8 +92,6 @@ lua_context::lua_context(std::shared_ptr<expression::op_manager> ops)
 }
 
 #undef SEP
-
-lua_context::~lua_context() {}
 
 void
 lua_context::init_fennel() {
@@ -136,6 +143,7 @@ return_to_eval_result(auto&& result) {
 
 lua_context::eval_result
 lua_context::eval_fennel(std::string_view code) {
+  ensure_fully_initialized();
   auto& s = *state_;
 
   // Try to auto-load the desired function if it is not known yet.
@@ -168,18 +176,21 @@ lua_context::eval_fennel(std::string_view code) {
 lua_context::eval_result
 lua_context::eval_fennel(std::string_view code,
                          const expression::op_ref& last_op) {
+  ensure_fully_initialized();
   (*state_)[fennel_last_op_name_] = last_op;
   return eval_fennel(code);
 }
 
 lua_context::eval_result
 lua_context::eval(std::string_view code) {
+  ensure_fully_initialized();
   auto r = state_->script(code);
   return return_to_eval_result(r);
 }
 
 lua_context::eval_result
 lua_context::eval(std::string_view code, const expression::op_ref& last_op) {
+  ensure_fully_initialized();
   (*state_)["**"] = last_op;
   return eval(code);
 }
@@ -187,6 +198,7 @@ lua_context::eval(std::string_view code, const expression::op_ref& last_op) {
 expression::op_ref
 lua_context::eval_fennel_to_op_or_throw(std::string_view code,
                                         expression::op_ref last_op) {
+  ensure_fully_initialized();
   auto res = eval_fennel(code, last_op);
   if(std::string* s = std::get_if<std::string>(&res)) {
     throw fennel_error(*s);

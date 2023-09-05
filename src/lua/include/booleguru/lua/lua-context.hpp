@@ -25,7 +25,9 @@ class lua_context {
   std::shared_ptr<expression::op_manager> ops_;
   std::unique_ptr<sol::state> state_;
   std::string fennel_last_op_name_;
+  bool fully_initialized_ = false;
 
+  void ensure_fully_initialized();
   void init_fennel();
   void register_booleguru_types();
 
