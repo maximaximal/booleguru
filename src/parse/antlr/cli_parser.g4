@@ -115,4 +115,5 @@ format returns [parse::type t]:
     | QCIR   { $t = parse::type::qcir; }
     | PYTHON { $t = parse::type::py; }
     | LUA    { $t = parse::type::lua; }
+    | NONE   { $t = parse::type::none; }
     ;

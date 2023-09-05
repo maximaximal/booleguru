@@ -22,6 +22,7 @@ BOOLE : '--boole' | '--bool' | '--limboole';
 QCIR : '--qcir';
 PYTHON : '--py' | '--python';
 LUA : '--lua';
+NONE : '--none';
 
 FENNEL_SUBST : ( ':(' ) { pushMode(CODE); };
 FENNEL_CALL : ( ':' ) { pushMode(CALL); };
