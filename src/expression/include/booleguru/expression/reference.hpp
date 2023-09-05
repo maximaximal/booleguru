@@ -64,5 +64,12 @@ class reference {
   inline constexpr bool operator==(const reference& o) const {
     return mgr_ == o.mgr_ && id_ == o.id_;
   }
+
+  inline size_t hash() const {
+    size_t hash = reinterpret_cast<intptr_t>(&get_mgr());
+    hash <<= 32u;
+    hash |= get_id();
+    return hash;
+  }
 };
 }

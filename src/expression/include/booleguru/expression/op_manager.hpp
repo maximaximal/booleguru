@@ -25,13 +25,6 @@ class op_ref : public reference<op, op_manager> {
   op_ref right();
 
   std::string to_string() const;
-
-  inline size_t hash() const {
-    size_t hash = reinterpret_cast<intptr_t>(&get_mgr());
-    hash <<= 32u;
-    hash |= get_id();
-    return hash;
-  }
 };
 
 class op_manager : public manager<op_ref, op_manager> {

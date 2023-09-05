@@ -171,6 +171,9 @@ op_tostr_visit(std::ostream& o,
   (void)t;
   (void)parent_type;
   o << exprs.vars()[expr.v]->name;
+  if(expr.i) {
+    o << "{" << expr.i << "}";
+  }
   if(expr.q) {
     o << "[" << expr.q << "]";
   }
