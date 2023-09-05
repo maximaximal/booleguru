@@ -13,8 +13,8 @@ using namespace booleguru::expression;
 using namespace booleguru::expression::literals;
 
 TEST_CASE("Serialize simple example QCIR formula") {
-  std::shared_ptr<op_manager> ops =
-    std::make_shared<op_manager>(std::make_shared<var_manager>());
+  std::shared_ptr<op_manager> ops
+    = std::make_shared<op_manager>(std::make_shared<var_manager>());
 
   auto var_x1 = ops->vars().get(variable{ "x1" });
   auto var_x2 = ops->vars().get(variable{ "x2" });
@@ -34,8 +34,8 @@ TEST_CASE("Serialize simple example QCIR formula") {
 
   auto op_g3 = op_z && op_g2;
 
-  auto op_complete =
-    ops->get(op(op_type::Forall, op_z.get_id(), op_g3.get_id()));
+  auto op_complete
+    = ops->get(op(op_type::Forall, op_z.get_id(), op_g3.get_id()));
 
   std::stringstream o;
   booleguru::serialize::qcir serializer(o);
@@ -61,8 +61,8 @@ output(7)
 }
 
 TEST_CASE("Serialize simple example QCIR formula with some NOTs") {
-  std::shared_ptr<op_manager> ops =
-    std::make_shared<op_manager>(std::make_shared<var_manager>());
+  std::shared_ptr<op_manager> ops
+    = std::make_shared<op_manager>(std::make_shared<var_manager>());
 
   auto var_x1 = ops->vars().get(variable{ "x1" });
   auto var_x2 = ops->vars().get(variable{ "x2" });
@@ -82,8 +82,8 @@ TEST_CASE("Serialize simple example QCIR formula with some NOTs") {
 
   auto op_g3 = !(op_z && !op_g2);
 
-  auto op_complete =
-    ops->get(op(op_type::Forall, op_z.get_id(), op_g3.get_id()));
+  auto op_complete
+    = ops->get(op(op_type::Forall, op_z.get_id(), op_g3.get_id()));
 
   std::stringstream o;
   booleguru::serialize::qcir serializer(o);
@@ -110,8 +110,8 @@ output(-7)
 }
 
 TEST_CASE("Serialize simple prenex example QCIR formula") {
-  std::shared_ptr<op_manager> ops =
-    std::make_shared<op_manager>(std::make_shared<var_manager>());
+  std::shared_ptr<op_manager> ops
+    = std::make_shared<op_manager>(std::make_shared<var_manager>());
 
   auto var_v1 = ops->vars().get(variable{ "v1" });
   auto var_v2 = ops->vars().get(variable{ "v2" });
@@ -127,8 +127,8 @@ TEST_CASE("Serialize simple prenex example QCIR formula") {
 
   auto ex_v3 = ops->get(op(op_type::Exists, op_v3.get_id(), op_.get_id()));
   auto ex_v2 = ops->get(op(op_type::Exists, op_v2.get_id(), ex_v3.get_id()));
-  auto forall_v1 =
-    ops->get(op(op_type::Forall, op_v1.get_id(), ex_v2.get_id()));
+  auto forall_v1
+    = ops->get(op(op_type::Forall, op_v1.get_id(), ex_v2.get_id()));
 
   std::stringstream o;
   booleguru::serialize::qcir serializer(o);
@@ -281,6 +281,25 @@ output(8)
 6 = or(-1, 2)
 7 = or(-6, -3, 2)
 8 = and(5, 7)
+)";
+
+  REQUIRE(o.str() == expected);
+}
+
+TEST_CASE("Formula with boolean constant converted to QCIR") {
+  op_manager ops;
+  auto top = ops.top();
+
+  std::stringstream o;
+  booleguru::serialize::qcir serializer(o);
+  serializer(top);
+
+  CAPTURE(top);
+  CAPTURE(o.str());
+
+  const char* expected = R"(#QCIR-G14 1
+output(1)
+1 = and()
 )";
 
   REQUIRE(o.str() == expected);

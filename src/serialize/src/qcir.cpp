@@ -228,23 +228,36 @@ qcir::walk_var(op_ref o) {
     o->mark = true;
     o->user_int32 = ++number_of_variables_;
   }
+  if(!dry_walk_
+     && (o->var.v == var_manager::LITERAL_TOP
+         || o->var.v == var_manager::LITERAL_BOTTOM)
+     && on_quant_prefix_) {
+    o_ << "output(" << o->user_int32 << ")\n";
+  }
+  if(!dry_walk_ && o->var.v == var_manager::LITERAL_TOP) {
+    o_ << o->user_int32 << " = and()\n";
+  }
+  if(!dry_walk_ && o->var.v == var_manager::LITERAL_BOTTOM) {
+    o_ << o->user_int32 << " = or()\n";
+  }
 }
 
 void
 qcir::operator()(expression::op_ref op) {
-  op =
-    transform::eliminate_implication()(transform::eliminate_equivalence()(op));
+  op = transform::eliminate_implication()(
+    transform::eliminate_equivalence()(op));
 
   op.get_mgr().unmark();
 
   std::vector<uint32_t> vars;
   std::vector<uint32_t> quantified_vars;
-  auto visit = [&quantified_vars, &vars](uint32_t id,
-                                         const expression::op& op) -> void {
+  auto visit
+    = [&quantified_vars, &vars](uint32_t id, const expression::op& op) -> void {
     op.mark = true;
     switch(op.type) {
       case expression::op_type::Var:
-        vars.push_back(id);
+        if(op.var.v > var_manager::LITERAL_BOTTOM)
+          vars.push_back(id);
         break;
       case expression::op_type::Exists:
       case expression::op_type::Forall:
