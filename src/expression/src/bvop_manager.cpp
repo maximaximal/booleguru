@@ -25,6 +25,7 @@ export_as_ops(op_manager& ops) {
   // HANDLING VARIABLES: Variables must be converted from SMT with multi-width
   // into purely variables. This is done using the .i attribute of varops, which
   // makes them unique, but uses the same name.
+  (void)ops;
   return op_ref();
 }
 }

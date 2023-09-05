@@ -27,6 +27,7 @@ class sviewbuf : public std::streambuf {
                    ios_base::seekdir dir,
                    ios_base::openmode which
                    = ios_base::in | ios_base::out) override {
+    (void)which;
     if(dir == ios_base::cur)
       gbump(off);
     else if(dir == ios_base::end)
