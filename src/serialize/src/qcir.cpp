@@ -38,6 +38,12 @@ qcir::walk_quant(op_ref o) {
   }
   while(o->type == t) {
     auto v = o->quant.v;
+    // This is required for variables that only occurr in the quantifier but not
+    // in the formula itself. They are never visited twice, as variables are
+    // marked in walk_var.
+    if(dry_walk_) {
+      walk_var(o.left());
+    }
     if(first) {
       if(!dry_walk_)
         o_ << qtext << "(" << o.get_mgr()[v]->user_int32;
@@ -218,7 +224,6 @@ qcir::walk_xor(op_ref o) {
 }
 void
 qcir::walk_var(op_ref o) {
-  (void)o;
   if(dry_walk_ && !o->mark) {
     o->mark = true;
     o->user_int32 = ++number_of_variables_;
@@ -281,7 +286,14 @@ qcir::operator()(expression::op_ref op) {
   });
 
   for(auto v : vars) {
-    o_ << "# " << op.get_mgr()[v]->user_int32 << " " << op.get_mgr()[v] << "\n";
+    auto r = op.get_mgr()[v];
+#ifndef NDEBUG
+    if(r->user_int32 <= 0)
+      std::cerr << "!! user_int32 must be > 0! Variable " << r
+                << " broke this assumption!" << std::endl;
+#endif
+    assert(r->user_int32 > 0);
+    o_ << "# " << r->user_int32 << " " << r << "\n";
   }
 
   std::sort(
