@@ -15,6 +15,7 @@
 #include <booleguru/parse/base.hpp>
 #include <booleguru/parse/boole.hpp>
 #include <booleguru/parse/luascript.hpp>
+#include <booleguru/parse/qcir.hpp>
 #include <booleguru/parse/qdimacs.hpp>
 #include <booleguru/util/stdiobuf.hpp>
 #ifdef BOOLEGURU_PARSE_PY
@@ -101,8 +102,8 @@ input_file::process() {
   if(!res) {
     std::stringstream s;
     s << res;
-    throw parse_error("Parse error! Result: " + s.str() +
-                      ", message: " + res.message);
+    throw parse_error("Parse error! Result: " + s.str()
+                      + ", message: " + res.message);
   }
   return *res;
 }
@@ -121,8 +122,8 @@ input_file::produce_istream() {
   if(path_.ends_with(".xz") && file_matches_signature(path_, xzsig)) {
     name_ = path_.substr(0, path_.length() - 3);
     return produce_istream_from_popen("xz", "-c -d");
-  } else if(path_.ends_with(".lzma") &&
-            file_matches_signature(path_, lzmasig)) {
+  } else if(path_.ends_with(".lzma")
+            && file_matches_signature(path_, lzmasig)) {
     name_ = path_.substr(0, path_.length() - 5);
     return produce_istream_from_popen("lzma", "-c -d");
   } else if(path_.ends_with(".bz2") && file_matches_signature(path_, bz2sig)) {
@@ -159,8 +160,8 @@ input_file::produce_istream_from_popen(std::string command, std::string args) {
 
 std::unique_ptr<parse::base>
 input_file::produce_parser(std::istream& is) {
-  if(name_.ends_with(".smtlib2") || name_.ends_with(".smt") ||
-     name_.ends_with(".smtlib")) {
+  if(name_.ends_with(".smtlib2") || name_.ends_with(".smt")
+     || name_.ends_with(".smtlib")) {
     type_ = parse::type::smtlib;
   } else if(name_.ends_with(".boole") || name_.ends_with(".limboole")) {
     type_ = parse::type::boole;
@@ -181,30 +182,33 @@ input_file::produce_parser(std::istream& is) {
       throw std::runtime_error("SMTLIB Not supported yet!");
     }
     case parse::type::aiger: {
-      auto aiger =
-        std::make_unique<parse::aiger>(is, ops_->vars_ptr(), ops_, lua_);
+      auto aiger
+        = std::make_unique<parse::aiger>(is, ops_->vars_ptr(), ops_, lua_);
       return aiger;
     }
-    case parse::type::qcir:
-      throw std::runtime_error("QCIR Not supported yet!");
+    case parse::type::qcir: {
+      is >> std::noskipws;
+      auto qcir = std::make_unique<parse::qcir>(is, ops_);
+      return qcir;
+    }
     case parse::type::boole: {
       is >> std::noskipws;
-      auto boole =
-        std::make_unique<parse::boole>(is, ops_->vars_ptr(), ops_, lua_);
+      auto boole
+        = std::make_unique<parse::boole>(is, ops_->vars_ptr(), ops_, lua_);
       boole->eval(eval_);
       return boole;
     }
     case parse::type::lua: {
       is >> std::noskipws;
-      auto lua =
-        std::make_unique<parse::luascript>(is, ops_->vars_ptr(), ops_, lua_);
+      auto lua
+        = std::make_unique<parse::luascript>(is, ops_->vars_ptr(), ops_, lua_);
       return lua;
     }
     case parse::type::py: {
 #ifdef BOOLEGURU_PARSE_PY
       is >> std::noskipws;
-      auto py =
-        std::make_unique<parse::pythonscript>(is, ops_->vars_ptr(), ops_, lua_);
+      auto py = std::make_unique<parse::pythonscript>(
+        is, ops_->vars_ptr(), ops_, lua_);
       return py;
 #else
       throw std::runtime_error("No support for Python parsing built in! "

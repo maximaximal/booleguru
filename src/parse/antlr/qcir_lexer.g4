@@ -1,29 +1,41 @@
 lexer grammar qcir_lexer;
 
-LINE_COMMENT
-    : '#' ~('\r' | '\n')*
-    ;
+channels { COMMENTS, WHITESPACE }
 
-FORMAT_SPECIFIER : ( '#QCIR-G14' | '#QCIR-14');
-FREE : 'free';
-EXISTS : 'exists';
-FORALL : 'forall';
-OUTPUT : 'output';
-AND : 'and';
-OR : 'or';
-XOR : 'xor';
-ITE : 'ite';
+// Keywords
+FREE   options { caseInsensitive=true; } : 'free' ;
+EXISTS options { caseInsensitive=true; } : 'exists' ;
+FORALL options { caseInsensitive=true; } : 'forall' ;
+OUTPUT options { caseInsensitive=true; } : 'output' ;
+AND    options { caseInsensitive=true; } : 'and' ;
+OR     options { caseInsensitive=true; } : 'or' ;
+XOR    options { caseInsensitive=true; } : 'xor' ;
+ITE    options { caseInsensitive=true; } : 'ite' ;
 
-L: '(' ;
-R: ')' ;
-EQ: '=' ;
-COMMA: ',' ;
-SEMICOLON: ';' ;
-NEGATE : '-';
-EOL : '\n' ;
-ID : ('_'|LETTER) ('_'|LETTER|DIGIT)* ;
-INT : DIGIT+ ;
-DIGIT : '0'..'9' ;
-LETTER : ('a'..'z'|'A'..'Z') ;
+// Simple symbols
+LPAR      : '(' ;
+RPAR      : ')' ;
+EQ        : '=' ;
+COMMA     : ',' ;
+SEMICOLON : ';' ;
+NEG       : '-' ;
+/* TODO: Should allow for support of LF, CR, and CRLF? */
+EOL       : '\n' | '\r' | '\r\n' ;
 
-WS : (' ' | '\t')+ -> channel(HIDDEN);
+// Identifiers and numbers
+IDENT  : ( '_' | NUMBER | LETTER )+ ;
+NUMBER : DIGIT+ ;
+fragment DIGIT  : '0'..'9' ;
+fragment LETTER : 'a'..'z' | 'A'..'Z' ;
+
+// Format ID, a special form of a comment, should match before LINE_COMMENT
+FORMAT_ID_G14 : '#' WS? 'QCIR-G14' WS? NUMBER? WS? ;
+FORMAT_ID_14  : '#' WS? 'QCIR-14'  WS? NUMBER? WS? ;
+FORMAT_ID_13  : '#' WS? 'QCIR-13'  WS? NUMBER? WS? ;
+FORMAT_ID_ILL : '#' WS? 'QCIR' WS? '-'? WS? 'G'? NUMBER? WS? NUMBER? WS? ;
+
+// Tokens sent to other channels, we don't need these in the parser, but might
+// want to do something with them
+LINE_COMMENT : '#' ~( '\r' | '\n' )* -> channel(COMMENTS) ;
+WS           : ( ' ' | '\t' )+ -> channel(WHITESPACE) ;
+

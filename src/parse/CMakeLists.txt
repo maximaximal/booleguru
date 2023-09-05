@@ -35,7 +35,7 @@ add_library(booleguru-parse-antlr OBJECT
 
 target_link_libraries(booleguru-parse-antlr PRIVATE fmt)
 target_link_libraries(booleguru-parse-antlr PUBLIC antlr4_static)
-target_link_libraries(booleguru-parse-antlr PUBLIC booleguru-expression booleguru-lua)
+target_link_libraries(booleguru-parse-antlr PUBLIC booleguru-expression booleguru-lua fmt::fmt)
 target_include_directories(booleguru-parse-antlr PUBLIC
   ${ANTLR4_INCLUDE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -45,6 +45,7 @@ set(SRCS
   src/base.cpp
   src/boole.cpp
   src/qdimacs.cpp
+  src/qcir.cpp
   src/aiger.cpp
   src/smtlib2.cpp
   src/luascript.cpp

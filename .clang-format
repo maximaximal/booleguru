@@ -13,6 +13,7 @@ Standard: Cpp11
 TabWidth: '2'
 UseTab: Never
 BreakBeforeBraces: Custom
+BreakBeforeBinaryOperators: All
 BraceWrapping:
   AfterExternBlock: false
 ...
