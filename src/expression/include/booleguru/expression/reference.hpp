@@ -4,12 +4,15 @@
 #include <cstddef>
 #include <cstdint>
 
+#include <booleguru/expression/id.hpp>
+
 namespace booleguru::expression {
-template<typename T, class M>
+template<class T, class M, class ID = id>
 class reference {
   public:
   using objtype = T;
-  using ref = uint32_t;
+  using ref = ID;
+  using numeric_type = typename ID::numeric_type;
 
   protected:
   // ID 0 is never given to valid references, as the manager base class always
@@ -22,10 +25,10 @@ class reference {
   inline constexpr reference()
     : mgr_(nullptr)
     , id_(0) {}
-  inline explicit constexpr reference(M& m, uint32_t id)
+  inline explicit constexpr reference(M& m, ID id)
     : mgr_(&m)
     , id_(id) {}
-  inline explicit constexpr reference(const M& m, uint32_t id)
+  inline explicit constexpr reference(const M& m, ID id)
     : mgr_(const_cast<M*>(&m))
     , id_(id) {}
   inline explicit constexpr reference(const reference& o)
@@ -36,7 +39,7 @@ class reference {
     , id_(o.id_) {}
 
   inline constexpr bool valid() const { return id_ > 0 && mgr_; }
-  inline constexpr uint32_t operator[](uint32_t id) { return get_mgr()[id]; }
+  inline constexpr ID operator[](ID id) { return get_mgr()[id]; }
   inline constexpr const T* operator->() const {
     return &get_mgr().getobj(id_);
   }

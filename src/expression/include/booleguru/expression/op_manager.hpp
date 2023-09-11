@@ -8,18 +8,19 @@
 
 #include <iostream>
 
-#include "manager.hpp"
-#include "op.hpp"
-#include "reference.hpp"
+#include <booleguru/expression/id.hpp>
+#include <booleguru/expression/manager.hpp>
+#include <booleguru/expression/op.hpp>
+#include <booleguru/expression/reference.hpp>
 
 namespace booleguru::expression {
 struct op;
 class op_manager;
 class var_manager;
 
-class op_ref : public reference<op, op_manager> {
+class op_ref : public reference<op, op_manager, op_id> {
   public:
-  using reference<op, op_manager>::reference;
+  using reference<op, op_manager, op_id>::reference;
 
   op_ref left();
   op_ref right();

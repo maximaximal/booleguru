@@ -3,8 +3,8 @@
 #include <memory>
 #include <string>
 
-#include "manager.hpp"
-#include "reference.hpp"
+#include <booleguru/expression/manager.hpp>
+#include <booleguru/expression/reference.hpp>
 
 namespace booleguru::expression {
 class op_manager;

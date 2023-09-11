@@ -1,9 +1,8 @@
 #pragma once
 
-#include "manager.hpp"
-#include "reference.hpp"
-
-#include "bv.hpp"
+#include <booleguru/expression/bv.hpp>
+#include <booleguru/expression/manager.hpp>
+#include <booleguru/expression/reference.hpp>
 
 namespace booleguru::expression {
 class op_manager;

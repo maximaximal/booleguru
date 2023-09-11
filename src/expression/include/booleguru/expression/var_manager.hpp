@@ -5,8 +5,9 @@
 #include <string>
 #include <vector>
 
-#include "manager.hpp"
-#include "reference.hpp"
+#include <booleguru/expression/id.hpp>
+#include <booleguru/expression/manager.hpp>
+#include <booleguru/expression/reference.hpp>
 
 namespace booleguru::expression {
 class op_manager;
@@ -27,9 +28,9 @@ struct variable {
   }
 };
 
-class var_ref : public reference<variable, var_manager> {
+class var_ref : public reference<variable, var_manager, var_id> {
   public:
-  using reference<variable, var_manager>::reference;
+  using reference<variable, var_manager, var_id>::reference;
 };
 
 class var_manager : public manager<var_ref, var_manager> {
@@ -62,7 +63,7 @@ class var_manager : public manager<var_ref, var_manager> {
   using base::base;
   friend class manager;
 
-  enum {
+  enum : manager<var_ref, var_manager>::ref::numeric_type {
     LITERAL_TOP = 1,
     LITERAL_BOTTOM = 2,
     LITERAL_TSEITIN = 3,

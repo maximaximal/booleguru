@@ -8,7 +8,8 @@
 
 namespace booleguru::transform {
 struct variable_rename : public visitor<variable_rename> {
-  using M = std::unordered_map<op_ref::ref, op_ref::ref>;
+  using M
+    = std::unordered_map<op_ref::ref::numeric_type, op_ref::ref::numeric_type>;
   M vars;
 
   template<typename... Rest>

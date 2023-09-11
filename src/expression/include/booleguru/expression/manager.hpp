@@ -11,9 +11,8 @@
 
 #include <ankerl/unordered_dense.h>
 
+#include <booleguru/expression/op.hpp>
 #include <booleguru/util/die.hpp>
-
-#include "op.hpp"
 
 namespace booleguru::expression {
 struct variable;
@@ -22,11 +21,12 @@ template<typename R, typename C>
 class manager {
   public:
   using ref = typename R::ref;
+  using numeric_type = typename ref::numeric_type;
   using T = typename R::objtype;
   using objref = R;
 
   protected:
-  using map = ankerl::unordered_dense::map<T, ref>;
+  using map = ankerl::unordered_dense::map<T, numeric_type>;
   using vec = typename map::value_container_type;
   map objects_map_;
   size_t counter_ = 1;
@@ -84,7 +84,7 @@ class manager {
     assert(static_cast<int32_t>(counter_)
            < std::numeric_limits<int32_t>::max());
     size_t idx = counter_++;
-    if(idx == std::numeric_limits<uint32_t>::max() - 1) {
+    if(idx == std::numeric_limits<numeric_type>::max() - 1) {
       util::die("Reached limit of manager !! Have " + std::to_string(counter_)
                 + " elements in store. Try GC or something else.");
     }

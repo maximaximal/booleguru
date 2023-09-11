@@ -3,9 +3,11 @@
 #include <cstddef>
 #include <cstdint>
 
+#include <booleguru/expression/id.hpp>
+
 namespace booleguru::expression {
 struct varop {
-  uint32_t v = 0;/// Reference to variable in vars manager.
+  var_id v = 0;/// Reference to variable in vars manager.
 
   uint16_t q = 0;/// Some number that binds the variable to some
                  /// namespace/quantifier. Must not be bigger than 2^16, which
@@ -19,8 +21,8 @@ struct varop {
            + 70200511 * static_cast<size_t>(q);
   }
 
-  inline constexpr uint32_t left() const { return 0; }
-  inline constexpr uint32_t right() const { return 0; }
+  inline constexpr op_id left() const { return 0; }
+  inline constexpr op_id right() const { return 0; }
 
   inline constexpr bool operator==(const varop& o) const {
     return v == o.v && i == o.i && q == o.q;

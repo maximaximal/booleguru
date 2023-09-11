@@ -3,11 +3,11 @@
 #include <cassert>
 #include <ostream>
 
-#include "binop.hpp"
-#include "quantop.hpp"
-#include "scriptop.hpp"
-#include "unop.hpp"
-#include "varop.hpp"
+#include <booleguru/expression/binop.hpp>
+#include <booleguru/expression/quantop.hpp>
+#include <booleguru/expression/scriptop.hpp>
+#include <booleguru/expression/unop.hpp>
+#include <booleguru/expression/varop.hpp>
 
 namespace booleguru::expression {
 enum class op_type : uint8_t {
@@ -77,7 +77,7 @@ struct op {
     this->type = type;
   }
 
-  inline explicit constexpr op(op_type type, uint32_t r1, uint32_t r2)
+  inline explicit constexpr op(op_type type, op_id r1, op_id r2)
     : op(type) {
     switch(type) {
       case op_type::Exists:
@@ -101,20 +101,19 @@ struct op {
         bin.l = r1;
         bin.r = r2;
         break;
-      case op_type::Var:
-        is_ors = true;
-        var.v = r1;
-        var.q = r2;
-        break;
       case op_type::None:
+        break;
+      default:
+        // TODO(Marcel): Error handling?
+        assert(false);
         break;
     }
   }
 
   inline explicit constexpr op(op_type type,
-                               uint32_t r1,
+                               var_id r1,
                                uint16_t r2,
-                               uint16_t r3)
+                               uint16_t r3 = 0)
     : op(type) {
     assert(type == op_type::Var);
     var.v = r1;

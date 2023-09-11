@@ -2,8 +2,8 @@
 
 #include <memory>
 
-#include "op_manager.hpp"
-#include "var_manager.hpp"
+#include <booleguru/expression/op_manager.hpp>
+#include <booleguru/expression/var_manager.hpp>
 
 namespace booleguru::expression::literals {
 class handle {
