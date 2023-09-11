@@ -14,7 +14,7 @@ class output_to_op {
   private:
   expression::op_ref o;
   expression::op_manager& mgr;
-  ref tseitin_id = mgr.vars().get_id(expression::variable{ "tseitin" });
+  ref tseitin_id = mgr.vars().LITERAL_TSEITIN;
 
   std::stack<std::pair<expression::op_type, ref>> quants;
 

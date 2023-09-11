@@ -5,6 +5,7 @@ options { tokenVocab=boole_lexer; }
 #include <booleguru/expression/op_manager.hpp>
 #include <booleguru/expression/var_manager.hpp>
 #include <booleguru/lua/lua-context.hpp>
+#include <booleguru/util/is_number.hpp>
 }
 
 @members {
@@ -32,27 +33,11 @@ expr returns [uint32_t o]:
     | l=expr LPMI r=expr { $o = ops->get_id(op(op_type::Lpmi, $l.o, $r.o)); }
     | l=expr EQUI r=expr { $o = ops->get_id(op(op_type::Equi, $l.o, $r.o)); }
     | LPAR l=expr RPAR { $o = $l.o; }
-    | FORALL ID r=expr {
-            auto text = $ID.text;
-            uint32_t var_id = ops->vars().get_id(variable{std::move(text)});
-            uint32_t varop_id = ops->get_id(op(op_type::Var, var_id, 0));
-            $o = ops->get_id(op(op_type::Forall,
-                                varop_id,
-                                $r.o));
-        }
-    | EXISTS ID r=expr {
-            auto text = $ID.text;
-            uint32_t var_id = ops->vars().get_id(variable{std::move(text)});
-            uint32_t varop_id = ops->get_id(op(op_type::Var, var_id, 0));
-            $o = ops->get_id(op(op_type::Exists,
-                                varop_id,
-                                $r.o));
-        }
+    | FORALL v=var r=expr { $o = ops->get_id(op(op_type::Forall, $v.o, $r.o)); }
+    | EXISTS v=var r=expr { $o = ops->get_id(op(op_type::Exists, $v.o, $r.o)); }
     | TOP { $o = ops->top().get_id(); }
     | BOTTOM { $o = ops->bottom().get_id(); }
-    | ID { auto text = $ID.text;
-           uint32_t var_id = ops->vars().get_id(variable{std::move(text)});
-           $o = ops->get_id(op(op_type::Var, var_id, 0)); }
+    | v=var { $o = $v.o; }
     | last_op=expr FENNEL_SUBST c=MATCHING_PAREN {
             if(eval) {
                 auto ret = lua->eval_fennel("(" + $c.text + ")", (*ops)[$last_op.o]);
@@ -114,4 +99,18 @@ expr returns [uint32_t o]:
                 }
             }
         }
+    ;
+
+// Syntax for variable names in boolean logic is quite complex, as the {i}[q]
+// modifiers have to be parsed correctly.
+var returns [uint32_t o]:
+        { uint32_t var_id = 0; uint16_t i = 0, q = 0;}
+        ( ( VEC { var_id = ops->vars().LITERAL_VEC; } )
+      | ( TSEITIN { var_id = ops->vars().LITERAL_TSEITIN; } )
+      | ( ID { auto text = $ID.text;
+           var_id = ops->vars().get_id(variable{std::move(text)}); } )
+        )
+        ( LCURL ID { util::ensure_is_number($ID.text); i = atoi($ID.text.c_str()); } RCURL )?
+        ( LBRACK ID { util::ensure_is_number($ID.text); q = atoi($ID.text.c_str()); } RBRACK )?
+        { $o = ops->get_id(op(op_type::Var, var_id, i, q)); }
     ;

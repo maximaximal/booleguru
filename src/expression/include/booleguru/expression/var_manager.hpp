@@ -49,8 +49,12 @@ class var_manager : public manager<var_ref, var_manager> {
   inline void init() {
     auto top_id = get_id(variable{ "⊤" });
     auto bot_id = get_id(variable{ "⊥" });
+    auto tseitin_id = get_id(variable{ "𝑡" });
+    auto vec_id = get_id(variable{ "𝑣" });
     assert(top_id == LITERAL_TOP);
     assert(bot_id == LITERAL_BOTTOM);
+    assert(tseitin_id == LITERAL_TSEITIN);
+    assert(vec_id == LITERAL_VEC);
   }
 
   public:
@@ -61,6 +65,8 @@ class var_manager : public manager<var_ref, var_manager> {
   enum {
     LITERAL_TOP = 1,
     LITERAL_BOTTOM = 2,
+    LITERAL_TSEITIN = 3,
+    LITERAL_VEC = 4,
   };
 
   void push_namespace(std::string ns) { namespace_.push_back(ns); }

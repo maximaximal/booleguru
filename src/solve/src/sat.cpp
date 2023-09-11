@@ -342,7 +342,7 @@ sat::solve(expression::op_ref o) {
     std::stack<uint32_t> s;
     s.emplace(o.get_id());
 
-    int32_t tseitin_id = ops.vars().get_id(expression::variable{ "tseitin" });
+    int32_t tseitin_id = ops.vars().LITERAL_TSEITIN;
 
     while(!s.empty()) {
       uint32_t i = s.top();
@@ -418,7 +418,7 @@ sat::solve_resultmap(expression::op_ref o) {
     std::stack<uint32_t> s;
     s.emplace(o.get_id());
 
-    int32_t tseitin_id = ops.vars().get_id(expression::variable{ "tseitin" });
+    int32_t tseitin_id = ops.vars().LITERAL_TSEITIN;
 
     while(!s.empty()) {
       uint32_t i = s.top();

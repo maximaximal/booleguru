@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <ostream>
 
 #include "binop.hpp"
@@ -58,11 +59,8 @@ struct op {
     quantop quant;
   };
 
-  inline explicit constexpr op() {}
-
-  inline explicit constexpr op(op_type type, uint32_t r1, uint32_t r2)
-    : type(type)
-    , and_inside(false)
+  inline explicit constexpr op()
+    : and_inside(false)
     , is_ors(false)
     , is_cnf(false)
     , is_prenex(true)
@@ -72,8 +70,15 @@ struct op {
     , user_flag5(false)
     , user_int16(0)
     , user_int32(0)
-    , bin(0, 0) {
+    , bin(0, 0) {}
 
+  inline explicit constexpr op(op_type type)
+    : op() {
+    this->type = type;
+  }
+
+  inline explicit constexpr op(op_type type, uint32_t r1, uint32_t r2)
+    : op(type) {
     switch(type) {
       case op_type::Exists:
       case op_type::Forall:
@@ -106,6 +111,17 @@ struct op {
     }
   }
 
+  inline explicit constexpr op(op_type type,
+                               uint32_t r1,
+                               uint16_t r2,
+                               uint16_t r3)
+    : op(type) {
+    assert(type == op_type::Var);
+    var.v = r1;
+    var.i = r2;
+    var.q = r3;
+  }
+
   template<typename Functor>
   inline constexpr auto visit(Functor f) const {
     switch(type) {
@@ -128,6 +144,7 @@ struct op {
     }
 
     // Never occurs, but silences compiler warnings.
+    assert(false);
     return f(type, un);
   }
 

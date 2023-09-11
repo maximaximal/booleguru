@@ -8,13 +8,21 @@ AND : '--and' | '\u2227' | '&';
 OR : '--or'| '/' | '\u2228' | '|';
 NOT : '!' | '~' ;
 XOR : '--xor';
-LPAR : '(' | '[' | '{' | '--lpar';
-RPAR : ')' | ']' | '}' | '--rpar';
+LPAR : '(' | '--lpar';
+RPAR : ')' | '--rpar';
 IMPL : '--impl' | 'impl' | '->' ;
 LPMI : '--lpmi' | 'lpmi' | '<-' ;
 EQUI : '--equi' | '--equivalent' | '<->' ;
 FORALL : '--forall' | '#' | '@' | '\u2200' ;
 EXISTS : '--exists' | '?' | '\u2203';
+LCURL : '{';
+RCURL : '}';
+LBRACK : '[';
+RBRACK : ']';
+TSEITIN : '𝑡';
+VEC : '𝑣';
+TOP : '\u8868' | '⊤';
+BOTTOM : '\u8869' | '⊥';
 
 DIMACS : '--dimacs' | '--qdimacs';
 SMTLIB : '--smt' | '--smtlib' | '--smtlib2';
@@ -28,7 +36,7 @@ FENNEL_SUBST : ( ':(' ) { pushMode(CODE); };
 FENNEL_CALL : ( ':' ) { pushMode(CALL); };
 EOL_FENNEL_SUBST : ( '::' ) { pushMode(EOL_CODE); };
 
-ID : [0-9A-Za-z\u0080-\u2199\u22FF-\uFFFF_'"\][]+ {!std::filesystem::exists(getText());}? ;
+ID : [0-9A-Za-z\u0080-\u2199\u22FF-\uFFFF_'"]+ {!std::filesystem::exists(getText());}? ;
 PATH : ( '.' | '/' )? [-./0-9A-Za-z\u0080-\u2199\u22FF-\uFFFF_'"\][]+ {getText() == "-" || std::filesystem::exists(getText());}? ;
 
 WS : [ \t\f]+ -> skip ;

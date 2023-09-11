@@ -12,6 +12,7 @@ options { tokenVocab=cli_lexer; }
 #include <booleguru/lua/lua-context.hpp>
 #include <booleguru/parse/type.hpp>
 #include <booleguru/util/trim.hpp>
+#include <booleguru/util/is_number.hpp>
 }
 
 @members {
@@ -69,25 +70,11 @@ expr returns [uint32_t o]:
     | l=expr LPMI r=expr { $o = ops->get_id(op(op_type::Lpmi, $l.o, $r.o)); }
     | l=expr EQUI r=expr { $o = ops->get_id(op(op_type::Equi, $l.o, $r.o)); }
     | LPAR l=expr RPAR { $o = $l.o; }
-    | FORALL ID r=expr {
-            auto text = $ID.text;
-            uint32_t var_id = ops->vars().get_id(variable{std::move(text)});
-            uint32_t varop_id = ops->get_id(op(op_type::Var, var_id, 0));
-            $o = ops->get_id(op(op_type::Forall,
-                                varop_id,
-                                $r.o));
-        }
-    | EXISTS ID r=expr {
-            auto text = $ID.text;
-            uint32_t var_id = ops->vars().get_id(variable{std::move(text)});
-            uint32_t varop_id = ops->get_id(op(op_type::Var, var_id, 0));
-            $o = ops->get_id(op(op_type::Exists,
-                                varop_id,
-                                $r.o));
-        }
-    | ID { auto text = $ID.text;
-           uint32_t var_id = ops->vars().get_id(variable{std::move(text)});
-           $o = ops->get_id(op(op_type::Var, var_id, 0)); }
+    | FORALL v=var r=expr { $o = ops->get_id(op(op_type::Forall, $v.o, $r.o)); }
+    | EXISTS v=var r=expr { $o = ops->get_id(op(op_type::Exists, $v.o, $r.o)); }
+    | TOP { $o = ops->top().get_id(); }
+    | BOTTOM { $o = ops->bottom().get_id(); }
+    | v=var { $o = $v.o; }
     | {parse::type file_format = parse::type::boole;} (fo=format {file_format = $fo.t;})?
         p=PATH {
             if(!parse_file_function_)
@@ -119,4 +106,16 @@ format returns [parse::type t]:
     | PYTHON { $t = parse::type::py; }
     | LUA    { $t = parse::type::lua; }
     | NONE   { $t = parse::type::none; }
+    ;
+
+var returns [uint32_t o]:
+        { uint32_t var_id = 0; uint16_t i = 0, q = 0;}
+        ( ( VEC { var_id = ops->vars().LITERAL_VEC; } )
+      | ( TSEITIN { var_id = ops->vars().LITERAL_TSEITIN; } )
+      | ( ID { auto text = $ID.text;
+           var_id = ops->vars().get_id(variable{std::move(text)}); } )
+        )
+        ( LCURL ID { util::ensure_is_number($ID.text); i = atoi($ID.text.c_str()); } RCURL )?
+        ( LBRACK ID { util::ensure_is_number($ID.text); q = atoi($ID.text.c_str()); } RBRACK )?
+        { $o = ops->get_id(op(op_type::Var, var_id, i, q)); }
     ;

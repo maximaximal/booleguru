@@ -9,6 +9,7 @@
 #include <booleguru/util/istringviewstream.hpp>
 
 using namespace booleguru::parse;
+using namespace booleguru::expression;
 
 TEST_CASE("Parse example boole formulas and check the resulting expressions") {
   std::string_view input = GENERATE("(a & b)",
@@ -95,4 +96,32 @@ TEST_CASE("Parse formula containing lisp code") {
   }
   REQUIRE((*res)->and_inside);
   REQUIRE(res);
+}
+
+TEST_CASE("Parse a formula with modifiers on a variable") {
+  std::string_view input = "# bv{1}[1] ? bv{2}[1] bv{1}[1] & bv{2}[1]";
+  auto is = isviewstream(input);
+  boole parser(is);
+  auto root = parser();
+
+  CAPTURE(root.message);
+  CAPTURE(*root);
+
+  REQUIRE((*root)->type == op_type::Forall);
+
+  auto f1 = root->right();
+  auto ref = f1.right();
+
+  REQUIRE(ref->type == op_type::And);
+
+  auto l = ref.left();
+  auto r = ref.right();
+
+  REQUIRE(l->type == op_type::Var);
+  REQUIRE(r->type == op_type::Var);
+  REQUIRE(l->var.v == r->var.v);
+  REQUIRE(l->var.i == 1);
+  REQUIRE(l->var.q == 1);
+  REQUIRE(r->var.i == 2);
+  REQUIRE(r->var.q == 1);
 }
