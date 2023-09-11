@@ -13,7 +13,7 @@ RPAR : ')' | ']' | '}' | '--rpar';
 IMPL : '--impl' | 'impl' | '->' ;
 LPMI : '--lpmi' | 'lpmi' | '<-' ;
 EQUI : '--equi' | '--equivalent' | '<->' ;
-FORALL : '--forall' | '@' | '\u2200' ;
+FORALL : '--forall' | '#' | '@' | '\u2200' ;
 EXISTS : '--exists' | '?' | '\u2203';
 
 DIMACS : '--dimacs' | '--qdimacs';
