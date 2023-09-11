@@ -10,8 +10,19 @@ set(CMAKE_CXX_STANDARD 20)
 
 option(TESTS "Enable Test-Target (requires Catch2)" ON)
 option(DOCS "Enable Generation of Documentation (requires Doxygen, Sphinx, and Breathe)" ON)
+option(FORCE_COLORED_OUTPUT "Always produce ANSI-colored output (GNU/Clang only)." TRUE)
 
 get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+
+# Credit to this article:
+# https://medium.com/@alasher/colored-c-compiler-output-with-ninja-clang-gcc-10bfe7f2b949
+if(${FORCE_COLORED_OUTPUT})
+    if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+       add_compile_options(-fdiagnostics-color=always)
+    elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+       add_compile_options(-fcolor-diagnostics)
+    endif()
+endif()
 
 if(EMSCRIPTEN)
   set(CMAKE_CXX_FLAGS "-fwasm-exceptions")
