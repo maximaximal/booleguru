@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <functional>
+
 namespace booleguru::expression {
 using bvop_ref_t = uint32_t;
 
