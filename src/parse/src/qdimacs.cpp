@@ -126,7 +126,7 @@ qdimacs::operator()() {
   }
 
   for(int i = 1; i <= highest_var; ++i) {
-    int id = vars_->get_id(variable{ std::to_string(i) }) - 1;
+    expression::var_id id = vars_->get_id(variable{ std::to_string(i) }) - 1;
     assert(id == i);
   }
 

@@ -8,13 +8,13 @@ bvop_ref
 bvop_ref::left() {
   if(!valid())
     return bvop_ref();
-  return get_mgr()[(*this)->left()];
+  return get_mgr()[id((*this)->left())];
 }
 bvop_ref
 bvop_ref::right() {
   if(!valid())
     return bvop_ref();
-  return get_mgr()[(*this)->right()];
+  return get_mgr()[id((*this)->right())];
 }
 
 op_ref

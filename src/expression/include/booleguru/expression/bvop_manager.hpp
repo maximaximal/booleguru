@@ -8,9 +8,9 @@ namespace booleguru::expression {
 class op_manager;
 class bvop_manager;
 
-class bvop_ref : public reference<bvop, bvop_manager> {
+class bvop_ref : public reference<bvop, bvop_manager, bvop_id> {
   public:
-  using reference<bvop, bvop_manager>::reference;
+  using reference<bvop, bvop_manager, bvop_id>::reference;
 
   bvop_ref left();
   bvop_ref right();

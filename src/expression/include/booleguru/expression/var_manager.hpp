@@ -63,7 +63,7 @@ class var_manager : public manager<var_ref, var_manager> {
   using base::base;
   friend class manager;
 
-  enum : manager<var_ref, var_manager>::ref::numeric_type {
+  enum : uint32_t {
     LITERAL_TOP = 1,
     LITERAL_BOTTOM = 2,
     LITERAL_TSEITIN = 3,

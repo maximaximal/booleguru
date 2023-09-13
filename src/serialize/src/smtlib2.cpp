@@ -12,10 +12,10 @@ void
 smtlib2::operator()(expression::op_ref op) {
   expression::op_manager& mgr = op.get_mgr();
 
-  std::set<expression::op_manager::ref> vars;
-  std::set<expression::op_manager::ref> quantified_vars;
-  expression::op_manager::ref root = op.get_id();
-  std::stack<std::pair<expression::op_manager::ref, uint32_t>> s;
+  std::set<expression::op_manager::id> vars;
+  std::set<expression::op_manager::id> quantified_vars;
+  expression::op_manager::id root = op.get_id();
+  std::stack<std::pair<expression::op_manager::id, uint32_t>> s;
   s.emplace(std::make_pair(root, 0));
 
   // Collect all variables!
@@ -58,7 +58,7 @@ smtlib2::operator()(expression::op_ref op) {
     o_ << "\n";
   }
 
-  std::set<expression::op_manager::ref> unquantified_vars;
+  std::set<expression::op_manager::id> unquantified_vars;
   std::set_difference(
     vars.begin(),
     vars.end(),

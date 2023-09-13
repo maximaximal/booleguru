@@ -34,13 +34,13 @@ template<class Mgr>
 class proxy {
   std::string_view name_;
 
-  using Ref = typename Mgr::objref;
+  using ref = typename Mgr::ref;
 
   public:
   constexpr inline proxy(std::string_view name)
     : name_(name) {}
 
-  constexpr inline Ref operator()(Mgr& mgr) const {
+  constexpr inline ref operator()(Mgr& mgr) const {
     if constexpr(std::is_same<Mgr, var_manager>()) {
       return mgr.get(variable{ std::string(name_) });
     } else if constexpr(std::is_same<Mgr, op_manager>()) {
@@ -50,11 +50,11 @@ class proxy {
             0 });
     }
   }
-  inline Ref operator()(std::shared_ptr<Mgr> mgr) const {
+  inline ref operator()(std::shared_ptr<Mgr> mgr) const {
     return (*this)(*mgr);
   }
 
-  constexpr operator Ref() const {
+  constexpr operator ref() const {
     if constexpr(std::is_same<Mgr, var_manager>()) {
       return (*this)(handle::global().get_var_manager());
     } else if constexpr(std::is_same<Mgr, op_manager>()) {

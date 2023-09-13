@@ -8,8 +8,7 @@
 
 namespace booleguru::transform {
 struct variable_rename : public visitor<variable_rename> {
-  using M
-    = std::unordered_map<op_ref::ref::numeric_type, op_ref::ref::numeric_type>;
+  using M = std::unordered_map<uint32_t, uint32_t>;
   M vars;
 
   template<typename... Rest>
@@ -17,8 +16,8 @@ struct variable_rename : public visitor<variable_rename> {
                   const std::string& oldname,
                   const std::string& newname,
                   Rest&&... rest) {
-    vars.insert({ varmgr.get(variable{ oldname }).get_id(),
-                  varmgr.get(variable{ newname }).get_id() });
+    vars.insert({ (uint32_t)varmgr.get(variable{ oldname }).get_id(),
+                  (uint32_t)varmgr.get(variable{ newname }).get_id() });
     if constexpr(sizeof...(Rest) > 0) {
       variable_rename(varmgr, std::forward(rest)...);
     }

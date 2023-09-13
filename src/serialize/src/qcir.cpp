@@ -249,10 +249,10 @@ qcir::operator()(expression::op_ref op) {
 
   op.get_mgr().unmark();
 
-  std::vector<uint32_t> vars;
-  std::vector<uint32_t> quantified_vars;
+  std::vector<op_id> vars;
+  std::vector<op_id> quantified_vars;
   auto visit
-    = [&quantified_vars, &vars](uint32_t id, const expression::op& op) -> void {
+    = [&quantified_vars, &vars](op_id id, const expression::op& op) -> void {
     op.mark = true;
     switch(op.type) {
       case expression::op_type::Var:
@@ -272,7 +272,7 @@ qcir::operator()(expression::op_ref op) {
   std::sort(vars.begin(), vars.end());
   std::sort(quantified_vars.begin(), quantified_vars.end());
 
-  std::vector<uint32_t> unquantified_vars;
+  std::vector<op_id> unquantified_vars;
   std::set_difference(vars.begin(),
                       vars.end(),
                       quantified_vars.begin(),

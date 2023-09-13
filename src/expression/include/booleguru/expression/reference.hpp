@@ -7,19 +7,26 @@
 #include <booleguru/expression/id.hpp>
 
 namespace booleguru::expression {
-template<class T, class M, class ID = id>
+/**
+ * TODO: Write documentation.
+ *
+ * Explanation on type naming conventions:
+ *  - `id`: Refers to the typed wrapper around some numeric type
+ *  - `numeric_type`: The underlying numerical type of an ID (e.g. int).
+ *  - `objtype`: The object type, as referenced by the ID and manager.
+ */
+template<class T, class M, class ID>
 class reference {
   public:
   using objtype = T;
-  using ref = ID;
-  using numeric_type = typename ID::numeric_type;
+  using id = ID;
 
   protected:
   // ID 0 is never given to valid references, as the manager base class always
   // counts up from 1 onwards.
 
   M* mgr_;
-  ref id_;
+  ID id_;
 
   public:
   inline constexpr reference()
@@ -56,8 +63,8 @@ class reference {
     return *mgr_;
   }
   inline constexpr void set_mgr(M* m) { mgr_ = m; }
-  inline constexpr ref get_id() const noexcept { return id_; }
-  inline constexpr void set_id(ref id) noexcept { id_ = id; }
+  inline constexpr ID get_id() const noexcept { return id_; }
+  inline constexpr void set_id(ID id) noexcept { id_ = id; }
 
   inline constexpr reference& operator=(const reference& o) {
     mgr_ = o.mgr_;
@@ -71,7 +78,7 @@ class reference {
   inline size_t hash() const {
     size_t hash = reinterpret_cast<intptr_t>(&get_mgr());
     hash <<= 32u;
-    hash |= get_id();
+    hash |= (uint32_t)get_id();
     return hash;
   }
 };

@@ -182,13 +182,13 @@ struct op {
     return false;
   }
 
-  constexpr inline uint32_t left() const {
+  constexpr inline op_id left() const {
     return visit([](op_type t, const auto& e) {
       (void)t;
       return e.left();
     });
   }
-  constexpr inline uint32_t right() const {
+  constexpr inline op_id right() const {
     return visit([](op_type t, const auto& e) {
       (void)t;
       return e.right();

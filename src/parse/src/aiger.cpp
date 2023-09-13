@@ -4,6 +4,7 @@
 
 #include <fmt/format.h>
 
+#include <booleguru/expression/id.hpp>
 #include <booleguru/expression/op_manager.hpp>
 #include <booleguru/expression/var_manager.hpp>
 #include <booleguru/parse/aiger.hpp>
@@ -156,7 +157,7 @@ aiger::parse_binary() {
 void
 aiger::remember_symbol(unsigned gate, const std::string& symbol) {
   if(gate < number_of_inputs_ + number_of_outputs_ + 2) {
-    uint32_t var_id = vars_->get_id(expression::variable{ symbol });
+    expression::var_id var_id = vars_->get_id(expression::variable{ symbol });
     variables[gate] = var_id;
   }
 }
@@ -168,13 +169,13 @@ aiger::build() {
   } else if(number_of_outputs_ == 1) {
     // This is the archetypical formula of one output and many inputs. Build it
     // like a boolean expression by operating on two stacks.
-    std::stack<uint32_t> ops;
+    std::stack<expression::op_id> ops;
 
     auto visit = [this, &ops](unsigned node) {
       using namespace expression;
       if(node > 0 && node <= 2) {
         // A constant variable! Use booleguru's special constant values.
-        op_ref::ref v;
+        op_id v;
         if(node == 1) {
           // FALSE
           v = ops_->get_id(op(op_type::Var, 2, 0));
@@ -185,20 +186,20 @@ aiger::build() {
         ops.emplace(v);
       } else if(node > 2 && node <= number_of_inputs_ + 2) {
         // Input node! This is just a variable.
-        var_ref::ref var_id = variables[node - 1];
+        var_id var_id = variables[node - 1];
         if(var_id == 0)
           var_id = vars_->get_id(variable{ std::to_string(node - 2) });
-        op_ref::ref v = ops_->get_id(op(op_type::Var, var_id, 0));
+        op_id v = ops_->get_id(op(op_type::Var, var_id, 0));
         ops.emplace(v);
       } else if(node >= number_of_inputs_ + 2 + number_of_latches_
                           + number_of_outputs_
                 && number_of_and_gates_ > 0) {
         // And gate!
         assert(!ops.empty());
-        op_ref::ref r = ops.top();
+        op_id r = ops.top();
         ops.pop();
         assert(!ops.empty());
-        op_ref::ref l = ops.top();
+        op_id l = ops.top();
         ops.pop();
 
         auto& g = gates[node - gates_offset() - 2];
@@ -216,10 +217,10 @@ aiger::build() {
         // Output node! This may be directly a variable or a negated variable,
         // depending on what's saved in negated_outputs.
         if(ops.empty()) {
-          var_ref::ref var_id = variables[node - 1];
+          var_id var_id = variables[node - 1];
           if(var_id == 0)
             var_id = vars_->get_id(variable{ std::to_string(node) });
-          op_ref::ref v = ops_->get_id(op(op_type::Var, var_id, 0));
+          op_id v = ops_->get_id(op(op_type::Var, var_id, 0));
           ops.emplace(v);
         }
         if(negated_outputs[node - 1]) {

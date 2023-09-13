@@ -13,7 +13,7 @@ class tseitin {
   public:
   using TransformResult = typename O::TransformResult;
   using initarg = typename O::initarg;
-  using ref = typename O::ref;
+  using id = typename O::id;
 
   tseitin(initarg init)
     : o_(init) {}

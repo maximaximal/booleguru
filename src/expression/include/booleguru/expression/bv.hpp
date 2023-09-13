@@ -5,22 +5,21 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <functional>
+#include <booleguru/expression/id.hpp>
 
 namespace booleguru::expression {
-using bvop_ref_t = uint32_t;
 
 struct bvunop {
-  const bvop_ref_t l = 0;
+  const bvop_id l = 0;
 
-  bvunop(bvop_ref_t l)
+  bvunop(bvop_id l)
     : l(l) {}
 
   inline constexpr size_t hash() const {
     return 4017271 * static_cast<size_t>(l);
   }
-  inline constexpr bvop_ref_t left() const { return l; }
-  inline constexpr bvop_ref_t right() const { return 0; }
+  inline constexpr bvop_id left() const { return l; }
+  inline constexpr bvop_id right() const { return 0; }
   inline constexpr bool operator==(const bvunop& o) const { return l == o.l; }
 };
 
@@ -29,29 +28,30 @@ struct bvunop {
  * A variable has width on l, and varref on r.
  */
 struct bvbinop {
-  const bvop_ref_t l = 0;
-  const bvop_ref_t r = 0;
+  const uint32_t l = 0;
+  const uint32_t r = 0;
 
-  bvbinop(bvop_ref_t l, bvop_ref_t r)
+  bvbinop(bvop_id l, bvop_id r)
     : l(l)
     , r(r) {}
 
   inline constexpr size_t hash() const {
     return 4017271 * static_cast<size_t>(l) + 70200511 * static_cast<size_t>(r);
   }
-  inline constexpr bvop_ref_t left() const { return l; }
-  inline constexpr bvop_ref_t right() const { return r; }
+  inline constexpr bvop_id left() const { return l; }
+  inline constexpr bvop_id right() const { return r; }
   inline constexpr bool operator==(const bvbinop& o) const {
     return l == o.l && r == o.r;
   }
 };
 
 struct bvternop {
-  const bvop_ref_t a1 = 0;
-  const bvop_ref_t a2 = 0;
-  const bvop_ref_t a3 = 0;
+  const bvop_id a1 = 0;
+  const bvop_id a2 = 0;
+  // TODO(Marcel): Not sure about the type here..?
+  const uint32_t a3 = 0;
 
-  bvternop(bvop_ref_t a1, bvop_ref_t a2, bvop_ref_t a3)
+  bvternop(bvop_id a1, bvop_id a2, bvop_id a3)
     : a1(a1)
     , a2(a2)
     , a3(a3) {}
@@ -61,8 +61,8 @@ struct bvternop {
             + 70200511 * static_cast<size_t>(a2))
            ^ a3;
   }
-  inline constexpr bvop_ref_t left() const { return 0; }
-  inline constexpr bvop_ref_t right() const { return 0; }
+  inline constexpr bvop_id left() const { return 0; }
+  inline constexpr bvop_id right() const { return 0; }
   inline constexpr bool operator==(const bvternop& o) const {
     return a1 == o.a1 && a2 == o.a2 && a3 == o.a3;
   }
@@ -89,8 +89,9 @@ enum class bvop_type : uint8_t {
 };
 
 struct bvop {
-  using ref = bvop_ref_t;
   using objtype = bvop;
+  using id = bvop_id;
+
   bvop_type type;
   union {
     bvunop unop;
@@ -98,12 +99,12 @@ struct bvop {
     bvternop ternop;
   };
 
-  explicit bvop(bvop_type t, ref l)
+  explicit bvop(bvop_type t, id l)
     : type(t)
     , unop(l) {
     assert(t == bvop_type::bvnot || t == bvop_type::bvneg);
   }
-  explicit bvop(bvop_type t, ref l, ref r)
+  explicit bvop(bvop_type t, id l, id r)
     : type(t)
     , binop(l, r) {
     assert(t == bvop_type::bv || t == bvop_type::bvand || t == bvop_type::bvor
@@ -111,7 +112,7 @@ struct bvop {
            || t == bvop_type::bvudiv || t == bvop_type::bvurem
            || t == bvop_type::bvshl || t == bvop_type::bvlshr);
   }
-  explicit bvop(bvop_type t, ref a1, ref a2, ref a3)
+  explicit bvop(bvop_type t, id a1, id a2, id a3)
     : type(t)
     , ternop(a1, a2, a3) {}
 
@@ -184,13 +185,13 @@ struct bvop {
     assert(type == bvop_type::bv);
     return binop.r;
   }
-  constexpr inline uint32_t left() const noexcept {
+  constexpr inline bvop_id left() const noexcept {
     return visit([](bvop_type t, const auto& e) {
       (void)t;
       return e.left();
     });
   }
-  constexpr inline uint32_t right() const noexcept {
+  constexpr inline bvop_id right() const noexcept {
     return visit([](bvop_type t, const auto& e) {
       (void)t;
       return e.right();

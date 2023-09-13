@@ -11,6 +11,8 @@ options { tokenVocab=boole_lexer; }
 @members {
   using variable = expression::variable;
   using op = expression::op;
+  using op_id = expression::op_id;
+  using var_id = expression::var_id;
   using op_ref = expression::op_ref;
   using op_type = expression::op_type;
   using op_manager = expression::op_manager;
@@ -24,7 +26,7 @@ formula returns [op_ref o]
     | <EOF>
     ;
 
-expr returns [uint32_t o]:
+expr returns [op_id o]:
       NOT l=expr { $o = ops->get_id(op(op_type::Not, $l.o, 0)); }
     | l=expr AND r=expr { $o = ops->get_id(op(op_type::And, $l.o, $r.o)); }
     | l=expr OR r=expr { $o = ops->get_id(op(op_type::Or, $l.o, $r.o)); }
@@ -103,8 +105,8 @@ expr returns [uint32_t o]:
 
 // Syntax for variable names in boolean logic is quite complex, as the {i}[q]
 // modifiers have to be parsed correctly.
-var returns [uint32_t o]:
-        { uint32_t var_id = 0; uint16_t i = 0, q = 0;}
+var returns [op_id o]:
+        { var_id var_id = 0; uint16_t i = 0, q = 0;}
         ( ( VEC { var_id = ops->vars().LITERAL_VEC; } )
       | ( TSEITIN { var_id = ops->vars().LITERAL_TSEITIN; } )
       | ( ID { auto text = $ID.text;

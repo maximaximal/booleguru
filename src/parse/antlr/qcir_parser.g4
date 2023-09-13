@@ -16,6 +16,7 @@ options { tokenVocab=qcir_lexer; }
     #include <ankerl/unordered_dense.h>
     #include <fmt/format.h>
 
+    #include <booleguru/expression/id.hpp>
     #include <booleguru/expression/op_manager.hpp>
     #include <booleguru/expression/var_manager.hpp>
     #include <booleguru/util/reverse.hpp>
@@ -24,17 +25,19 @@ options { tokenVocab=qcir_lexer; }
 
     using op          = expression::op;
     using op_ref      = expression::op_ref;
+    using op_id       = expression::op_id;
     using op_type     = expression::op_type;
     using op_manager  = expression::op_manager;
     using var_ref     = expression::var_ref;
+    using var_id      = expression::var_id;
     using var_manager = expression::var_manager;
 }
 
 @members {
     std::shared_ptr<op_manager> ops;
-    ankerl::unordered_dense::map<std::string, uint32_t> free_variables;
-    ankerl::unordered_dense::map<std::string, uint32_t> quantified_variables;
-    ankerl::unordered_dense::map<std::string, uint32_t> gate_variables;
+    ankerl::unordered_dense::map<std::string, var_id> free_variables;
+    ankerl::unordered_dense::map<std::string, var_id> quantified_variables;
+    ankerl::unordered_dense::map<std::string, op_id> gate_variables;
 
     void check_var_dup(std::string const &var_name) {
       std::string_view constexpr fmt_str = "{} variable '{}' clashes with"
@@ -55,7 +58,7 @@ formula returns [op_ref op]
     : EOL* q=qcir { $op = (*ops)[$q.output_id]; } EOF
     ;
 
-qcir returns [uint32_t output_id]
+qcir returns [op_id output_id]
     : format_id EOL+
       ( qblock_free EOL+ )?
       ( qb+=qblock_quant EOL+ )*
@@ -79,7 +82,7 @@ qcir returns [uint32_t output_id]
           // after a variable usage...
           std::unordered_set<std::string_view> seen_names;
           ops->traverse_preorder_with_stack($output_id,
-            [this, &seen_names](uint32_t const &curr) {
+            [this, &seen_names](op_id const &curr) {
               op_ref const &o = (*ops)[curr];
               switch (o->type) {
                 case op_type::Exists:
@@ -90,12 +93,12 @@ qcir returns [uint32_t output_id]
                   } break;
                 case op_type::Var:;
                   {
-                    auto const &var_id = o->var.v;
-                    auto const &name = ops->vars()[var_id]->name;
+                    auto const &v_id = o->var.v;
+                    auto const &name = ops->vars()[v_id]->name;
                     if (seen_names.count(name) == 0
                           && free_variables.count(name) == 0
-                          && var_id != var_manager::LITERAL_TOP
-                          && var_id != var_manager::LITERAL_BOTTOM)
+                          && v_id != var_manager::LITERAL_TOP
+                          && v_id != var_manager::LITERAL_BOTTOM)
                       notifyErrorListeners(fmt::format(
                         "Variable '{}' was never declared free, quantified,"
                         " or defined as gate variable", name));
@@ -119,7 +122,7 @@ qblock_free
     : FREE LPAR vl=var_list RPAR
         { for (auto const var : $vl.vars) {
             check_var_dup(var->text);
-            free_variables[var->text] = var->var_id;
+            free_variables[var->text] = var->v_id;
           }
         }
     ;
@@ -130,7 +133,7 @@ qblock_quant returns [op_type ot, std::vector<VariableContext *> vars]
         { $vars = std::move($vl.vars);
           for (auto const var : $vl.vars) {
             check_var_dup(var->text);
-            quantified_variables[var->text] = var->var_id;
+            quantified_variables[var->text] = var->v_id;
           }
         }
     ;
@@ -146,7 +149,7 @@ output_statement returns [std::string name, bool negated]
         }
     ;
 
-gate_statement returns [std::string gvar, uint32_t id]
+gate_statement returns [std::string gvar, op_id id]
     : IDENT
         { $gvar = std::move($IDENT.text);
           check_var_dup($gvar);
@@ -160,11 +163,11 @@ gate_statement returns [std::string gvar, uint32_t id]
             { $id = ops->get_id(op(op_type::Xor, $l0.id, $l1.id)); }
         | ITE LPAR l0=literal[$gvar] COMMA l1=literal[$gvar]
               COMMA l2=literal[$gvar]
-            { uint32_t const neg_l0 = ops->get_id(op(op_type::Not, $l0.id, 0));
-              uint32_t const if_branch   = ops->get_id(op(op_type::And,
-                                                          $l0.id, $l1.id)),
-                             else_branch = ops->get_id(op(op_type::And,
-                                                          neg_l0, $l2.id));
+            { op_id const neg_l0 = ops->get_id(op(op_type::Not, $l0.id, 0));
+              op_id const if_branch   = ops->get_id(op(op_type::And,
+                                                       $l0.id, $l1.id)),
+                          else_branch = ops->get_id(op(op_type::And,
+                                                       neg_l0, $l2.id));
               $id = ops->get_id(op(op_type::Or, if_branch, else_branch));
             }
         | ( qu=EXISTS | qu=FORALL ) LPAR vl=var_list SEMICOLON l=literal[$gvar]
@@ -190,14 +193,14 @@ var_list returns [std::vector<VariableContext *> vars]
     ;
 
 // NOTE: Literal lists can be empty, hence the 'empty_id' parameter!
-lit_list [op_type ot, uint32_t empty_id, std::string gvar] returns [uint32_t id]
+lit_list [op_type ot, var_id empty_id, std::string gvar] returns [op_id id]
     : l0=literal[$gvar] { $id = $l0.id; }
         ( COMMA ln=literal[gvar] { $id = ops->get_id(op(ot, $id, $ln.id)); } )*
     | { $id = ops->get_id(op(op_type::Var, empty_id, 0)); }
     ;
 
 // Literals always create a node in the binary tree.
-literal [std::string gvar] returns [uint32_t id]
+literal [std::string gvar] returns [op_id id]
     : ( NEG var=variable { $id = ops->get_id(op(op_type::Not, $var.id, 0)); }
           | var=variable { $id = $var.id; } )
         { // Check that the literal is not cyclic with its gate variable
@@ -210,15 +213,15 @@ literal [std::string gvar] returns [uint32_t id]
 
 // Variables only reserve a spot in the variable manager, without creating a
 // variable node in the binary tree.
-variable returns [uint32_t id, uint32_t var_id, std::string text]
+variable returns [op_id id, var_id v_id, std::string text]
     : IDENT
         { $text = std::move($IDENT.text);
           if (gate_variables.count($text) != 0) {
-            $var_id = 0;
+            $v_id = 0;
             $id = gate_variables[$text];
           } else {
-            $var_id = ops->vars().get_id({ $text });
-            $id = ops->get_id(op(op_type::Var, $var_id, 0));
+            $v_id = ops->vars().get_id({ $text });
+            $id = ops->get_id(op(op_type::Var, $v_id, 0));
           }
         }
     ;
