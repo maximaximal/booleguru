@@ -15,10 +15,12 @@ class handle {
   handle(std::shared_ptr<op_manager> ops)
     : ops_(ops) {}
 
-  static handle& global(std::shared_ptr<op_manager> ops
-                        = std::make_shared<op_manager>()) {
-    if(!instance_)
+  static handle& global(std::shared_ptr<op_manager> ops = nullptr) {
+    if(!instance_) {
+      if(!ops)
+        ops = std::make_shared<op_manager>();
       instance_ = std::make_unique<handle>(ops);
+    }
     return *instance_;
   }
 

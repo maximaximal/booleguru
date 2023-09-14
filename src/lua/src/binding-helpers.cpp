@@ -122,7 +122,7 @@ solve_sat(expression::op_ref o,
   return s.solve(o);
 }
 
-std::optional<std::unordered_map<expression::op_ref, bool>>
+std::optional<std::unordered_map<uint32_t, bool>>
 solve_sat_to_resultmap(expression::op_ref o,
                        std::string solver,
                        std::vector<std::string> args) {

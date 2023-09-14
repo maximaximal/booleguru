@@ -401,7 +401,7 @@ sat::solve(expression::op_ref o) {
   }
 }
 
-std::optional<std::unordered_map<expression::op_ref, bool>>
+std::optional<std::unordered_map<uint32_t, bool>>
 sat::solve_resultmap(expression::op_ref o) {
   if(o->is_quant()) {
     throw std::runtime_error("Cannot solve a QBF with a pure SAT solver!");
@@ -410,7 +410,7 @@ sat::solve_resultmap(expression::op_ref o) {
   xcc_sat_solver solver;
   int res = solve_with_solver(o, solver);
 
-  std::unordered_map<expression::op_ref, bool> assignments;
+  std::unordered_map<uint32_t, bool> assignments;
 
   expression::op_manager& ops = o.get_mgr();
   if(res == 10) {
@@ -440,7 +440,7 @@ sat::solve_resultmap(expression::op_ref o) {
           s.emplace(op.un.c);
           break;
         case Var:
-          assignments[ops[i]] = solver.assignments[op.user_int32];
+          assignments[ops[i].get_id()] = solver.assignments[op.user_int32];
           break;
         default:
           assert(false);
