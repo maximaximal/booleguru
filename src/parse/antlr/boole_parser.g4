@@ -114,5 +114,5 @@ var returns [op_id o]:
         )
         ( LCURL ID { util::ensure_is_number($ID.text); i = atoi($ID.text.c_str()); } RCURL )?
         ( LBRACK ID { util::ensure_is_number($ID.text); q = atoi($ID.text.c_str()); } RBRACK )?
-        { $o = ops->get_id(op(op_type::Var, var_id, i, q)); }
+        { $o = ops->get_id(op(op_type::Var, var_id, q, i)); }
     ;

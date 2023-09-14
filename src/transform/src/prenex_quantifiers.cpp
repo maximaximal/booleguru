@@ -119,8 +119,8 @@ prenex_quantifier::walk_quant(expression::op_ref o) {
   // variable). Unbound variables are free, i.e. they have never been quantified
   // before.
 
-  auto bound_v
-    = o.get_mgr().get(expression::op(expression::op_type::Var, old_v.v, bound));
+  auto bound_v = o.get_mgr().get(
+    expression::op(expression::op_type::Var, old_v.v, bound, old_v.i));
   bound_v->user_int32
     = static_cast<uint32_t>(std::numeric_limits<uint32_t>::max());
 

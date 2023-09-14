@@ -117,8 +117,8 @@ struct op {
     : op(type) {
     assert(type == op_type::Var);
     var.v = r1;
-    var.i = r2;
-    var.q = r3;
+    var.q = r2;
+    var.i = r3;
   }
 
   template<typename Functor>
