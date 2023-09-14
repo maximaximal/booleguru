@@ -1,6 +1,5 @@
 // Author: Marcel Simader (marcel.simader@jku.at)
 // Date: 11.09.2023
-// (c) Marcel Simader 2023, Johannes Kepler Universität Linz
 
 #pragma once
 
