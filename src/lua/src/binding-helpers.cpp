@@ -9,7 +9,7 @@
 namespace booleguru::lua::helpers {
 uint32_t
 get_op_id(const expression::op_ref& r) {
-  return (uint32_t)r.get_id();
+  return static_cast<uint32_t>(r.get_id());
 }
 
 expression::op_type
@@ -45,7 +45,7 @@ get_op_is_ors(const expression::op_ref& r) {
 
 uint32_t
 get_op_varop_v(const expression::op_ref& op) {
-  return (uint32_t)op->var.v;
+  return static_cast<uint32_t>(op->var.v);
 }
 
 uint32_t

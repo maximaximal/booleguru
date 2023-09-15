@@ -200,7 +200,7 @@ class output_to_qdimacs {
     while(i->is_quant()) {
       i = i.right();
     }
-    uint32_t behind_prefix = (uint32_t)i.get_id();
+    uint32_t behind_prefix = static_cast<uint32_t>(i.get_id());
 
     int32_t variables = var_id - 1;
     int32_t clauses = 0;
@@ -245,12 +245,12 @@ class output_to_qdimacs {
         if(o.left()->type == And) {
           s.emplace(o->left());
         } else {
-          print_or_tree(ops, (uint32_t)o->left(), inner_s, a);
+          print_or_tree(ops, static_cast<uint32_t>(o->left()), inner_s, a);
         }
         if(o.right()->type == And) {
           s.emplace(o->right());
         } else {
-          print_or_tree(ops, (uint32_t)o->right(), inner_s, a);
+          print_or_tree(ops, static_cast<uint32_t>(o->right()), inner_s, a);
         }
       }
     }

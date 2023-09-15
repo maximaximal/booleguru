@@ -102,7 +102,7 @@ tseitin<O>::operator()(expression::op_ref o) {
   while(q->is_quant()) {
     assert(q.left()->type == expression::op_type::Var);
     const expression::op& q_ = q.get_obj();
-    uint32_t left_id = (uint32_t)q_.left();
+    uint32_t left_id = static_cast<uint32_t>(q_.left());
     const expression::op& left = q.get_mgr().getobj(left_id);
     assert(left_id != 0);
     assert(left.type == expression::op_type::Var);

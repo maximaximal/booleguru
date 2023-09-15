@@ -68,8 +68,8 @@ class output_to_op {
     if(o.type == expression::op_type::Var) {
       return id;
     } else {
-      return mgr.get_id(
-        expression::op(expression::op_type::Var, tseitin_id, (uint16_t)id));
+      return mgr.get_id(expression::op(
+        expression::op_type::Var, tseitin_id, static_cast<uint16_t>(id), 0));
     }
   }
 

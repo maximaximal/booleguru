@@ -16,8 +16,9 @@ struct variable_rename : public visitor<variable_rename> {
                   const std::string& oldname,
                   const std::string& newname,
                   Rest&&... rest) {
-    vars.insert({ (uint32_t)varmgr.get(variable{ oldname }).get_id(),
-                  (uint32_t)varmgr.get(variable{ newname }).get_id() });
+    vars.insert(
+      { static_cast<uint32_t>(varmgr.get(variable{ oldname }).get_id()),
+        static_cast<uint32_t>(varmgr.get(variable{ newname }).get_id()) });
     if constexpr(sizeof...(Rest) > 0) {
       variable_rename(varmgr, std::forward(rest)...);
     }

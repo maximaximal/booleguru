@@ -22,7 +22,7 @@ struct id {
   inline constexpr T& operator=(T const& o_id) {
     if(this == &o_id)
       return *this;
-    id_ = (uint32_t)o_id;
+    id_ = static_cast<uint32_t>(o_id);
     return *this;
   }
 

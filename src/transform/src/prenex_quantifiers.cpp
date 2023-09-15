@@ -62,9 +62,9 @@ prenex_quantifier::operator()(op_ref o) {
 
   op_id qt_root = o.get_mgr().getobj(new_root).user_int32;
 
-  i_->qt.prenex((uint32_t)qt_root, i_->checker);
-  op_ref prepended
-    = i_->qt.prepend_marked_to_op((uint32_t)qt_root, o.get_mgr()[new_root]);
+  i_->qt.prenex(static_cast<uint32_t>(qt_root), i_->checker);
+  op_ref prepended = i_->qt.prepend_marked_to_op(static_cast<uint32_t>(qt_root),
+                                                 o.get_mgr()[new_root]);
   return prepended;
 }
 
@@ -113,7 +113,7 @@ prenex_quantifier::walk_quant(expression::op_ref o) {
   auto& old_v_obj = o.get_mgr().vars().getobj(old_v.v);
 
   uint32_t bound = ++old_v_obj.counter;
-  i_->bounds_map[(uint32_t)old_v.v] = bound;
+  i_->bounds_map[static_cast<uint32_t>(old_v.v)] = bound;
 
   // Whenever a variable is quantified, it is bound to a new unique number (per
   // variable). Unbound variables are free, i.e. they have never been quantified
@@ -126,7 +126,7 @@ prenex_quantifier::walk_quant(expression::op_ref o) {
 
   op_ref e = o.right();
   uint32_t user_int32 = i_->qt.add((expression::op_type)o->type,
-                                   (uint32_t)bound_v.get_id(),
+                                   static_cast<uint32_t>(bound_v.get_id()),
                                    static_cast<uint32_t>(e->user_int32));
 
   // Travese all variables downwards again, now that the bound is fixed.

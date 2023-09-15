@@ -53,7 +53,7 @@ class manager {
     assert(r > 0);
     r = r - 1;
     assert(r < counter_);
-    return objects()[(uint32_t)r].first;
+    return objects()[static_cast<size_t>(r)].first;
   }
 
   constexpr inline R get_from_map(const objtype& obj) noexcept {

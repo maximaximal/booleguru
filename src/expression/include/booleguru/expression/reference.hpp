@@ -78,7 +78,7 @@ class reference {
   inline size_t hash() const {
     size_t hash = reinterpret_cast<intptr_t>(&get_mgr());
     hash <<= 32u;
-    hash |= (uint32_t)get_id();
+    hash |= static_cast<size_t>(get_id());
     return hash;
   }
 };

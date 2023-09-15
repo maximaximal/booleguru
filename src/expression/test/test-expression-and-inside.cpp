@@ -8,10 +8,10 @@
 using namespace booleguru::expression;
 
 TEST_CASE("Test creating op objects results in and_inside correctly") {
-  op o(op_type::And, (op_id)1, (op_id)2);
+  op o(op_type::And, static_cast<op_id>(1), static_cast<op_id>(2));
   REQUIRE(o.and_inside);
 
-  op other(op_type::Or, (op_id)1, (op_id)2);
+  op other(op_type::Or, static_cast<op_id>(1), static_cast<op_id>(2));
   REQUIRE(!other.and_inside);
 }
 
