@@ -21,10 +21,10 @@ TEST_CASE("Serialize simple example QCIR formula") {
   auto var_x3 = ops->vars().get(variable{ "x3" });
   auto var_z = ops->vars().get(variable{ "z" });
 
-  auto op_x1 = ops->get(op(op_type::Var, var_x1.get_id(), 0));
-  auto op_x2 = ops->get(op(op_type::Var, var_x2.get_id(), 0));
-  auto op_x3 = ops->get(op(op_type::Var, var_x3.get_id(), 0));
-  auto op_z = ops->get(op(op_type::Var, var_z.get_id(), 0));
+  auto op_x1 = ops->get(op(op_type::Var, var_x1.get_id(), 0, 0));
+  auto op_x2 = ops->get(op(op_type::Var, var_x2.get_id(), 0, 0));
+  auto op_x3 = ops->get(op(op_type::Var, var_x3.get_id(), 0, 0));
+  auto op_z = ops->get(op(op_type::Var, var_z.get_id(), 0, 0));
 
   auto op_g1_ = ops->get(op(op_type::And, op_x1.get_id(), op_x2.get_id()));
   auto op_g1 = ops->get(op(op_type::And, op_g1_.get_id(), op_x3.get_id()));
@@ -69,10 +69,10 @@ TEST_CASE("Serialize simple example QCIR formula with some NOTs") {
   auto var_x3 = ops->vars().get(variable{ "x3" });
   auto var_z = ops->vars().get(variable{ "z" });
 
-  auto op_x1 = ops->get(op(op_type::Var, var_x1.get_id(), 0));
-  auto op_x2 = ops->get(op(op_type::Var, var_x2.get_id(), 0));
-  auto op_x3 = ops->get(op(op_type::Var, var_x3.get_id(), 0));
-  auto op_z = ops->get(op(op_type::Var, var_z.get_id(), 0));
+  auto op_x1 = ops->get(op(op_type::Var, var_x1.get_id(), 0, 0));
+  auto op_x2 = ops->get(op(op_type::Var, var_x2.get_id(), 0, 0));
+  auto op_x3 = ops->get(op(op_type::Var, var_x3.get_id(), 0, 0));
+  auto op_z = ops->get(op(op_type::Var, var_z.get_id(), 0, 0));
 
   auto op_g1_ = ops->get(op(op_type::And, op_x1.get_id(), op_x2.get_id()));
   auto op_g1 = ops->get(op(op_type::And, op_g1_.get_id(), op_x3.get_id()));
@@ -117,9 +117,9 @@ TEST_CASE("Serialize simple prenex example QCIR formula") {
   auto var_v2 = ops->vars().get(variable{ "v2" });
   auto var_v3 = ops->vars().get(variable{ "v3" });
 
-  auto op_v1 = ops->get(op(op_type::Var, var_v1.get_id(), 0));
-  auto op_v2 = ops->get(op(op_type::Var, var_v2.get_id(), 0));
-  auto op_v3 = ops->get(op(op_type::Var, var_v3.get_id(), 0));
+  auto op_v1 = ops->get(op(op_type::Var, var_v1.get_id(), 0, 0));
+  auto op_v2 = ops->get(op(op_type::Var, var_v2.get_id(), 0, 0));
+  auto op_v3 = ops->get(op(op_type::Var, var_v3.get_id(), 0, 0));
 
   auto op_g1 = op_v1 && op_v2;
   auto op_g2 = !op_v1 && !op_v2 && op_v3;

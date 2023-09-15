@@ -18,7 +18,7 @@ struct variable_extend : public visitor<variable_extend> {
     auto newvar = e.get_mgr().vars().get(
       expression::variable{ prefix + oldvar.name + suffix });
     return e.get_mgr().get(
-      expression::op(expression::op_type::Var, newvar.get_id(), 0));
+      expression::op(expression::op_type::Var, newvar.get_id(), 0, 0));
   };
 };
 

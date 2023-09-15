@@ -178,10 +178,10 @@ aiger::build() {
         op_id v;
         if(node == 1) {
           // FALSE
-          v = ops_->get_id(op(op_type::Var, 2, 0));
+          v = ops_->get_id(op(op_type::Var, var_manager::LITERAL_BOTTOM, 0, 0));
         } else {
           // TRUE
-          v = ops_->get_id(op(op_type::Var, 1, 0));
+          v = ops_->get_id(op(op_type::Var, var_manager::LITERAL_TOP, 0, 0));
         }
         ops.emplace(v);
       } else if(node > 2 && node <= number_of_inputs_ + 2) {
@@ -189,7 +189,7 @@ aiger::build() {
         var_id var_id = variables[node - 1];
         if(var_id == 0)
           var_id = vars_->get_id(variable{ std::to_string(node - 2) });
-        op_id v = ops_->get_id(op(op_type::Var, var_id, 0));
+        op_id v = ops_->get_id(op(op_type::Var, var_id, 0, 0));
         ops.emplace(v);
       } else if(node >= number_of_inputs_ + 2 + number_of_latches_
                           + number_of_outputs_
@@ -220,7 +220,7 @@ aiger::build() {
           var_id var_id = variables[node - 1];
           if(var_id == 0)
             var_id = vars_->get_id(variable{ std::to_string(node) });
-          op_id v = ops_->get_id(op(op_type::Var, var_id, 0));
+          op_id v = ops_->get_id(op(op_type::Var, var_id, 0, 0));
           ops.emplace(v);
         }
         if(negated_outputs[node - 1]) {

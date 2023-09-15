@@ -3,6 +3,8 @@
 #include <cassert>
 #include <ostream>
 
+#include <fmt/format.h>
+
 #include <booleguru/expression/binop.hpp>
 #include <booleguru/expression/quantop.hpp>
 #include <booleguru/expression/scriptop.hpp>
@@ -35,6 +37,11 @@ op_type_flip_quantifier(op_type in) noexcept {
       return op_type::None;
   }
 }
+
+const char*
+op_type_to_str(op_type t);
+const char*
+op_type_to_sym(op_type t);
 
 struct op {
   op_type type : 8;
@@ -104,7 +111,10 @@ struct op {
       case op_type::None:
         break;
       default:
+        throw std::invalid_argument(
+          fmt::format("Illegal `op_type`: {}", op_type_to_str(type)));
         // TODO(Marcel): Error handling?
+        assert(type != op_type::Var);
         assert(false);
         break;
     }
@@ -113,7 +123,7 @@ struct op {
   inline explicit constexpr op(op_type type,
                                var_id r1,
                                uint16_t r2,
-                               uint16_t r3 = 0)
+                               uint16_t r3)
     : op(type) {
     assert(type == op_type::Var);
     var.v = r1;
@@ -198,11 +208,6 @@ struct op {
     return type == op_type::Exists || type == op_type::Forall;
   }
 };
-
-const char*
-op_type_to_str(op_type t);
-const char*
-op_type_to_sym(op_type t);
 
 class op_ref;
 

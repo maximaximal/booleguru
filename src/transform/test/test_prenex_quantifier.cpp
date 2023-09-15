@@ -30,9 +30,9 @@ TEST_CASE("Transform a simple Non-Prenex formula into prenex formula") {
   auto var_v2 = ops->vars().get(variable{ "q" });
   auto var_v3 = ops->vars().get(variable{ "r" });
 
-  auto op_v1 = ops->get(op(op_type::Var, var_v1.get_id(), 0));
-  auto op_v2 = ops->get(op(op_type::Var, var_v2.get_id(), 0));
-  auto op_v3 = ops->get(op(op_type::Var, var_v3.get_id(), 0));
+  auto op_v1 = ops->get(op(op_type::Var, var_v1.get_id(), 0, 0));
+  auto op_v2 = ops->get(op(op_type::Var, var_v2.get_id(), 0, 0));
+  auto op_v3 = ops->get(op(op_type::Var, var_v3.get_id(), 0, 0));
 
   auto op_g1 = op_v1 || op_v2 || op_v3;
   auto op_g2 = !op_v1 || op_v2 || op_v3;

@@ -47,6 +47,7 @@ class proxy {
       return mgr.get(
         op{ op_type::Var,
             mgr.vars().get(variable{ std::string(name_) }).get_id(),
+            0,
             0 });
     }
   }
@@ -92,7 +93,7 @@ exists(var_ref variable, op_ref sub_tree) {
     assert(&variable.get_mgr() == &sub_tree.get_mgr().vars());
   }
   op_ref var_op
-    = sub_tree.get_mgr().get(op(op_type::Var, variable.get_id(), 0));
+    = sub_tree.get_mgr().get(op(op_type::Var, variable.get_id(), 0, 0));
   return exists(var_op, sub_tree);
 }
 
@@ -113,7 +114,7 @@ forall(var_ref variable, op_ref sub_tree) {
     assert(&variable.get_mgr() == &sub_tree.get_mgr().vars());
   }
   op_ref var_op
-    = sub_tree.get_mgr().get(op(op_type::Var, variable.get_id(), 0));
+    = sub_tree.get_mgr().get(op(op_type::Var, variable.get_id(), 0, 0));
   return forall(var_op, sub_tree);
 }
 

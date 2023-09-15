@@ -196,7 +196,7 @@ var_list returns [std::vector<VariableContext *> vars]
 lit_list [op_type ot, var_id empty_id, std::string gvar] returns [op_id id]
     : l0=literal[$gvar] { $id = $l0.id; }
         ( COMMA ln=literal[gvar] { $id = ops->get_id(op(ot, $id, $ln.id)); } )*
-    | { $id = ops->get_id(op(op_type::Var, empty_id, 0)); }
+    | { $id = ops->get_id(op(op_type::Var, empty_id, 0, 0)); }
     ;
 
 // Literals always create a node in the binary tree.
@@ -221,7 +221,7 @@ variable returns [op_id id, var_id v_id, std::string text]
             $id = gate_variables[$text];
           } else {
             $v_id = ops->vars().get_id({ $text });
-            $id = ops->get_id(op(op_type::Var, $v_id, 0));
+            $id = ops->get_id(op(op_type::Var, $v_id, 0, 0));
           }
         }
     ;

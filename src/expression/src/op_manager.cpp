@@ -263,11 +263,11 @@ op_manager::insert_id(op_manager::objtype&& obj) {
 }
 op_ref
 op_manager::top() {
-  return get(op(op_type::Var, var_manager::LITERAL_TOP, 0));
+  return get(op(op_type::Var, var_manager::LITERAL_TOP, 0, 0));
 }
 op_ref
 op_manager::bottom() {
-  return get(op(op_type::Var, var_manager::LITERAL_BOTTOM, 0));
+  return get(op(op_type::Var, var_manager::LITERAL_BOTTOM, 0, 0));
 }
 void
 op_manager::modify_ops(modifier&& mod) {

@@ -47,7 +47,7 @@ g = or()
 )",
       .should_parse = true,
       .produce_result = *[](op_manager& ops) {
-        return ops.get(op(op_type::Var, var_manager::LITERAL_BOTTOM, 0));
+        return ops.get(op(op_type::Var, var_manager::LITERAL_BOTTOM, 0, 0));
       } };
 
 constexpr static QCIRTestSnippet test3
@@ -60,7 +60,7 @@ output( 23 )
 )",
       .should_parse = true,
       .produce_result = *[](op_manager& ops) {
-        return ops.get(op(op_type::Var, var_manager::LITERAL_TOP, 0));
+        return ops.get(op(op_type::Var, var_manager::LITERAL_TOP, 0, 0));
       } };
 
 constexpr static QCIRTestSnippet test6 = { .str = R"(#QCIR-14
@@ -156,7 +156,7 @@ a = or()
 )",
       .should_parse = true,
       .produce_result = *[](op_manager& ops) {
-        return ops.get(op(op_type::Var, var_manager::LITERAL_BOTTOM, 0));
+        return ops.get(op(op_type::Var, var_manager::LITERAL_BOTTOM, 0, 0));
       } };
 
 constexpr static QCIRTestSnippet test34 = { .str = R"(#QCIR-G14

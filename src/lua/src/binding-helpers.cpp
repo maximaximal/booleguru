@@ -84,7 +84,8 @@ expression::op_ref
 get_variable_from_manager(const std::string& name,
                           expression::op_manager& mgr) {
   auto varref = mgr.vars().get(expression::variable{ name });
-  return mgr.get(expression::op(expression::op_type::Var, varref.get_id(), 0));
+  return mgr.get(
+    expression::op(expression::op_type::Var, varref.get_id(), 0, 0));
 }
 
 expression::op_ref
