@@ -14,11 +14,13 @@ struct variable_extend : public visitor<variable_extend> {
   std::string suffix;
 
   inline op_ref walk_var(op_ref e) {
+    assert(false);
+
     auto& oldvar = e.get_mgr().vars().getobj(e->var.v);
     auto newvar = e.get_mgr().vars().get(
       expression::variable{ prefix + oldvar.name + suffix });
-    return e.get_mgr().get(
-      expression::op(expression::op_type::Var, newvar.get_id(), 0));
+    return e.get_mgr().get(expression::op(
+      expression::op_type::Var, newvar.get_id(), e->var.q, e->var.i));
   };
 };
 

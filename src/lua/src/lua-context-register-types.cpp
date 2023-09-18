@@ -6,6 +6,8 @@
 #include <booleguru/lua/binding-helpers.hpp>
 #include <booleguru/lua/lua-context.hpp>
 
+#include <booleguru/transform/variable_extend.hpp>
+
 using namespace booleguru::expression;
 using namespace booleguru::lua::helpers;
 
@@ -17,7 +19,7 @@ lua_context::get_var(const std::string& name) {
 }
 
 auto
-fennel_s(sol::state& s, const std::string& fennel) -> auto{
+fennel_s(sol::state& s, const std::string& fennel) -> auto {
   const std::string name = s["fennel"]["mangle"](fennel);
   return s[name];
 }
@@ -142,6 +144,8 @@ lua_context::register_booleguru_types() {
     "solve",
     sol::overload(&helpers::solve_sat, helpers::solve_sat_default_args));
 
+  set_to_state(s, "prefix_vars", "prefix-vars", &helpers::prefix_variables);
+
   using namespace booleguru::transform;
   auto reftype = s.new_usertype<op_ref>(
     "opref",
@@ -153,6 +157,8 @@ lua_context::register_booleguru_types() {
     sol::resolve<op_ref(op_ref, op_ref)>(operator&&),
     sol::meta_function::addition,
     sol::resolve<op_ref(op_ref, op_ref)>(operator||),
+    sol::meta_function::concatenation,
+    sol::resolve<op_ref(op_ref&, const std::string&)>(operator+),
     sol::meta_function::unary_minus,
     sol::resolve<op_ref(op_ref)>(operator!),
     sol::meta_function::division,
