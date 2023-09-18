@@ -95,7 +95,7 @@ lua_context::ensure_fully_initialized() {
 
 void
 lua_context::init_fennel() {
-  state_->script("fennel = require(\"fennel\")");
+  state_->script("fennel = require(\"fennel\").install()");
   fennel_last_op_name_ = (*state_)["fennel"]["mangle"]("**");
 }
 
@@ -139,6 +139,11 @@ return_to_eval_result(auto&& result) {
   }
 
   return std::monostate{};
+}
+
+std::string
+lua_context::fennel_mangle(const std::string& name) {
+  return (*state_)["fennel"]["mangle"](name);
 }
 
 lua_context::eval_result

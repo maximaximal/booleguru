@@ -31,3 +31,18 @@ correct `BOOLEGURU_LUA_PATH`, then you call it inside the script context in
 `:(...)` using its name `f`. Booleguru returns the following::
 
   test & test_2
+
+Randomness in Lua Scripts
+-------------------------
+
+If you require some random value in Lua, we recommend to give the seed as a
+parameter to your function. This makes experiments repeatable. You can add a
+`seed` parameter as the last parameter to your function and add use the
+following Lua snippet in the beginning of your formulas for convenience::
+
+  if seed ~= nil then
+    seed = 42
+  end
+  math.randomseed(seed)
+
+This script uses the provided seed or fixes it to 42.
