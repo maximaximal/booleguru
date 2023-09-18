@@ -15,10 +15,12 @@ class handle {
   handle(std::shared_ptr<op_manager> ops)
     : ops_(ops) {}
 
-  static handle& global(std::shared_ptr<op_manager> ops
-                        = std::make_shared<op_manager>()) {
-    if(!instance_)
+  static handle& global(std::shared_ptr<op_manager> ops = nullptr) {
+    if(!instance_) {
+      if(!ops)
+        ops = std::make_shared<op_manager>();
       instance_ = std::make_unique<handle>(ops);
+    }
     return *instance_;
   }
 
@@ -32,7 +34,7 @@ class handle {
 
 template<class Mgr>
 class proxy {
-  std::string_view name_;
+  std::string name_;
 
   using ref = typename Mgr::ref;
 
@@ -42,16 +44,15 @@ class proxy {
 
   constexpr inline ref operator()(Mgr& mgr) const {
     if constexpr(std::is_same<Mgr, var_manager>()) {
-      return mgr.get(variable{ std::string(name_) });
+      return mgr.get(variable{ name_ });
     } else if constexpr(std::is_same<Mgr, op_manager>()) {
       return mgr.get(
-        op{ op_type::Var,
-            mgr.vars().get(variable{ std::string(name_) }).get_id(),
-            0,
-            0 });
+        op{ op_type::Var, mgr.vars().get(variable{ name_ }).get_id(), 0, 0 });
     }
   }
+
   inline ref operator()(std::shared_ptr<Mgr> mgr) const {
+    assert(mgr);
     return (*this)(*mgr);
   }
 

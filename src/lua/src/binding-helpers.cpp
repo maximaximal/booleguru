@@ -1,3 +1,4 @@
+#include "booleguru/transform/variable_extend.hpp"
 #include <booleguru/lua/binding-helpers.hpp>
 #include <booleguru/transform/tseitin.hpp>
 #include <booleguru/util/istringviewstream.hpp>
@@ -81,6 +82,11 @@ rename_map(expression::op_ref& r,
 }
 
 expression::op_ref
+prefix_variables(expression::op_ref& r, const std::string& prefix) {
+  return transform::variable_extend(prefix, "")(r);
+}
+
+expression::op_ref
 get_variable_from_manager(const std::string& name,
                           expression::op_manager& mgr) {
   auto varref = mgr.vars().get(expression::variable{ name });
@@ -123,7 +129,7 @@ solve_sat(expression::op_ref o,
   return s.solve(o);
 }
 
-std::optional<std::unordered_map<expression::op_ref, bool>>
+std::optional<std::unordered_map<uint32_t, bool>>
 solve_sat_to_resultmap(expression::op_ref o,
                        std::string solver,
                        std::vector<std::string> args) {

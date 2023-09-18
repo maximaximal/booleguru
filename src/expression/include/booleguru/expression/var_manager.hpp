@@ -34,19 +34,7 @@ class var_ref : public reference<variable, var_manager, var_id> {
 };
 
 class var_manager : public manager<var_ref, var_manager> {
-  private:
-  std::vector<std::string> namespace_;
-
   protected:
-  inline variable transform_(variable obj) {
-    if(namespace_.empty())
-      return obj;
-    else
-      return variable{ std::accumulate(
-                         namespace_.begin(), namespace_.end(), std::string{})
-                       + obj.name };
-  }
-
   inline void init() {
     auto top_id = get_id(variable{ "⊤" });
     auto bot_id = get_id(variable{ "⊥" });
@@ -69,9 +57,6 @@ class var_manager : public manager<var_ref, var_manager> {
     LITERAL_TSEITIN = 3,
     LITERAL_VEC = 4,
   };
-
-  void push_namespace(std::string ns) { namespace_.push_back(ns); }
-  void pop_namespace() { namespace_.pop_back(); }
 };
 
 std::ostream&

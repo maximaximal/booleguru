@@ -1,4 +1,7 @@
 add_library(booleguru-py-common OBJECT
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/solver.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/model.cpp
+
   ${CMAKE_CURRENT_SOURCE_DIR}/src/py_register_booleguru_types.cpp
 )
 

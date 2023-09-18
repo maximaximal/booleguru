@@ -27,7 +27,7 @@ class sat {
   ~sat();
 
   std::optional<expression::op_ref> solve(expression::op_ref o);
-  std::optional<std::unordered_map<expression::op_ref, bool>> solve_resultmap(
+  std::optional<std::unordered_map<uint32_t, bool>> solve_resultmap(
     expression::op_ref o);
 };
 }

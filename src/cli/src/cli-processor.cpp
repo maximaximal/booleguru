@@ -13,6 +13,7 @@
 
 #include <booleguru/lua/lua-context.hpp>
 
+#include <cstddef>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 

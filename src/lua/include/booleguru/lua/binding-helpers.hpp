@@ -60,6 +60,9 @@ expression::op_ref
 rename_map(expression::op_ref& r,
            const std::unordered_map<std::string, std::string>& map);
 
+expression::op_ref
+prefix_variables(expression::op_ref& r, const std::string& prefix);
+
 template<expression::op_type type>
 static expression::op_ref
 binop(expression::op_ref& l, expression::op_ref& r) {
@@ -113,7 +116,7 @@ solve_sat(expression::op_ref o,
           std::string solver = "kissat",
           std::vector<std::string> args = { "-q" });
 
-std::optional<std::unordered_map<expression::op_ref, bool>>
+std::optional<std::unordered_map<uint32_t, bool>>
 solve_sat_to_resultmap(expression::op_ref o,
                        std::string solver = "kissat",
                        std::vector<std::string> args = { "-q" });
