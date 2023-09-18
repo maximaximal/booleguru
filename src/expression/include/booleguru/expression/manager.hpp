@@ -103,9 +103,6 @@ class manager {
     return static_cast<C*>(this)->insert(std::move(obj));
   }
   constexpr inline R get(T&& obj) {
-    if constexpr(std::is_same<T, variable>()) {
-      obj = static_cast<C*>(this)->transform_(obj);
-    }
     R ref = static_cast<C*>(this)->get_from_map(obj);
     if(ref.valid())
       return ref;
@@ -124,9 +121,6 @@ class manager {
     return static_cast<C*>(this)->insert_id(obj);
   }
   constexpr inline ref get_id(T&& obj) {
-    if constexpr(std::is_same<T, variable>()) {
-      obj = static_cast<C*>(this)->transform_(obj);
-    }
     ref r = static_cast<C*>(this)->get_id_from_map(obj);
     if(r)
       return r;
