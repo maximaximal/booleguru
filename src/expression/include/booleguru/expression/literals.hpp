@@ -34,7 +34,7 @@ class handle {
 
 template<class Mgr>
 class proxy {
-  std::string name_;
+  std::string_view name_;
 
   using ref = typename Mgr::ref;
 
@@ -44,10 +44,10 @@ class proxy {
 
   constexpr inline ref operator()(Mgr& mgr) const {
     if constexpr(std::is_same<Mgr, var_manager>()) {
-      return mgr.get(variable{ name_ });
+      return mgr.get(variable{ std::string(name_) });
     } else if constexpr(std::is_same<Mgr, op_manager>()) {
       return mgr.get(
-        op{ op_type::Var, mgr.vars().get(variable{ name_ }).get_id(), 0, 0 });
+        op{ op_type::Var, mgr.vars().get(variable{ std::string(name_) }).get_id(), 0, 0 });
     }
   }
 
