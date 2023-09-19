@@ -89,13 +89,13 @@ TEST_CASE("Parse formula containing lisp code") {
 
   CAPTURE(inputs);
   CAPTURE(res.message);
+  REQUIRE(res);
   if(res) {
     std::stringstream f;
     f << *res;
     REQUIRE(f.str() == "a & b");
   }
   REQUIRE((*res)->and_inside);
-  REQUIRE(res);
 }
 
 TEST_CASE("Parse a formula with modifiers on a variable") {

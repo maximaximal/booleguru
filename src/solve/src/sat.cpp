@@ -410,6 +410,8 @@ sat::solve_resultmap(expression::op_ref o) {
   xcc_sat_solver solver;
   int res = solve_with_solver(o, solver);
 
+  // TODO(Marcel): 'Implicitly deleted default constructor' Can we use
+  //               templating to make a `var_id` map?
   std::unordered_map<uint32_t, bool> assignments;
 
   expression::op_manager& ops = o.get_mgr();
@@ -440,7 +442,8 @@ sat::solve_resultmap(expression::op_ref o) {
           s.emplace(op.un.c);
           break;
         case Var:
-          assignments[ops[i].get_id()] = solver.assignments[op.user_int32];
+          assignments[static_cast<uint32_t>(ops[i].get_id())]
+            = solver.assignments[op.user_int32];
           break;
         default:
           assert(false);

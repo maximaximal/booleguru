@@ -10,7 +10,7 @@
 namespace booleguru::lua::helpers {
 uint32_t
 get_op_id(const expression::op_ref& r) {
-  return r.get_id();
+  return static_cast<uint32_t>(r.get_id());
 }
 
 expression::op_type
@@ -46,7 +46,7 @@ get_op_is_ors(const expression::op_ref& r) {
 
 uint32_t
 get_op_varop_v(const expression::op_ref& op) {
-  return op->var.v;
+  return static_cast<uint32_t>(op->var.v);
 }
 
 uint32_t
@@ -90,7 +90,8 @@ expression::op_ref
 get_variable_from_manager(const std::string& name,
                           expression::op_manager& mgr) {
   auto varref = mgr.vars().get(expression::variable{ name });
-  return mgr.get(expression::op(expression::op_type::Var, varref.get_id(), 0));
+  return mgr.get(
+    expression::op(expression::op_type::Var, varref.get_id(), 0, 0));
 }
 
 expression::op_ref

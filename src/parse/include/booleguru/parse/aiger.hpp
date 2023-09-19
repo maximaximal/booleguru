@@ -3,6 +3,8 @@
 #include <ankerl/unordered_dense.h>
 #include <vector>
 
+#include <booleguru/expression/id.hpp>
+
 #include "base.hpp"
 
 namespace booleguru::parse {
@@ -32,7 +34,7 @@ class aiger : public base {
   }
 
   // All variables, i.e. inputs and outputs. Gates not included.
-  std::vector<uint32_t> variables;
+  std::vector<expression::var_id> variables;
   // All and gates. These have a gates_offset.
   std::vector<gate> gates;
   // Negations for output variables. This should only be of size 1, usually.

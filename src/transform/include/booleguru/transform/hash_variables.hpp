@@ -19,7 +19,7 @@ struct hash_variables : public visitor<hash_variables<Set>> {
   }
   Set& s;
   inline expression::op_ref walk_var(expression::op_ref e) {
-    s.insert(e.get_id());
+    s.insert(static_cast<uint32_t>(e.get_id()));
     return e;
   }
 };

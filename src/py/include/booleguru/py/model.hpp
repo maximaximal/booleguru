@@ -9,7 +9,7 @@
 
 namespace booleguru::py {
 struct model {
-  using map = std::unordered_map<expression::op_ref::ref, bool>;
+  using map = std::unordered_map<uint32_t, bool>;
   map values_;
 
   std::string to_string() const;

@@ -3,8 +3,9 @@
 #include <memory>
 #include <string>
 
-#include "manager.hpp"
-#include "reference.hpp"
+#include <booleguru/expression/id.hpp>
+#include <booleguru/expression/manager.hpp>
+#include <booleguru/expression/reference.hpp>
 
 namespace booleguru::expression {
 class op_manager;
@@ -24,9 +25,9 @@ struct script {
   inline bool operator==(const script& o) { return code == o.code; }
 };
 
-class script_ref : public reference<script, script_manager> {
+class script_ref : public reference<script, script_manager, script_id> {
   public:
-  using reference<script, script_manager>::reference;
+  using reference<script, script_manager, script_id>::reference;
 };
 
 class script_manager : public manager<script_ref, script_manager> {

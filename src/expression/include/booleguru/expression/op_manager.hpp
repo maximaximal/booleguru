@@ -8,18 +8,19 @@
 
 #include <iostream>
 
-#include "manager.hpp"
-#include "op.hpp"
-#include "reference.hpp"
+#include <booleguru/expression/id.hpp>
+#include <booleguru/expression/manager.hpp>
+#include <booleguru/expression/op.hpp>
+#include <booleguru/expression/reference.hpp>
 
 namespace booleguru::expression {
 struct op;
 class op_manager;
 class var_manager;
 
-class op_ref : public reference<op, op_manager> {
+class op_ref : public reference<op, op_manager, op_id> {
   public:
-  using reference<op, op_manager>::reference;
+  using reference<op, op_manager, op_id>::reference;
 
   op_ref left();
   op_ref right();
@@ -38,7 +39,7 @@ class op_manager : public manager<op_ref, op_manager> {
   op_manager();
   op_manager(std::shared_ptr<var_manager> vars);
 
-  base::ref insert_id(T&& obj);
+  id insert_id(objtype&& obj);
 
   inline var_manager& vars() { return *vars_; }
   inline std::shared_ptr<var_manager> vars_ptr() { return vars_; }
@@ -50,41 +51,41 @@ class op_manager : public manager<op_ref, op_manager> {
   using modifier = std::function<void(const op&)>;
   void modify_ops(modifier&& mod);
   void unmark();
-  void mark_through_tree(uint32_t);
+  void mark_through_tree(id);
   void traverse_depth_first_through_tree(
-    uint32_t root,
-    std::function<void(uint32_t, const op&)>& visit);
+    id root,
+    std::function<void(id, const op&)>& visit);
   void traverse_unmarked_depth_first_through_tree(
-    uint32_t root,
-    std::function<void(uint32_t, const op&)> visit);
+    id root,
+    std::function<void(id, const op&)> visit);
   void reset_op_user_vars();
 
   /** @brief Traverse the expression tree in postorder and provide a facility to
    * return a changed tree.
    */
   template<typename Visitor>
-  std::invoke_result_t<Visitor, op_manager*, ref> traverse_postorder_with_stack(
-    ref orig_root,
+  std::invoke_result_t<Visitor, op_manager*, id> traverse_postorder_with_stack(
+    id orig_root,
     Visitor visit) {
 
     // A reference to an op in the op_manager and a reference to the stack
     // itself to the parent of the currently traversed node.
     struct entry {
-      ref op;
+      id op;
       uint32_t parent;
       bool left;
 
-      entry(ref op, uint32_t parent, bool left)
+      entry(id op, uint32_t parent, bool left)
         : op(op)
         , parent(parent)
         , left(left) {}
     };
     std::vector<entry> s;
 
-    ref root = orig_root;
-    uint32_t r = 0;
+    id root = orig_root;
+    id r = 0;
     bool l = false;
-    ref parent = std::numeric_limits<uint32_t>::max();
+    uint32_t parent = std::numeric_limits<uint32_t>::max();
 
     do {
       while(root) {
@@ -103,7 +104,7 @@ class op_manager : public manager<op_ref, op_manager> {
       l = s.back().left;
       s.pop_back();
 
-      ref right = getobj(root).right();
+      op_id right = getobj(root).right();
       if(right && !s.empty() && s.back().op == right) {
         s.pop_back();
         s.emplace_back(root, parent, l);
@@ -112,9 +113,9 @@ class op_manager : public manager<op_ref, op_manager> {
         l = false;
       } else {
         if constexpr(std::is_same<
-                       std::invoke_result_t<Visitor, op_manager*, ref>,
-                       ref>()) {
-          uint32_t new_root = visit(this, root);
+                       std::invoke_result_t<Visitor, op_manager*, id>,
+                       id>()) {
+          id new_root = visit(this, root);
           if(parent != std::numeric_limits<uint32_t>::max()) {
             assert(parent < s.size());
             if(l) {
@@ -134,22 +135,22 @@ class op_manager : public manager<op_ref, op_manager> {
       }
     } while(!s.empty());
 
-    if constexpr(std::is_same<std::invoke_result_t<Visitor, op_manager*, ref>,
-                              ref>()) {
+    if constexpr(std::is_same<std::invoke_result_t<Visitor, op_manager*, id>,
+                              id>()) {
       return r;
     }
   }
 
   template<typename Visitor>
-  void traverse_preorder_with_stack(ref root, Visitor visit) {
+  void traverse_preorder_with_stack(id root, Visitor visit) {
     if(root == 0)
       return;
 
-    std::stack<ref> s;
+    std::stack<id> s;
     s.emplace(root);
 
     while(!s.empty()) {
-      ref current = s.top();
+      id current = s.top();
       const auto& current_obj = getobj(current);
       s.pop();
       visit(current);

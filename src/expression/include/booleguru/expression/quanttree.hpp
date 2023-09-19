@@ -5,7 +5,7 @@
 #include <ostream>
 #include <vector>
 
-#include "op.hpp"
+#include <booleguru/expression/op.hpp>
 
 namespace booleguru::expression {
 class op_manager;

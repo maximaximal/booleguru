@@ -1,17 +1,16 @@
 #pragma once
 
-#include "manager.hpp"
-#include "reference.hpp"
-
-#include "bv.hpp"
+#include <booleguru/expression/bv.hpp>
+#include <booleguru/expression/manager.hpp>
+#include <booleguru/expression/reference.hpp>
 
 namespace booleguru::expression {
 class op_manager;
 class bvop_manager;
 
-class bvop_ref : public reference<bvop, bvop_manager> {
+class bvop_ref : public reference<bvop, bvop_manager, bvop_id> {
   public:
-  using reference<bvop, bvop_manager>::reference;
+  using reference<bvop, bvop_manager, bvop_id>::reference;
 
   bvop_ref left();
   bvop_ref right();

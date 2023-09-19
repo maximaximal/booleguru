@@ -128,8 +128,8 @@ qdimacs::operator()() {
   }
 
   for(int i = 1; i <= highest_var; ++i) {
-    int id = vars_->get_id(variable{ std::to_string(i) })
-             - expression::var_manager::LITERAL_VEC;
+    expression::var_id id = vars_->get_id(variable{ std::to_string(i) })
+                            - expression::var_manager::LITERAL_VEC;
     assert(id == i);
   }
 

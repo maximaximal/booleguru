@@ -118,7 +118,9 @@ PYBIND11_MODULE(pybooleguru, m) {
   pybind11::class_<model>(m, "Model")
     .def("__repr__", &model::to_string)
     .def("__getitem__", &model::operator[])
-    .def("__getitem__", [](model& m, pyop_ref& r) { return m[r.get_id()]; });
+    .def("__getitem__", [](model& m, pyop_ref& r) {
+      return m[static_cast<uint32_t>(r.get_id())];
+    });
 
   pybind11::class_<check_sat_result>(m, "CheckSatResult")
     .def("__repr__", &check_sat_result::to_string)

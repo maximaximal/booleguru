@@ -13,7 +13,7 @@ operator+(op_ref& e, const std::string& s) {
     auto v = e->var.v;
     auto var_name = e.get_mgr().vars()[v]->name;
     auto new_var_ref = e.get_mgr().vars().get(variable{ var_name + s });
-    return e.get_mgr().get(op(op_type::Var, new_var_ref.get_id(), 0));
+    return e.get_mgr().get(op(op_type::Var, new_var_ref.get_id(), 0, 0));
   }
 }
 
@@ -25,7 +25,7 @@ operator+(const std::string& s, op_ref& e) {
     auto v = e->var.v;
     auto var_name = e.get_mgr().vars()[v]->name;
     auto new_var_ref = e.get_mgr().vars().get(variable{ s + var_name });
-    return e.get_mgr().get(op(op_type::Var, new_var_ref.get_id(), 0));
+    return e.get_mgr().get(op(op_type::Var, new_var_ref.get_id(), 0, 0));
   }
 }
 

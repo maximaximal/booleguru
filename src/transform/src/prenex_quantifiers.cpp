@@ -49,8 +49,8 @@ prenex_quantifier::operator()(op_ref o) {
   // I want to postorder traverse the tree and remove all quantifiers in the
   // process. In the end, the collected quantifiers are used from the quanttree.
 
-  uint32_t new_root = o.get_mgr().traverse_postorder_with_stack(
-    o.get_id(), [this](expression::op_manager* ops, uint32_t o) -> uint32_t {
+  op_id new_root = o.get_mgr().traverse_postorder_with_stack(
+    o.get_id(), [this](expression::op_manager* ops, op_id o) -> op_id {
       return walk((*ops)[o]).get_id();
     });
 
@@ -60,11 +60,11 @@ prenex_quantifier::operator()(op_ref o) {
     return o;
   }
 
-  uint32_t qt_root = o.get_mgr().getobj(new_root).user_int32;
+  op_id qt_root = o.get_mgr().getobj(new_root).user_int32;
 
-  i_->qt.prenex(qt_root, i_->checker);
-  op_ref prepended
-    = i_->qt.prepend_marked_to_op(qt_root, o.get_mgr()[new_root]);
+  i_->qt.prenex(static_cast<uint32_t>(qt_root), i_->checker);
+  op_ref prepended = i_->qt.prepend_marked_to_op(static_cast<uint32_t>(qt_root),
+                                                 o.get_mgr()[new_root]);
   return prepended;
 }
 
@@ -113,25 +113,25 @@ prenex_quantifier::walk_quant(expression::op_ref o) {
   auto& old_v_obj = o.get_mgr().vars().getobj(old_v.v);
 
   uint32_t bound = ++old_v_obj.counter;
-  i_->bounds_map[old_v.v] = bound;
+  i_->bounds_map[static_cast<uint32_t>(old_v.v)] = bound;
 
   // Whenever a variable is quantified, it is bound to a new unique number (per
   // variable). Unbound variables are free, i.e. they have never been quantified
   // before.
 
-  auto bound_v
-    = o.get_mgr().get(expression::op(expression::op_type::Var, old_v.v, bound));
+  auto bound_v = o.get_mgr().get(
+    expression::op(expression::op_type::Var, old_v.v, bound, old_v.i));
   bound_v->user_int32
     = static_cast<uint32_t>(std::numeric_limits<uint32_t>::max());
 
   op_ref e = o.right();
   uint32_t user_int32 = i_->qt.add((expression::op_type)o->type,
-                                   bound_v.get_id(),
+                                   static_cast<uint32_t>(bound_v.get_id()),
                                    static_cast<uint32_t>(e->user_int32));
 
   // Travese all variables downwards again, now that the bound is fixed.
-  uint32_t new_e = o.get_mgr().traverse_postorder_with_stack(
-    e.get_id(), [bound_v](op_manager* ops, uint32_t id) -> uint32_t {
+  op_id new_e = o.get_mgr().traverse_postorder_with_stack(
+    e.get_id(), [bound_v](op_manager* ops, op_id id) -> op_id {
       op_ref o = (*ops)[id];
       switch(o->type) {
         case op_type::Var:

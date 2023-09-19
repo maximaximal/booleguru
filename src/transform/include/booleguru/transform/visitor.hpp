@@ -12,6 +12,7 @@ struct visitor {
   using op_ref = expression::op_ref;
   using op_type = expression::op_type;
   using op = expression::op;
+  using op_id = expression::op_id;
   using variable = expression::variable;
 
   inline ReturnType operator()(op_ref o) {
@@ -65,33 +66,33 @@ struct visitor {
     return ex.get_mgr().get(op(op_type::Not, c(ex).get_id(), 0));
   }
   inline ReturnType walk_and(op_ref ex) {
-    uint32_t left = l(ex).get_id();
-    uint32_t right = r(ex).get_id();
+    op_id left = l(ex).get_id();
+    op_id right = r(ex).get_id();
     return ex.get_mgr().get(op(op_type::And, left, right));
   }
   inline ReturnType walk_or(op_ref ex) {
-    uint32_t left = l(ex).get_id();
-    uint32_t right = r(ex).get_id();
+    op_id left = l(ex).get_id();
+    op_id right = r(ex).get_id();
     return ex.get_mgr().get(op(op_type::Or, left, right));
   }
   inline ReturnType walk_equi(op_ref ex) {
-    uint32_t left = l(ex).get_id();
-    uint32_t right = r(ex).get_id();
+    op_id left = l(ex).get_id();
+    op_id right = r(ex).get_id();
     return ex.get_mgr().get(op(op_type::Equi, left, right));
   }
   inline ReturnType walk_impl(op_ref ex) {
-    uint32_t left = l(ex).get_id();
-    uint32_t right = r(ex).get_id();
+    op_id left = l(ex).get_id();
+    op_id right = r(ex).get_id();
     return ex.get_mgr().get(op(op_type::Impl, left, right));
   }
   inline ReturnType walk_lpmi(op_ref ex) {
-    uint32_t left = l(ex).get_id();
-    uint32_t right = r(ex).get_id();
+    op_id left = l(ex).get_id();
+    op_id right = r(ex).get_id();
     return ex.get_mgr().get(op(op_type::Lpmi, left, right));
   }
   inline ReturnType walk_xor(op_ref ex) {
-    uint32_t left = l(ex).get_id();
-    uint32_t right = r(ex).get_id();
+    op_id left = l(ex).get_id();
+    op_id right = r(ex).get_id();
     return ex.get_mgr().get(op(op_type::Xor, left, right));
   }
   inline ReturnType walk_var(op_ref ex) { return ex; }

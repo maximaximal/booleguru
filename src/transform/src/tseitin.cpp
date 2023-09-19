@@ -12,6 +12,8 @@
 #include "booleguru/transform/output_to_qdimacs.hpp"
 
 namespace booleguru::transform {
+using expression::op_ref;
+
 static std::pair<int32_t, int32_t>
 compute_number_of_clauses_and_variables_in_marked(const expression::op_ref& o,
                                                   auto o_,
@@ -88,7 +90,7 @@ tseitin<O>::operator()(expression::op_ref o) {
 
   // int32_t means that references actually map to literals in a solver call /
   // QDIMACS output. This also requires the problem to be initiated.
-  if constexpr(std::is_same_v<ref, int32_t>) {
+  if constexpr(std::is_same_v<id, int32_t>) {
     auto [num_clauses, num_variables]
       = compute_number_of_clauses_and_variables_in_marked(
         o, o_, mapping_comments_);
@@ -100,7 +102,7 @@ tseitin<O>::operator()(expression::op_ref o) {
   while(q->is_quant()) {
     assert(q.left()->type == expression::op_type::Var);
     const expression::op& q_ = q.get_obj();
-    uint32_t left_id = q_.left();
+    uint32_t left_id = static_cast<uint32_t>(q_.left());
     const expression::op& left = q.get_mgr().getobj(left_id);
     assert(left_id != 0);
     assert(left.type == expression::op_type::Var);
@@ -153,15 +155,15 @@ tseitin<O>::operator()(expression::op_ref o) {
   for(size_t i = 0; i < mgr.size(); ++i) {
     auto& e = mgr.objects()[i];
     const expression::op op = e.first;
-    ref t = o_.op_ref_to_ref(op, e.second);
+    id t = o_.op_ref_to_ref(op, e.second);
 
     if(!op.mark)
       continue;
 
     switch(op.type) {
       case expression::op_type::Equi: {
-        ref l = o_.op_ref_to_ref(mgr.getobj(op.left()), op.left());
-        ref r = o_.op_ref_to_ref(mgr.getobj(op.right()), op.right());
+        id l = o_.op_ref_to_ref(mgr.getobj(op.left()), op.left());
+        id r = o_.op_ref_to_ref(mgr.getobj(op.right()), op.right());
         o_.ternary(t, o_.not_op(l), o_.not_op(r));
         o_.ternary(t, l, r);
         o_.ternary(o_.not_op(t), o_.not_op(l), r);
@@ -169,8 +171,8 @@ tseitin<O>::operator()(expression::op_ref o) {
         break;
       }
       case expression::op_type::Xor: {
-        ref l = o_.op_ref_to_ref(mgr.getobj(op.left()), op.left());
-        ref r = o_.op_ref_to_ref(mgr.getobj(op.right()), op.right());
+        id l = o_.op_ref_to_ref(mgr.getobj(op.left()), op.left());
+        id r = o_.op_ref_to_ref(mgr.getobj(op.right()), op.right());
         o_.ternary(o_.not_op(t), l, r);
         o_.ternary(t, o_.not_op(l), r);
         o_.ternary(t, l, o_.not_op(r));
@@ -178,16 +180,16 @@ tseitin<O>::operator()(expression::op_ref o) {
         break;
       }
       case expression::op_type::Or: {
-        ref l = o_.op_ref_to_ref(mgr.getobj(op.left()), op.left());
-        ref r = o_.op_ref_to_ref(mgr.getobj(op.right()), op.right());
+        id l = o_.op_ref_to_ref(mgr.getobj(op.left()), op.left());
+        id r = o_.op_ref_to_ref(mgr.getobj(op.right()), op.right());
         o_.ternary(l, r, o_.not_op(t));
         o_.binary(o_.not_op(l), t);
         o_.binary(o_.not_op(r), t);
         break;
       }
       case expression::op_type::And: {
-        ref l = o_.op_ref_to_ref(mgr.getobj(op.left()), op.left());
-        ref r = o_.op_ref_to_ref(mgr.getobj(op.right()), op.right());
+        id l = o_.op_ref_to_ref(mgr.getobj(op.left()), op.left());
+        id r = o_.op_ref_to_ref(mgr.getobj(op.right()), op.right());
         o_.ternary(o_.not_op(l), o_.not_op(r), t);
         o_.binary(l, o_.not_op(t));
         o_.binary(r, o_.not_op(t));
@@ -195,23 +197,23 @@ tseitin<O>::operator()(expression::op_ref o) {
         break;
       }
       case expression::op_type::Impl: {
-        ref l = o_.op_ref_to_ref(mgr.getobj(op.left()), op.left());
-        ref r = o_.op_ref_to_ref(mgr.getobj(op.right()), op.right());
+        id l = o_.op_ref_to_ref(mgr.getobj(op.left()), op.left());
+        id r = o_.op_ref_to_ref(mgr.getobj(op.right()), op.right());
         o_.binary(t, l);
         o_.binary(t, o_.not_op(r));
         o_.ternary(o_.not_op(t), o_.not_op(l), r);
         break;
       }
       case expression::op_type::Lpmi: {
-        ref l = o_.op_ref_to_ref(mgr.getobj(op.left()), op.left());
-        ref r = o_.op_ref_to_ref(mgr.getobj(op.right()), op.right());
+        id l = o_.op_ref_to_ref(mgr.getobj(op.left()), op.left());
+        id r = o_.op_ref_to_ref(mgr.getobj(op.right()), op.right());
         o_.binary(t, o_.not_op(l));
         o_.binary(t, r);
         o_.ternary(o_.not_op(t), l, o_.not_op(r));
         break;
       }
       case expression::op_type::Not: {
-        ref l = o_.op_ref_to_ref(mgr.getobj(op.left()), op.left());
+        id l = o_.op_ref_to_ref(mgr.getobj(op.left()), op.left());
         o_.binary(o_.not_op(l), o_.not_op(t));
         o_.binary(l, t);
         break;

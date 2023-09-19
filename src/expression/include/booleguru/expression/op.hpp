@@ -3,11 +3,13 @@
 #include <cassert>
 #include <ostream>
 
-#include "binop.hpp"
-#include "quantop.hpp"
-#include "scriptop.hpp"
-#include "unop.hpp"
-#include "varop.hpp"
+#include <fmt/format.h>
+
+#include <booleguru/expression/binop.hpp>
+#include <booleguru/expression/quantop.hpp>
+#include <booleguru/expression/scriptop.hpp>
+#include <booleguru/expression/unop.hpp>
+#include <booleguru/expression/varop.hpp>
 
 namespace booleguru::expression {
 enum class op_type : uint8_t {
@@ -35,6 +37,11 @@ op_type_flip_quantifier(op_type in) noexcept {
       return op_type::None;
   }
 }
+
+const char*
+op_type_to_str(op_type t);
+const char*
+op_type_to_sym(op_type t);
 
 struct op {
   op_type type : 8;
@@ -77,7 +84,7 @@ struct op {
     this->type = type;
   }
 
-  inline explicit constexpr op(op_type type, uint32_t r1, uint32_t r2)
+  inline explicit constexpr op(op_type type, op_id r1, op_id r2)
     : op(type) {
     switch(type) {
       case op_type::Exists:
@@ -101,25 +108,27 @@ struct op {
         bin.l = r1;
         bin.r = r2;
         break;
-      case op_type::Var:
-        is_ors = true;
-        var.v = r1;
-        var.q = r2;
-        break;
       case op_type::None:
+        break;
+      default:
+        throw std::invalid_argument(
+          fmt::format("Illegal `op_type`: {}", op_type_to_str(type)));
+        // TODO(Marcel): Error handling?
+        assert(type != op_type::Var);
+        assert(false);
         break;
     }
   }
 
   inline explicit constexpr op(op_type type,
-                               uint32_t r1,
+                               var_id r1,
                                uint16_t r2,
                                uint16_t r3)
     : op(type) {
     assert(type == op_type::Var);
     var.v = r1;
-    var.i = r2;
-    var.q = r3;
+    var.q = r2;
+    var.i = r3;
   }
 
   template<typename Functor>
@@ -183,13 +192,13 @@ struct op {
     return false;
   }
 
-  constexpr inline uint32_t left() const {
+  constexpr inline op_id left() const {
     return visit([](op_type t, const auto& e) {
       (void)t;
       return e.left();
     });
   }
-  constexpr inline uint32_t right() const {
+  constexpr inline op_id right() const {
     return visit([](op_type t, const auto& e) {
       (void)t;
       return e.right();
@@ -199,11 +208,6 @@ struct op {
     return type == op_type::Exists || type == op_type::Forall;
   }
 };
-
-const char*
-op_type_to_str(op_type t);
-const char*
-op_type_to_sym(op_type t);
 
 class op_ref;
 

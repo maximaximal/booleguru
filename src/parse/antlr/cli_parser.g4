@@ -18,6 +18,8 @@ options { tokenVocab=cli_lexer; }
 @members {
   using variable = expression::variable;
   using op = expression::op;
+  using op_id = expression::op_id;
+  using var_id = expression::var_id;
   using op_ref = expression::op_ref;
   using op_type = expression::op_type;
   using op_manager = expression::op_manager;
@@ -31,7 +33,7 @@ options { tokenVocab=cli_lexer; }
   parse::type out_type = parse::type::boole;
 }
 
-invocation returns [uint32_t o]: e=expr {$o = $e.o;}
+invocation returns [op_id o]: e=expr {$o = $e.o;}
         ( t=format { out_type = $t.t; })?
         ( f=EOL_FENNEL_SUBST f=COMMAND {
         std::string command = $f.text;
@@ -44,7 +46,7 @@ invocation returns [uint32_t o]: e=expr {$o = $e.o;}
     } )?
         EOF;
 
-expr returns [uint32_t o]:
+expr returns [op_id o]:
       e=expr {$o = $e.o;} FENNEL_SUBST f=MATCHING_PAREN {
             auto last_op1 = (*ops)[$o];
             auto res1 = lua->eval_fennel_to_op_or_throw("(" + $f.text + ")", last_op1);
@@ -107,8 +109,8 @@ format returns [parse::type t]:
     | NONE   { $t = parse::type::none; }
     ;
 
-var returns [uint32_t o]:
-        { uint32_t var_id = 0; uint16_t i = 0, q = 0;}
+var returns [op_id o]:
+        { var_id var_id = 0; uint16_t i = 0, q = 0;}
         ( ( VEC { var_id = ops->vars().LITERAL_VEC; } )
       | ( TSEITIN { var_id = ops->vars().LITERAL_TSEITIN; } )
       | ( ID { auto text = $ID.text;

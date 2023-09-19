@@ -11,9 +11,8 @@
 
 #include <ankerl/unordered_dense.h>
 
+#include <booleguru/expression/op.hpp>
 #include <booleguru/util/die.hpp>
-
-#include "op.hpp"
 
 namespace booleguru::expression {
 struct variable;
@@ -21,12 +20,12 @@ struct variable;
 template<typename R, typename C>
 class manager {
   public:
-  using ref = typename R::ref;
-  using T = typename R::objtype;
-  using objref = R;
+  using objtype = typename R::objtype;
+  using ref = R;
+  using id = typename R::id;
 
   protected:
-  using map = ankerl::unordered_dense::map<T, ref>;
+  using map = ankerl::unordered_dense::map<objtype, id>;
   using vec = typename map::value_container_type;
   map objects_map_;
   size_t counter_ = 1;
@@ -41,30 +40,30 @@ class manager {
 
   inline const vec& objects() const noexcept { return objects_map_.values(); }
 
-  constexpr inline R operator[](ref r) noexcept {
+  constexpr inline R operator[](id r) noexcept {
     assert(r < counter_);
     return R(*static_cast<C*>(this), r);
   }
-  constexpr inline R operator[](ref r) const noexcept {
+  constexpr inline R operator[](id r) const noexcept {
     assert(r < counter_);
     const C* child = static_cast<const C*>(this);
     return R(*child, r);
   }
-  constexpr inline const T& getobj(ref r) const noexcept {
+  constexpr inline const objtype& getobj(id r) const noexcept {
     assert(r > 0);
     r = r - 1;
     assert(r < counter_);
-    return objects()[r].first;
+    return objects()[static_cast<size_t>(r)].first;
   }
 
-  constexpr inline R get_from_map(const T& obj) noexcept {
+  constexpr inline R get_from_map(const objtype& obj) noexcept {
     auto it = objects_map_.find(obj);
     if(it == objects_map_.end()) {
       return R();
     }
-    return objref(static_cast<C&>(*this), it->second);
+    return R(static_cast<C&>(*this), it->second);
   }
-  constexpr inline ref get_id_from_map(const T& obj) const noexcept {
+  constexpr inline id get_id_from_map(const objtype& obj) const noexcept {
     auto it = objects_map_.find(obj);
     if(it == objects_map_.end()) {
       return 0;
@@ -74,13 +73,13 @@ class manager {
 
   constexpr inline size_t size() const { return objects_map_.size(); }
 
-  constexpr inline R insert(T&& obj) {
+  constexpr inline R insert(objtype&& obj) {
     assert(static_cast<int32_t>(counter_)
            < std::numeric_limits<int32_t>::max());
-    ref idx = static_cast<C*>(this)->insert_id(std::move(obj));
+    id idx = static_cast<C*>(this)->insert_id(std::move(obj));
     return (*this)[idx];
   }
-  constexpr inline ref insert_id(T&& obj) {
+  constexpr inline id insert_id(objtype&& obj) {
     assert(static_cast<int32_t>(counter_)
            < std::numeric_limits<int32_t>::max());
     size_t idx = counter_++;
@@ -92,36 +91,38 @@ class manager {
     return idx;
   }
 
-  constexpr inline R get(const T& obj) {
-    if constexpr(std::is_same<T, variable>()) {
+  constexpr inline R get(const objtype& obj) {
+    if constexpr(std::is_same<objtype, variable>()) {
       obj = static_cast<C*>(this)->transform_(obj);
     }
-    R ref = static_cast<C*>(this)->get_from_map(obj);
-    if(ref.valid())
-      return ref;
-
-    return static_cast<C*>(this)->insert(std::move(obj));
-  }
-  constexpr inline R get(T&& obj) {
-    R ref = static_cast<C*>(this)->get_from_map(obj);
-    if(ref.valid())
-      return ref;
+    R id = static_cast<C*>(this)->get_from_map(obj);
+    if(id.valid())
+      return id;
 
     return static_cast<C*>(this)->insert(std::move(obj));
   }
 
-  constexpr inline ref get_id(const T& obj) {
-    if constexpr(std::is_same<T, variable>()) {
+  constexpr inline R get(objtype&& obj) {
+    R id = static_cast<C*>(this)->get_from_map(obj);
+    if(id.valid())
+      return id;
+
+    return static_cast<C*>(this)->insert(std::move(obj));
+  }
+
+  constexpr inline id get_id(const objtype& obj) {
+    if constexpr(std::is_same<objtype, variable>()) {
       obj = static_cast<C*>(this)->transform_(obj);
     }
-    ref r = static_cast<C*>(this)->get_id_from_map(obj);
+    id r = static_cast<C*>(this)->get_id_from_map(obj);
     if(r)
       return r;
 
     return static_cast<C*>(this)->insert_id(obj);
   }
-  constexpr inline ref get_id(T&& obj) {
-    ref r = static_cast<C*>(this)->get_id_from_map(obj);
+
+  constexpr inline id get_id(objtype&& obj) {
+    id r = static_cast<C*>(this)->get_id_from_map(obj);
     if(r)
       return r;
 

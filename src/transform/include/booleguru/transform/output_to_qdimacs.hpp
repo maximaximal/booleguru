@@ -46,8 +46,8 @@ class output_to_qdimacs {
     o << "p cnf " << variables << " " << clauses << "\n";
   }
 
-  using ref = int32_t;
-  void exists(ref x) {
+  using id = int32_t;
+  void exists(id x) {
     assert(in_prefix);
     assert(x != 0);
     maybe_end_forall();
@@ -57,7 +57,7 @@ class output_to_qdimacs {
     }
     o << x << " ";
   }
-  void forall(ref x) {
+  void forall(id x) {
     assert(in_prefix);
     assert(x != 0);
     maybe_end_exists();
@@ -71,18 +71,18 @@ class output_to_qdimacs {
     maybe_end_quant();
     in_prefix = false;
   };
-  void unit(ref x1) {
+  void unit(id x1) {
     assert(!in_prefix);
     assert(x1 != 0);
     o << x1 << " 0\n";
   }
-  void binary(ref x1, ref x2) {
+  void binary(id x1, id x2) {
     assert(!in_prefix);
     assert(x1 != 0);
     assert(x2 != 0);
     o << x1 << " " << x2 << " 0\n";
   }
-  void ternary(ref x1, ref x2, ref x3) {
+  void ternary(id x1, id x2, id x3) {
     assert(!in_prefix);
     assert(x1 != 0);
     assert(x2 != 0);
@@ -92,19 +92,19 @@ class output_to_qdimacs {
 
   TransformResult get_out() const {}
 
-  void insert_mapping_comment(ref id, std::string_view name) {
+  void insert_mapping_comment(id id, std::string_view name) {
     o << "c " << id << " " << name << "\n";
   }
 
-  inline constexpr ref op_ref_to_ref(const expression::op& o,
-                                     expression::op_ref::ref id) {
+  inline constexpr id op_ref_to_ref(const expression::op& o,
+                                    expression::op_id id) {
     (void)id;
     return o.user_int32;
   }
 
-  inline ref not_op(ref r) { return -r; }
+  inline id not_op(id r) { return -r; }
 
-  void add(ref x) {
+  void add(id x) {
     if(x == 0) {
       o << "0\n";
     } else {
@@ -200,7 +200,7 @@ class output_to_qdimacs {
     while(i->is_quant()) {
       i = i.right();
     }
-    uint32_t behind_prefix = i.get_id();
+    uint32_t behind_prefix = static_cast<uint32_t>(i.get_id());
 
     int32_t variables = var_id - 1;
     int32_t clauses = 0;
@@ -245,12 +245,12 @@ class output_to_qdimacs {
         if(o.left()->type == And) {
           s.emplace(o->left());
         } else {
-          print_or_tree(ops, o->left(), inner_s, a);
+          print_or_tree(ops, static_cast<uint32_t>(o->left()), inner_s, a);
         }
         if(o.right()->type == And) {
           s.emplace(o->right());
         } else {
-          print_or_tree(ops, o->right(), inner_s, a);
+          print_or_tree(ops, static_cast<uint32_t>(o->right()), inner_s, a);
         }
       }
     }

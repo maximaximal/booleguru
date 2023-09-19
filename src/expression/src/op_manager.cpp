@@ -196,8 +196,8 @@ op_manager::op_manager()
 op_manager::op_manager(std::shared_ptr<var_manager> vars)
   : vars_(vars) {}
 
-op_manager::base::ref
-op_manager::insert_id(T&& obj) {
+op_manager::id
+op_manager::insert_id(op_manager::objtype&& obj) {
   switch(obj.type) {
     case op_type::And: {
       const auto& l = getobj(obj.left());
@@ -263,11 +263,11 @@ op_manager::insert_id(T&& obj) {
 }
 op_ref
 op_manager::top() {
-  return get(op(op_type::Var, var_manager::LITERAL_TOP, 0));
+  return get(op(op_type::Var, var_manager::LITERAL_TOP, 0, 0));
 }
 op_ref
 op_manager::bottom() {
-  return get(op(op_type::Var, var_manager::LITERAL_BOTTOM, 0));
+  return get(op(op_type::Var, var_manager::LITERAL_BOTTOM, 0, 0));
 }
 void
 op_manager::modify_ops(modifier&& mod) {
@@ -295,8 +295,8 @@ op_manager::reset_op_user_vars() {
 }
 
 void
-op_manager::mark_through_tree(uint32_t root) {
-  std::stack<uint32_t> unvisited;
+op_manager::mark_through_tree(op_manager::id root) {
+  std::stack<op_manager::id> unvisited;
   unvisited.push(root);
 
   while(!unvisited.empty()) {
@@ -334,13 +334,13 @@ op_manager::mark_through_tree(uint32_t root) {
 }
 void
 op_manager::traverse_depth_first_through_tree(
-  uint32_t root,
-  std::function<void(uint32_t, const op&)>& visit) {
-  std::stack<uint32_t> unvisited;
+  op_manager::id root,
+  std::function<void(op_manager::id, const op&)>& visit) {
+  std::stack<op_manager::id> unvisited;
   unvisited.push(root);
 
   while(!unvisited.empty()) {
-    uint32_t id = unvisited.top();
+    op_id id = unvisited.top();
     const op& current = getobj(id);
     unvisited.pop();
 
@@ -372,13 +372,13 @@ op_manager::traverse_depth_first_through_tree(
 }
 void
 op_manager::traverse_unmarked_depth_first_through_tree(
-  uint32_t root,
-  std::function<void(uint32_t, const op&)> visit) {
-  std::stack<uint32_t> unvisited;
+  op_manager::id root,
+  std::function<void(op_manager::id, const op&)> visit) {
+  std::stack<op_manager::id> unvisited;
   unvisited.push(root);
 
   while(!unvisited.empty()) {
-    uint32_t id = unvisited.top();
+    op_id id = unvisited.top();
     const op& current = getobj(id);
     unvisited.pop();
 

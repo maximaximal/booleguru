@@ -2,8 +2,8 @@
 
 #include <memory>
 
-#include "op_manager.hpp"
-#include "var_manager.hpp"
+#include <booleguru/expression/op_manager.hpp>
+#include <booleguru/expression/var_manager.hpp>
 
 namespace booleguru::expression::literals {
 class handle {
@@ -36,28 +36,27 @@ template<class Mgr>
 class proxy {
   std::string name_;
 
-  using Ref = typename Mgr::objref;
+  using ref = typename Mgr::ref;
 
   public:
   constexpr inline proxy(std::string_view name)
     : name_(name) {}
 
-  constexpr inline Ref operator()(Mgr& mgr) const {
+  constexpr inline ref operator()(Mgr& mgr) const {
     if constexpr(std::is_same<Mgr, var_manager>()) {
       return mgr.get(variable{ name_ });
     } else if constexpr(std::is_same<Mgr, op_manager>()) {
       return mgr.get(
-        op{ op_type::Var,
-            mgr.vars().get(variable{ name_ }).get_id(),
-            0 });
+        op{ op_type::Var, mgr.vars().get(variable{ name_ }).get_id(), 0, 0 });
     }
   }
-  inline Ref operator()(std::shared_ptr<Mgr> mgr) const {
+
+  inline ref operator()(std::shared_ptr<Mgr> mgr) const {
     assert(mgr);
     return (*this)(*mgr);
   }
 
-  constexpr operator Ref() const {
+  constexpr operator ref() const {
     if constexpr(std::is_same<Mgr, var_manager>()) {
       return (*this)(handle::global().get_var_manager());
     } else if constexpr(std::is_same<Mgr, op_manager>()) {
@@ -95,7 +94,7 @@ exists(var_ref variable, op_ref sub_tree) {
     assert(&variable.get_mgr() == &sub_tree.get_mgr().vars());
   }
   op_ref var_op
-    = sub_tree.get_mgr().get(op(op_type::Var, variable.get_id(), 0));
+    = sub_tree.get_mgr().get(op(op_type::Var, variable.get_id(), 0, 0));
   return exists(var_op, sub_tree);
 }
 
@@ -116,7 +115,7 @@ forall(var_ref variable, op_ref sub_tree) {
     assert(&variable.get_mgr() == &sub_tree.get_mgr().vars());
   }
   op_ref var_op
-    = sub_tree.get_mgr().get(op(op_type::Var, variable.get_id(), 0));
+    = sub_tree.get_mgr().get(op(op_type::Var, variable.get_id(), 0, 0));
   return forall(var_op, sub_tree);
 }
 
