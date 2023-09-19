@@ -165,7 +165,8 @@ input_file::produce_parser(std::istream& is) {
     type_ = parse::type::smtlib;
   } else if(name_.ends_with(".boole") || name_.ends_with(".limboole")) {
     type_ = parse::type::boole;
-  } else if(name_.ends_with(".dimacs") || name_.ends_with(".qdimacs")) {
+  } else if(name_.ends_with(".dimacs") || name_.ends_with(".qdimacs")
+            || name_.ends_with(".cnf") || name_.ends_with(".pcnf")) {
     type_ = parse::type::qdimacs;
   } else if(name_.ends_with(".qcir")) {
     type_ = parse::type::qcir;

@@ -37,10 +37,7 @@ invocation returns [uint32_t o]: e=expr {$o = $e.o;}
         std::string command = $f.text;
         util::trim(command);
         auto last_op = (*ops)[$o];
-        if(command[0] != '(') {
-            command = "(" + command + " **)";
-        }
-        auto res = lua->eval_fennel_to_op_or_throw(command, last_op);
+        auto res = lua->eval_fennel_to_op_or_throw("(" + command + ")", last_op);
         if(res.valid()) {
             $o = res.get_id();
         }
@@ -50,7 +47,7 @@ invocation returns [uint32_t o]: e=expr {$o = $e.o;}
 expr returns [uint32_t o]:
       e=expr {$o = $e.o;} FENNEL_SUBST f=MATCHING_PAREN {
             auto last_op1 = (*ops)[$o];
-            auto res1 = lua->eval_fennel_to_op_or_throw($f.text, last_op1);
+            auto res1 = lua->eval_fennel_to_op_or_throw("(" + $f.text + ")", last_op1);
             if(res1.valid()) {
                 $o = res1.get_id();
             }
@@ -81,7 +78,8 @@ expr returns [uint32_t o]:
               throw std::invalid_argument("missing parse file function in CLI parser!");
             $o = parse_file_function_($p.text, file_format).get_id(); }
     | FENNEL_SUBST f=MATCHING_PAREN {
-            auto res3 = lua->eval_fennel_to_op_or_throw("(" + $f.text + ")");
+            std::string text{$f.text};
+            auto res3 = lua->eval_fennel_to_op_or_throw("(" + text + ")");
             if(res3.valid()) {
                 $o = res3.get_id();
             } else {
@@ -89,7 +87,8 @@ expr returns [uint32_t o]:
             }
         }
     | FENNEL_CALL f=CALL_CODE {
-            auto res4 = lua->eval_fennel_to_op_or_throw("(" + $f.text + ")");
+            std::string text{$f.text};
+            auto res4 = lua->eval_fennel_to_op_or_throw("(" + text + ")");
             if(res4.valid()) {
                 $o = res4.get_id();
             } else {

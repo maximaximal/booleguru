@@ -90,7 +90,6 @@ main(int argc, const char* argv[]) {
   // Preliminary stuff, just for testing!!
   cli::cli_processor cli(argc, argv);
 
-  try {
     auto result = cli.process();
 
     parse::type t = cli.output_type();
@@ -123,9 +122,6 @@ main(int argc, const char* argv[]) {
       default:
         std::cerr << "Unsupported output type." << std::endl;
     }
-  } catch(std::exception& e) {
-    std::cerr << "Exception: " << e.what() << std::endl;
-  }
 
   return EXIT_SUCCESS;
 }

@@ -45,6 +45,8 @@ qdimacs::operator()() {
   op_ref expr = op_ref();
   int highest_var = 0;
 
+  auto var_offset = expression::var_manager::LITERAL_VEC;
+
   while(std::getline(in_, line_str)) {
     std::istringstream line(line_str);
 
@@ -76,7 +78,7 @@ qdimacs::operator()() {
               if(var == 0) {
                 break;
               } else {
-                quantified_.push_back(std::make_pair(exists, var + 1));
+                quantified_.push_back(std::make_pair(exists, var + var_offset));
               }
             } while(line && var != 0);
           } else if(line_str[0] == 'a') {
@@ -90,7 +92,7 @@ qdimacs::operator()() {
               if(var == 0) {
                 break;
               } else {
-                quantified_.push_back(std::make_pair(forall, var + 1));
+                quantified_.push_back(std::make_pair(forall, var + var_offset));
               }
             } while(line && var != 0);
           } else {
@@ -99,7 +101,7 @@ qdimacs::operator()() {
             int abs_var = abs(var);
             if(abs_var > highest_var)
               highest_var = abs_var;
-            op_ref ex = ops_->get(op(op_type::Var, abs_var + 1, 0));
+            op_ref ex = ops_->get(op(op_type::Var, abs_var + var_offset, 0));
             if(var < 0)
               ex = !ex;
             CHECK_OR_RETURN(line, "could not read first variable");
@@ -110,7 +112,7 @@ qdimacs::operator()() {
               abs_var = abs(var);
               if(abs_var > highest_var)
                 highest_var = abs_var;
-              auto next = ops_->get(op(op_type::Var, abs_var + 1, 0));
+              auto next = ops_->get(op(op_type::Var, abs_var + var_offset, 0));
               if(var < 0)
                 next = !next;
               ex = ex || next;
@@ -126,14 +128,16 @@ qdimacs::operator()() {
   }
 
   for(int i = 1; i <= highest_var; ++i) {
-    int id = vars_->get_id(variable{ std::to_string(i) }) - 1;
+    int id = vars_->get_id(variable{ std::to_string(i) })
+             - expression::var_manager::LITERAL_VEC;
     assert(id == i);
   }
 
   for(auto it = quantified_.rbegin(); it != quantified_.rend(); ++it) {
     auto& [quant, v] = *it;
     op_type q = quant == exists ? op_type::Exists : op_type::Forall;
-    auto v_op = ops_->get_id(op(op_type::Var, v, 0));
+    auto v_op = ops_->get_id(
+      op(op_type::Var, v + expression::var_manager::LITERAL_VEC, 0));
     expr = ops_->get(op(q, v_op, expr.get_id()));
   }
 

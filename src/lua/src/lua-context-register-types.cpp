@@ -19,7 +19,7 @@ lua_context::get_var(const std::string& name) {
 }
 
 auto
-fennel_s(sol::state& s, const std::string& fennel) -> auto {
+fennel_s(sol::state& s, const std::string& fennel) -> auto{
   const std::string name = s["fennel"]["mangle"](fennel);
   return s[name];
 }
@@ -140,7 +140,6 @@ lua_context::register_booleguru_types() {
 
   set_to_state(
     s,
-    "solve",
     "solve",
     sol::overload(&helpers::solve_sat, helpers::solve_sat_default_args));
 
