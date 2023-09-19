@@ -226,7 +226,7 @@ class output_to_qdimacs {
       if(i->type == Exists) {
         exists(i.left()->user_int32);
       }
-      if(i->type == Exists) {
+      else if(i->type == Forall) {
         forall(i.left()->user_int32);
       }
       i = i.right();
