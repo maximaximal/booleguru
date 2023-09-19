@@ -101,7 +101,7 @@ qdimacs::operator()() {
             int abs_var = abs(var);
             if(abs_var > highest_var)
               highest_var = abs_var;
-            op_ref ex = ops_->get(op(op_type::Var, abs_var + var_offset, 0));
+            op_ref ex = ops_->get(op(op_type::Var, abs_var + var_offset, 0, 0));
             if(var < 0)
               ex = !ex;
             CHECK_OR_RETURN(line, "could not read first variable");
@@ -112,7 +112,8 @@ qdimacs::operator()() {
               abs_var = abs(var);
               if(abs_var > highest_var)
                 highest_var = abs_var;
-              auto next = ops_->get(op(op_type::Var, abs_var + var_offset, 0));
+              auto next
+                = ops_->get(op(op_type::Var, abs_var + var_offset, 0, 0));
               if(var < 0)
                 next = !next;
               ex = ex || next;
@@ -136,8 +137,7 @@ qdimacs::operator()() {
   for(auto it = quantified_.rbegin(); it != quantified_.rend(); ++it) {
     auto& [quant, v] = *it;
     op_type q = quant == exists ? op_type::Exists : op_type::Forall;
-    auto v_op = ops_->get_id(
-      op(op_type::Var, v + expression::var_manager::LITERAL_VEC, 0));
+    auto v_op = ops_->get_id(op(op_type::Var, v, 0, 0));
     expr = ops_->get(op(q, v_op, expr.get_id()));
   }
 

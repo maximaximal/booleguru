@@ -2,6 +2,7 @@ set(TEST_SRCS
   test-parse-boole.cpp
   test-parse-qcir.cpp
   test-parse-aiger.cpp
+  test-parse-qdimacs.cpp
   test-sexp-tracker.cpp
   test-antlr-boole-parse.cpp
 )
