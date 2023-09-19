@@ -25,3 +25,6 @@ endif()
 if(TARGET Catch2::Catch2)
   add_subdirectory(test)
 endif()
+
+set_property(TARGET booleguru-cli PROPERTY ENABLE_EXPORTS ON)
+set_property(TARGET booleguru PROPERTY ENABLE_EXPORTS ON)

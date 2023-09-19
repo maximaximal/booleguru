@@ -38,7 +38,9 @@ class manager {
     static_cast<C*>(this)->init();
   };
 
-  inline const vec& objects() const noexcept { return objects_map_.values(); }
+  inline const vec& objects() const noexcept {
+    return objects_map_.values();
+  }
 
   constexpr inline R operator[](id r) noexcept {
     assert(r < counter_);
@@ -71,7 +73,9 @@ class manager {
     return it->second;
   }
 
-  constexpr inline size_t size() const { return objects_map_.size(); }
+  constexpr inline size_t size() const {
+    return objects_map_.size();
+  }
 
   constexpr inline R insert(objtype&& obj) {
     assert(static_cast<int32_t>(counter_)

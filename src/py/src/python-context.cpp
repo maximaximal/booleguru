@@ -4,6 +4,12 @@
 #include <pybind11/embed.h>
 #include <pybind11/eval.h>
 
+// This is a weird hack, but only this way, pybind11 picks up the embedded
+// module correctly for some reason.
+
+#define EMBEDDED_PYTHON_MODULE
+#include "py_register_booleguru_types.cpp"
+
 namespace booleguru::py {
 
 python_result

@@ -1,6 +1,10 @@
 #include <optional>
 #include <type_traits>
 
+#ifdef EMBEDDED_PYTHON_MODULE
+#include <pybind11/embed.h>
+#endif
+
 #include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -48,7 +52,11 @@ pyop_bin_wrapper(F f) {
 // https://z3prover.github.io/api/html/namespacez3py.html with a custom spin to
 // support booleguru's variants.
 
+#ifdef EMBEDDED_PYTHON_MODULE
+PYBIND11_EMBEDDED_MODULE(pybooleguru, m) {
+#else
 PYBIND11_MODULE(pybooleguru, m) {
+#endif
   m.doc() = "booleguru: boolean formula multitool";
 
   pybind11::enum_<solve::result::type>(m, "result")

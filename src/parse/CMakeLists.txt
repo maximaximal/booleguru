@@ -86,3 +86,5 @@ add_dependencies(booleguru-parse booleguru-parse-antlr)
 if(TARGET Catch2::Catch2)
   add_subdirectory(test)
 endif()
+
+set_property(TARGET booleguru-parse PROPERTY ENABLE_EXPORTS ON)

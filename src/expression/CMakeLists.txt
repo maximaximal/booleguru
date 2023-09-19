@@ -15,6 +15,8 @@ target_include_directories(booleguru-expression PUBLIC ${CMAKE_CURRENT_SOURCE_DI
 
 target_link_libraries(booleguru-expression PUBLIC unordered_dense::unordered_dense booleguru-util)
 
+set_property(TARGET booleguru-expression PROPERTY ENABLE_EXPORTS ON)
+
 if(TARGET Catch2::Catch2)
   add_subdirectory(test)
 endif()
