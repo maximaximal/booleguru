@@ -1,3 +1,4 @@
+#include <booleguru/py/pyop.hpp>
 #include <booleguru/py/python-context.hpp>
 
 #include <pybind11/embed.h>
@@ -24,7 +25,7 @@ eval(std::istream& in) {
     std::string code(std::istreambuf_iterator<char>(in), {});
     pybind11::exec(code, pybind11::globals(), locals);
 
-    expression::op_ref op = locals["next_op"].cast<expression::op_ref>();
+    py::pyop_ref op = locals["next_op"].cast<py::pyop_ref>();
     return op;
   } catch(pybind11::error_already_set& e) {
     return std::string("Python error:\n") + e.what();

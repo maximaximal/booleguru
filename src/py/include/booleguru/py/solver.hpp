@@ -21,6 +21,6 @@ class solver {
   check_sat_result check();
   py::model& model();
 
-  expression::op_ref op() const { return op_; }
+  inline const expression::op_ref& op() const { return op_; }
 };
 }

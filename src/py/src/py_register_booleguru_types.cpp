@@ -138,6 +138,8 @@ PYBIND11_MODULE(pybooleguru, m) {
            }
          })
     .def("check", &solver::check)
+    .def_property_readonly("op",
+                           [](solver& solver) { return pyop_ref(solver.op()); })
     .def("model", &solver::model);
 
   m.def("Bool", [](const std::string& name) -> pyop_ref {
