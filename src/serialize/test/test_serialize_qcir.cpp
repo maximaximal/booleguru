@@ -12,7 +12,7 @@ using namespace booleguru::serialize;
 using namespace booleguru::expression;
 using namespace booleguru::expression::literals;
 
-TEST_CASE("Serialize simple example QCIR formula") {
+TEST_CASE("Serialize simple example QCIR formula", "[serialize][qcir]") {
   std::shared_ptr<op_manager> ops
     = std::make_shared<op_manager>(std::make_shared<var_manager>());
 
@@ -60,7 +60,8 @@ output(7)
   REQUIRE(o.str() == expected);
 }
 
-TEST_CASE("Serialize simple example QCIR formula with some NOTs") {
+TEST_CASE("Serialize simple example QCIR formula with some NOTs",
+          "[serialize][qcir]") {
   std::shared_ptr<op_manager> ops
     = std::make_shared<op_manager>(std::make_shared<var_manager>());
 
@@ -109,7 +110,7 @@ output(-7)
   REQUIRE(o.str() == expected);
 }
 
-TEST_CASE("Serialize simple prenex example QCIR formula") {
+TEST_CASE("Serialize simple prenex example QCIR formula", "[serialize][qcir]") {
   std::shared_ptr<op_manager> ops
     = std::make_shared<op_manager>(std::make_shared<var_manager>());
 
@@ -152,7 +153,8 @@ output(6)
   REQUIRE(o.str() == expected);
 }
 
-TEST_CASE("Serialize simple non prenex CNF example to QCIR formula cleansed") {
+TEST_CASE("Serialize simple non prenex CNF example to QCIR formula cleansed",
+          "[serialize][qcir]") {
   op_manager ops;
 
   op_ref x = "x"_var(ops);
@@ -183,7 +185,7 @@ output(6)
   REQUIRE(o.str() == expected);
 }
 
-TEST_CASE("Non prenex non CNF to QCIR") {
+TEST_CASE("Non prenex non CNF to QCIR", "[serialize][qcir]") {
   op_manager ops;
 
   op_ref x = "x"_var(ops);
@@ -216,7 +218,7 @@ output(6)
   REQUIRE(o.str() == expected);
 }
 
-TEST_CASE("Formula with equivalence to QCIR") {
+TEST_CASE("Formula with equivalence to QCIR", "[serialize][qcir]") {
   op_manager ops;
 
   op_ref a = "a"_var(ops);
@@ -251,7 +253,8 @@ output(9)
   REQUIRE(o.str() == expected);
 }
 
-TEST_CASE("Formula with similar or sub-trees converted to QCIR") {
+TEST_CASE("Formula with similar or sub-trees converted to QCIR",
+          "[serialize][qcir]") {
   op_manager ops;
 
   op_ref a = "a"_var(ops);
@@ -286,7 +289,8 @@ output(8)
   REQUIRE(o.str() == expected);
 }
 
-TEST_CASE("Formula with boolean constant converted to QCIR") {
+TEST_CASE("Formula with boolean constant converted to QCIR",
+          "[serialize][qcir]") {
   op_manager ops;
   auto top = ops.top();
 

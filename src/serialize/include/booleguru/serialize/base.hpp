@@ -63,5 +63,7 @@ class base {
   base(std::ostream& o)
     : o_(o) {}
   ~base() = default;
+
+  void operator()(op_ref op);
 };
 }

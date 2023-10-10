@@ -1,5 +1,6 @@
 set(TEST_SRCS
   test_serialize_qcir.cpp
+  test_serialize_qdimacs.cpp
 )
 
 add_executable(booleguru-serialize-test ${TEST_SRCS})
