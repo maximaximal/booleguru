@@ -33,6 +33,6 @@ class qcir : public base<qcir> {
   public:
   using base<qcir>::base;
 
-  void operator()(expression::op_ref op);
+  void operator()(expression::op_ref op) override;
 };
 }
