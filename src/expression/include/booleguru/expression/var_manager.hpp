@@ -12,7 +12,6 @@
 namespace booleguru::expression {
 class op_manager;
 class var_manager;
-class script_manager;
 
 struct variable {
   std::string name;

@@ -1,5 +1,4 @@
 #include <booleguru/expression/op_manager.hpp>
-#include <booleguru/expression/script_manager.hpp>
 #include <booleguru/expression/var_manager.hpp>
 
 #include <booleguru/parse/base.hpp>

@@ -3,7 +3,6 @@
 #include <booleguru/parse/result.hpp>
 #include <booleguru/parse/smtlib2.hpp>
 
-#include <booleguru/expression/script_manager.hpp>
 #include <booleguru/expression/var_manager.hpp>
 
 #include <smtlib2_lexer.h>
