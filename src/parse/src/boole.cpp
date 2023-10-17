@@ -1,7 +1,6 @@
 #include <booleguru/parse/boole.hpp>
 #include <booleguru/parse/result.hpp>
 
-#include <booleguru/expression/script_manager.hpp>
 #include <booleguru/expression/var_manager.hpp>
 
 #include <booleguru/lua/lua-context.hpp>

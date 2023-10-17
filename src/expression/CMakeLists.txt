@@ -4,7 +4,6 @@ set(SRCS
   src/op_manager.cpp
   src/var_manager.cpp
   src/bvop_manager.cpp
-  src/script_manager.cpp
   src/literals.cpp
   src/quanttree.cpp
 )

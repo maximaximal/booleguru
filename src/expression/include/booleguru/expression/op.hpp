@@ -7,7 +7,6 @@
 
 #include <booleguru/expression/binop.hpp>
 #include <booleguru/expression/quantop.hpp>
-#include <booleguru/expression/scriptop.hpp>
 #include <booleguru/expression/unop.hpp>
 #include <booleguru/expression/varop.hpp>
 
