@@ -39,14 +39,14 @@ function dotter (op, out)
     o:write("  " .. tostring(top.id) .. " [ label=\"" .. symb .. "\" ];\n" )
 
     if top.l ~= nil then
-      o:write("  " .. tostring(top.id) .. " -> " .. tostring(top.l.id) .. " [ label=\"l\" ];\n")
       if visited[top.l.id] ~= true then
+        o:write("  " .. tostring(top.id) .. " -> " .. tostring(top.l.id) .. " [ label=\"l\" ];\n")
         table.insert(unvisited, top.l)
       end
     end
     if top.r ~= nil then
-      o:write("  " .. tostring(top.id) .. " -> " .. tostring(top.r.id) .. " [ label=\"r\" ];\n")
       if visited[top.r.id] ~= true then
+        o:write("  " .. tostring(top.id) .. " -> " .. tostring(top.r.id) .. " [ label=\"r\" ];\n")
         table.insert(unvisited, top.r)
       end
     end
