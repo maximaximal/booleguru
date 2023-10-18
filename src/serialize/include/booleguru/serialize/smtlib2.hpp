@@ -12,6 +12,6 @@ class smtlib2 : public base<smtlib2> {
   public:
   using base<smtlib2>::base;
 
-  void operator()(expression::op_ref op) override;
+  void operator()(expression::op_ref op);
 };
 }

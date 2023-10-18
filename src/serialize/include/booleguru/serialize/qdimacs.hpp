@@ -15,7 +15,7 @@ class qdimacs : public base<qdimacs> {
   public:
   using base<qdimacs>::base;
 
-  void operator()(expression::op_ref op) override {
+  void operator()(expression::op_ref op) {
     if(op->is_prenex) {
       if(op->is_cnf) {
         transform::output_to_qdimacs transformer(o_);
