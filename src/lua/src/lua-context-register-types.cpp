@@ -167,7 +167,7 @@ lua_context::register_booleguru_types() {
       sol::resolve<op_ref(op_ref&, int)>(operator+),
       sol::resolve<op_ref(op_ref&, const std::string&)>(operator+)));
 
-  reftype.set("id", sol::property(&op_ref::get_id));
+  reftype.set("id", sol::property(&get_op_id));
   reftype.set("t", sol::property(&get_op_ref_type));
   reftype.set("type", sol::property(&get_op_ref_type));
   reftype.set("l", sol::property(&get_op_left));
