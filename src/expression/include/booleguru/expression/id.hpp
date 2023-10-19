@@ -54,6 +54,7 @@ struct id {
   }
   inline explicit constexpr operator uint32_t() const { return id_; }
   inline explicit constexpr operator uint64_t() const { return id_; }
+  inline explicit constexpr operator size_t() const { return id_; }
 };
 
 struct var_id : public id<var_id> {
@@ -73,4 +74,3 @@ struct script_id : public id<script_id> {
     : id(id_){};
 };
 }
-
