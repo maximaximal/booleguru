@@ -481,3 +481,22 @@ TEST_CASE("QBF Prenex K3 Eup Adown") {
   auto match_expression = Catch::Matchers::StartsWith(quantifiers);
   REQUIRE_THAT(k3_prenexed.to_string(), match_expression);
 }
+
+TEST_CASE("QBF prenex with duplicated structure", "[prenexer]") {
+  std::string_view in_str
+    = "(((#a ?b (a | b)) | !(#a ?b (a | b))) & ((#a ?b (a "
+      "| b)) | !(#a ?b (a | b))))";
+
+  isviewstream in(in_str);
+  boole parser(in);
+  auto result = parser();
+  REQUIRE(result);
+  op_ref root = *result;
+
+  REQUIRE(!root->is_prenex);
+
+  prenex_quantifier prenexer(prenex_quantifier::Eup_Aup);
+  op_ref prenexed = prenexer(root);
+
+  REQUIRE(prenexed->is_prenex);
+}

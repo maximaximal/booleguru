@@ -9,9 +9,10 @@
 #include <booleguru/util/unsupported.hpp>
 
 #include <iosfwd>
-#include <iostream>
 #include <iterator>
 #include <limits>
+
+#include <fmt/format.h>
 
 namespace booleguru::transform {
 
@@ -167,8 +168,12 @@ expression::op_ref
 prenex_quantifier::walk_not(expression::op_ref o) {
   o->user_int32 = o.get_mgr().getobj(o->un.c).user_int32;
   if(static_cast<uint32_t>(o->user_int32)
-     != std::numeric_limits<uint32_t>::max())
-    i_->qt.flip_downwards(static_cast<uint32_t>(o->user_int32));
+     != std::numeric_limits<uint32_t>::max()) {
+    uint32_t c = o->user_int32;
+    // fmt::println(
+    //   "Flip op {} which is {} in the quanttree downwards", o.to_string(), c);
+    i_->qt.flip_downwards(static_cast<uint32_t>(c));
+  }
   return o;
 }
 
@@ -214,8 +219,17 @@ prenex_quantifier::walk_equi(expression::op_ref o) {
 
 expression::op_ref
 prenex_quantifier::walk_bin(expression::op_ref o) {
-  o->user_int32 = i_->qt.add(static_cast<uint32_t>(o.left()->user_int32),
-                             static_cast<uint32_t>(o.right()->user_int32));
+  auto left = static_cast<uint32_t>(o.left()->user_int32);
+  auto right = static_cast<uint32_t>(o.right()->user_int32);
+  int32_t res = i_->qt.add(left, right);
+
+  // Useful print statement: How nodes are added together.
+  //
+  // fmt::println(
+  //  "BinOp {}: add {} and {} together to {}", o.to_string(), left, right,
+  //  res);
+
+  o->user_int32 = res;
   return o;
 }
 

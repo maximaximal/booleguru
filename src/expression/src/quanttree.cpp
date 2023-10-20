@@ -398,8 +398,10 @@ quanttree::next_marked(uint32_t i) {
   }
 
   uint32_t left_ = e.f.left;
+  assert(left_ != i);
   const entry& left = v[left_];
   uint32_t right_ = e.f.right;
+  assert(right_ != i);
   const entry& right = v[right_];
   if(left.marked_) {
     return left_;
@@ -414,8 +416,10 @@ uint32_t
 quanttree::next_unmarked(const entry& e) {
   assert(e.is_fork_);
   uint32_t left_ = e.f.left;
+  assert(left_ != e.index(v.data()));
   const entry& left = v[left_];
   uint32_t right_ = e.f.right;
+  assert(right_ != e.index(v.data()));
   const entry& right = v[right_];
   if(!left.marked_) {
     return left_;
