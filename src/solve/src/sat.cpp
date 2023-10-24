@@ -1,9 +1,12 @@
 #include "booleguru/transform/tseitin.hpp"
 #include <booleguru/solve/sat.hpp>
 #include <booleguru/transform/output_to_qdimacs.hpp>
+#include <booleguru/util/file.hpp>
 
 #include <sstream>
 #include <unordered_set>
+
+using namespace booleguru::util;
 
 #if __has_include(<ext/stdio_filebuf.h>)
 #include <ext/stdio_filebuf.h>
@@ -38,66 +41,9 @@ xcc_sign(int32_t value) {
   return sign;
 }
 
-// File existence and find_executable taken and adapted from MIT-licensed
-// Kissat.
-static bool
-file_exists(const char* path) {
-  if(!path)
-    return false;
-  if(access(path, F_OK))
-    return false;
-  return true;
-}
-
-static bool
-file_readable(const char* path) {
-  if(!path)
-    return false;
-  if(access(path, R_OK))
-    return false;
-  return true;
-}
-
-static bool
-find_executable(const char* name, std::string& overwrite) {
-  const size_t name_len = strlen(name);
-  const char* environment = getenv("PATH");
-  if(!environment)
-    return false;
-  const size_t dirs_len = strlen(environment);
-  char* dirs = (char*)malloc(dirs_len + 1);
-  if(!dirs)
-    return false;
-  strcpy(dirs, environment);
-  bool res = false;
-  const char* end = dirs + dirs_len + 1;
-  for(char *dir = dirs, *q; !res && dir != end; dir = q) {
-    for(q = dir; *q && *q != ':'; q++)
-      assert(q + 1 < end);
-    *q++ = 0;
-    const size_t path_len = (q - dir) + name_len;
-    char* path = (char*)malloc(path_len + 1);
-    if(!path) {
-      free(dirs);
-      return false;
-    }
-    snprintf(path, path_len + 1, "%s/%s", dir, name);
-    assert(strlen(path) == path_len);
-    res = file_readable(path);
-    overwrite = std::string(path);
-    free(path);
-  }
-  free(dirs);
-  return res;
-}
-
 // Taken from the XCC SAT solver implementation and adapted to fit C++.
 typedef struct xcc_sat_solver {
-  int infd[2];
-  int outfd[2];
-  FILE* infd_handle;
-  FILE* outfd_handle;
-  pid_t pid;
+  process p;
   unsigned int variables, clauses;
   char* assignments;
 } xcc_sat_solver;
@@ -111,30 +57,30 @@ xcc_sat_solver_init(xcc_sat_solver* solver,
                     char* envp[]) {
   assert(solver);
 
-  pipe(solver->infd);
-  pipe(solver->outfd);
+  pipe(solver->p.infd);
+  pipe(solver->p.outfd);
   solver->variables = variables;
   solver->clauses = clauses;
 
-  solver->pid = fork();
-  if(solver->pid) {
+  solver->p.pid = fork();
+  if(solver->p.pid) {
     // Parent
-    solver->infd_handle = fdopen(solver->infd[1], "w");
-    assert(solver->infd_handle);
-    solver->outfd_handle = fdopen(solver->outfd[0], "r");
-    assert(solver->outfd_handle);
+    solver->p.infd_handle = fdopen(solver->p.infd[1], "w");
+    assert(solver->p.infd_handle);
+    solver->p.outfd_handle = fdopen(solver->p.outfd[0], "r");
+    assert(solver->p.outfd_handle);
 
     solver->assignments
       = (char*)realloc(solver->assignments, sizeof(char) * (variables + 1));
   } else {
     // Child
-    dup2(solver->infd[0], STDIN_FILENO);
-    close(solver->infd[0]);
-    close(solver->infd[1]);
+    dup2(solver->p.infd[0], STDIN_FILENO);
+    close(solver->p.infd[0]);
+    close(solver->p.infd[1]);
 
-    dup2(solver->outfd[1], STDOUT_FILENO);
-    close(solver->outfd[0]);
-    close(solver->outfd[1]);
+    dup2(solver->p.outfd[1], STDOUT_FILENO);
+    close(solver->p.outfd[0]);
+    close(solver->p.outfd[1]);
 
     char* argv_null[1] = { NULL };
     if(argv == NULL)
@@ -182,7 +128,7 @@ parse_solver_output(xcc_sat_solver* solver) {
   char* buf = stack_buf;
   size_t buf_size = BUF_SIZE;
   size_t len;
-  while((len = getline(&buf, &buf_size, solver->outfd_handle)) != -1) {
+  while((len = getline(&buf, &buf_size, solver->p.outfd_handle)) != -1) {
     if(len > 0 && (buf[0] == 'c' || buf[0] == 'r')) {
       continue;// Comment line or result line
     }
@@ -212,37 +158,37 @@ parse_solver_output(xcc_sat_solver* solver) {
 static void
 xcc_sat_solver_add(xcc_sat_solver* solver, int l) {
   assert(solver);
-  assert(solver->infd_handle);
+  assert(solver->p.infd_handle);
   if(l == 0) {
-    fprintf(solver->infd_handle, "0\n");
+    fprintf(solver->p.infd_handle, "0\n");
   } else {
-    fprintf(solver->infd_handle, "%d ", l);
+    fprintf(solver->p.infd_handle, "%d ", l);
   }
 }
 
 static int
 xcc_sat_solver_solve(xcc_sat_solver* solver) {
-  fclose(solver->infd_handle);
-  solver->infd_handle = NULL;
-  close(solver->infd[1]);
+  fclose(solver->p.infd_handle);
+  solver->p.infd_handle = NULL;
+  close(solver->p.infd[1]);
 
   // Wait for pid to finish.
 
   int status;
-  waitpid(solver->pid, &status, 0);
+  waitpid(solver->p.pid, &status, 0);
 
   if(WIFEXITED(status)) {
     int exit_code = WEXITSTATUS(status);
     switch(exit_code) {
       case 10:
         parse_solver_output(solver);
-        fclose(solver->outfd_handle);
+        fclose(solver->p.outfd_handle);
         return 10;
       case 20:
-        fclose(solver->outfd_handle);
+        fclose(solver->p.outfd_handle);
         return 20;
       default:
-        fclose(solver->outfd_handle);
+        fclose(solver->p.outfd_handle);
         return exit_code;
     }
   } else {
@@ -299,7 +245,7 @@ sat::solve_with_solver(expression::op_ref& o, xcc_sat_solver& solver) {
         solver.variables = variables;
         solver.clauses = clauses;
         solver.assignments = (char*)malloc(variables * sizeof(char) + 1);
-        fprintf(solver.infd_handle, "p cnf %d %d\n", variables, clauses);
+        fprintf(solver.p.infd_handle, "p cnf %d %d\n", variables, clauses);
       },
       [&solver](int32_t l) { xcc_sat_solver_add(&solver, l); },
       false /* don't produce mappings */);
@@ -309,7 +255,7 @@ sat::solve_with_solver(expression::op_ref& o, xcc_sat_solver& solver) {
     //
     // Inspired from https://stackoverflow.com/a/5253726
 #ifdef USE_STDIO_FILEBUF
-    int handle = fileno(solver.infd_handle);
+    int handle = fileno(solver.p.infd_handle);
     __gnu_cxx::stdio_filebuf<char> filebuf(handle, std::ios::out);
     std::ostream os(&filebuf);
     transform::tseitin<transform::output_to_qdimacs> tseitin(os);
