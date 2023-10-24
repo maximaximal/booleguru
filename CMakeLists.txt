@@ -70,8 +70,12 @@ if(isMultiConfig)
     if(NOT "Sanitize" IN_LIST CMAKE_CONFIGURATION_TYPES)
         list(APPEND CMAKE_CONFIGURATION_TYPES Sanitize)
     endif()
+
+    if(NOT "Fuzz" IN_LIST CMAKE_CONFIGURATION_TYPES)
+        list(APPEND CMAKE_CONFIGURATION_TYPES Sanitize)
+    endif()
 else()
-    set(allowedBuildTypes Sanitize Debug Release RelWithDebInfo MinSizeRel)
+    set(allowedBuildTypes Sanitize Fuzz Debug Release RelWithDebInfo MinSizeRel)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "${allowedBuildTypes}")
 
     if(CMAKE_BUILD_TYPE AND NOT CMAKE_BUILD_TYPE IN_LIST allowedBuildTypes)
@@ -95,7 +99,35 @@ set(CMAKE_SHARED_LINKER_FLAGS_SANITIZE
     "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -fsanitize=address -fsanitize=undefined" CACHE STRING
     "Linker lags to be used to create shared libraries for Sanitize build type." FORCE)
 
+set(CMAKE_C_FLAGS_FUZZ
+    "${CMAKE_C_FLAGS_DEBUG} -fsanitize=fuzzer" CACHE STRING
+    "Flags used by the C compiler for Fuzz build type or configuration." FORCE)
+
+set(CMAKE_CXX_FLAGS_FUZZ
+    "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=fuzzer" CACHE STRING
+    "Flags used by the C++ compiler for Fuzz build type or configuration." FORCE)
+
+set(CMAKE_EXE_LINKER_FLAGS_FUZZ
+    "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -fsanitize=fuzzer" CACHE STRING
+    "Linker flags to be used to create executables for Fuzz build type." FORCE)
+
+set(CMAKE_SHARED_LINKER_FLAGS_FUZZ
+    "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -fsanitize=fuzzer" CACHE STRING
+    "Linker lags to be used to create shared libraries for Fuzz build type." FORCE)
+
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
+if(${CMAKE_BUILD_TYPE} MATCHES "Fuzz")
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        message(STATUS "Compiler is Clang, the Fuzz target works.")
+        if(TESTS)
+            message(STATUS "Disabling TESTS because of fuzz target.")
+            set(TESTS OFF)
+        endif()
+    else()
+        message(ERROR "Compiler is not clang, but " ${CMAKE_CXX_COMPILER_ID} "! Fuzz target cannot work!")
+    endif()
+endif()
 
 if(TESTS)
     find_package(Catch2)

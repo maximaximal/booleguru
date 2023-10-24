@@ -13,10 +13,33 @@
 
 #include "parser-internal.hpp"
 
+#include <fmt/format.h>
+
 using namespace booleguru::parse::antlr;
 using namespace antlr4;
 
 namespace booleguru::parse {
+class cli_graph : public expression::op_graph {
+  lua::lua_context& lua;
+  cli::parse_file_function f;
+
+  public:
+  cli_graph(expression::op_manager& ops,
+            lua::lua_context& lua,
+            cli::parse_file_function f)
+    : op_graph(ops)
+    , lua(lua)
+    , f(f) {}
+
+  virtual ref fennel_(std::string_view code, ref last_op = 0) final override {
+    expression::op_ref op = ops[last_op];
+    return lua.eval_fennel_to_op_or_throw(code, op).get_id();
+  }
+  virtual ref file_(std::string_view path, util::type type) final override {
+    return f(path, type).get_id();
+  }
+};
+
 struct cli::internal
   : public parser_internal<antlr::cli_lexer, antlr::cli_parser> {
   using base = parser_internal<cli_lexer, cli_parser>;
@@ -32,8 +55,6 @@ cli::internal_deleter::operator()(cli::internal* i) {
 void
 cli::init() {
   internal_.reset(new internal(in_));
-  internal_->parser.ops = ops_;
-  internal_->parser.lua = lua_;
 }
 result
 cli::operator()() {
@@ -41,7 +62,9 @@ cli::operator()() {
     init();
   }
 
-  internal_->parser.parse_file_function_ = parse_file_function_;
+  cli_graph g(*ops_, *lua_, parse_file_function_);
+
+  internal_->parser.g = &g;
 
   try {
     auto result = internal_->parser.invocation();
@@ -53,4 +76,23 @@ cli::operator()() {
     return error(e.what());
   }
 }
+
+size_t
+cli::fuzz_files() {
+  if(!internal_) {
+    init();
+  }
+
+  expression::fuzz_file_graph f;
+
+  internal_->parser.g = &f;
+
+  try {
+    internal_->parser.invocation();
+  } catch(parser_exception& e) {
+  }
+
+  return f.number_of_fuzz_files();
+}
+
 }

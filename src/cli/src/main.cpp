@@ -7,9 +7,9 @@
 
 #include <booleguru/parse/boole.hpp>
 #include <booleguru/parse/result.hpp>
-#include <booleguru/parse/type.hpp>
 #include <booleguru/serialize/qcir.hpp>
 #include <booleguru/serialize/smtlib2.hpp>
+#include <booleguru/util/type.hpp>
 
 #include <booleguru/transform/output_to_qdimacs.hpp>
 #include <booleguru/transform/tseitin.hpp>
@@ -90,38 +90,40 @@ main(int argc, const char* argv[]) {
   // Preliminary stuff, just for testing!!
   cli::cli_processor cli(argc, argv);
 
-    auto result = cli.process();
+  auto result = cli.process();
 
-    parse::type t = cli.output_type();
-    switch(t) {
-      case parse::type::qcir: {
-        serialize::qcir qcir_out(std::cout);
-        qcir_out(result);
-        return EXIT_SUCCESS;
-      }
-      case parse::type::boole:
-        std::cout << result << std::endl;
-        return EXIT_SUCCESS;
-      case parse::type::qdimacs: {
-        if(result->is_cnf) {
-          transform::output_to_qdimacs o(std::cout);
-          o.serialize_cnf_op(result);
-        } else {
-          transform::tseitin<transform::output_to_qdimacs> qdimacs(std::cout);
-          qdimacs(result);
-        }
-        return EXIT_SUCCESS;
-      }
-      case parse::type::smtlib: {
-        serialize::smtlib2 s(std::cout);
-        s(result);
-        return EXIT_SUCCESS;
-      }
-      case parse::type::none:
-        return EXIT_SUCCESS;
-      default:
-        std::cerr << "Unsupported output type." << std::endl;
+  using enum util::type;
+
+  util::type t = cli.output_type();
+  switch(t) {
+    case qcir: {
+      serialize::qcir qcir_out(std::cout);
+      qcir_out(result);
+      return EXIT_SUCCESS;
     }
+    case boole:
+      std::cout << result << std::endl;
+      return EXIT_SUCCESS;
+    case qdimacs: {
+      if(result->is_cnf) {
+        transform::output_to_qdimacs o(std::cout);
+        o.serialize_cnf_op(result);
+      } else {
+        transform::tseitin<transform::output_to_qdimacs> qdimacs(std::cout);
+        qdimacs(result);
+      }
+      return EXIT_SUCCESS;
+    }
+    case smtlib: {
+      serialize::smtlib2 s(std::cout);
+      s(result);
+      return EXIT_SUCCESS;
+    }
+    case none:
+      return EXIT_SUCCESS;
+    default:
+      std::cerr << "Unsupported output type." << std::endl;
+  }
 
   return EXIT_SUCCESS;
 }
