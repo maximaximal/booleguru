@@ -100,19 +100,19 @@ set(CMAKE_SHARED_LINKER_FLAGS_SANITIZE
     "Linker lags to be used to create shared libraries for Sanitize build type." FORCE)
 
 set(CMAKE_C_FLAGS_FUZZ
-    "${CMAKE_C_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer -fsanitize=undefined" CACHE STRING
+    "${CMAKE_C_FLAGS_DEBUG} -fsanitize=address -O3 -fno-omit-frame-pointer -fsanitize=undefined" CACHE STRING
     "Flags used by the C compiler for Sanitize build type or configuration." FORCE)
 
 set(CMAKE_CXX_FLAGS_FUZZ
-    "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer -fsanitize=undefined" CACHE STRING
+    "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address -O3 -fno-omit-frame-pointer -fsanitize=undefined" CACHE STRING
     "Flags used by the C++ compiler for Sanitize build type or configuration." FORCE)
 
 set(CMAKE_EXE_LINKER_FLAGS_FUZZ
-    "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -fsanitize=address -fsanitize=undefined" CACHE STRING
+    "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -fsanitize=address -O3 -fsanitize=undefined" CACHE STRING
     "Linker flags to be used to create executables for Sanitize build type." FORCE)
 
 set(CMAKE_SHARED_LINKER_FLAGS_FUZZ
-    "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -fsanitize=address -fsanitize=undefined" CACHE STRING
+    "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -fsanitize=address -O3 -fsanitize=undefined" CACHE STRING
     "Linker lags to be used to create shared libraries for Sanitize build type." FORCE)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
