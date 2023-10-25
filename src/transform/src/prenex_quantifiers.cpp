@@ -55,7 +55,7 @@ prenex_quantifier::operator()(op_ref o) {
       return walk((*ops)[o]).get_id();
     });
 
-  if(encountered_quant_) {
+  if(!encountered_quant_) {
     // No quantifiers have to be removed, the op is already devoid of
     // quantifiers! Can directly return the same op ref. This may not be equal
     // to new_root, as new_root may has new nodes because of resolving
