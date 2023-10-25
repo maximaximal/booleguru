@@ -6,6 +6,7 @@
 #include <booleguru/expression/quanttree.hpp>
 #include <booleguru/expression/var_manager.hpp>
 #include <booleguru/util/reverse.hpp>
+#include <booleguru/util/unsupported.hpp>
 
 #include <iosfwd>
 #include <iostream>
@@ -54,9 +55,11 @@ prenex_quantifier::operator()(op_ref o) {
       return walk((*ops)[o]).get_id();
     });
 
-  if(new_root == o.get_id()) {
-    // No quantifiers had to be removed, the op is already devoid of
-    // quantifiers! Can directly return the same op ref.
+  if(encountered_quant_) {
+    // No quantifiers have to be removed, the op is already devoid of
+    // quantifiers! Can directly return the same op ref. This may not be equal
+    // to new_root, as new_root may has new nodes because of resolving
+    // implications.
     return o;
   }
 
@@ -108,6 +111,8 @@ prenex_quantifier::walk_quant(expression::op_ref o) {
   assert(o->type == expression::op_type::Forall
          || o->type == expression::op_type::Exists);
   assert(o.left()->type == expression::op_type::Var);
+
+  encountered_quant_ = true;
 
   const auto old_v = o.get_mgr()[o->quant.v]->var;
   auto& old_v_obj = o.get_mgr().vars().getobj(old_v.v);
@@ -203,9 +208,7 @@ prenex_quantifier::walk_lpmi(expression::op_ref o) {
 
 expression::op_ref
 prenex_quantifier::walk_equi(expression::op_ref o) {
-  assert(false);
-  util::die("Equi not supported yet for prenexing!");
-  return o;
+  throw util::unsupported("equi unsupported for prenexing");
 }
 
 expression::op_ref
@@ -217,8 +220,7 @@ prenex_quantifier::walk_bin(expression::op_ref o) {
 
 expression::op_ref
 prenex_quantifier::walk_xor(expression::op_ref o) {
-  assert(false);
-  util::die("Xor not supported yet for prenexing!");
+  throw util::unsupported("xor unsupported for prenexing");
   return o;
 }
 }

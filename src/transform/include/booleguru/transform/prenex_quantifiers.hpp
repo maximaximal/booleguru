@@ -13,6 +13,8 @@ struct prenex_quantifier {
     Edown_Adown,
   };
 
+  bool encountered_quant_ = false;
+
   prenex_quantifier(kind k = Eup_Aup);
   ~prenex_quantifier();
 

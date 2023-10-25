@@ -1,4 +1,5 @@
 #include "booleguru/util/is_number.hpp"
+#include "booleguru/util/unsupported.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
@@ -133,6 +134,9 @@ LLVMFuzzerTestOneInput(const uint8_t* data_ptr, size_t size) {
     return -1;
   } catch(booleguru::parse::error::generic& e) {
     // Any generic parse errors are also not interesting.
+    return -1;
+  } catch(booleguru::util::unsupported& e) {
+    // If something is unsupported, it is not an error, it is a known issue.
     return -1;
   }
 
