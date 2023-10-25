@@ -208,6 +208,7 @@ prenex_quantifier::walk_lpmi(expression::op_ref o) {
 
 expression::op_ref
 prenex_quantifier::walk_equi(expression::op_ref o) {
+  (void)o;
   throw util::unsupported("equi unsupported for prenexing");
 }
 
@@ -220,7 +221,7 @@ prenex_quantifier::walk_bin(expression::op_ref o) {
 
 expression::op_ref
 prenex_quantifier::walk_xor(expression::op_ref o) {
+  (void)o;
   throw util::unsupported("xor unsupported for prenexing");
-  return o;
 }
 }
