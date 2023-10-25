@@ -14,6 +14,8 @@ options { tokenVocab=cli_lexer; }
 #include <booleguru/util/type.hpp>
 #include <booleguru/util/trim.hpp>
 #include <booleguru/util/is_number.hpp>
+
+#include <booleguru/parse/error.hpp>
 }
 
 @members {
@@ -72,20 +74,22 @@ expr returns [op_id o]:
         p=PATH { $o = g->file_($p.text, file_format); }
     | FENNEL_SUBST f=MATCHING_PAREN {
             std::string text{$f.text};
-            op_id res3 = g->fennel_("(" + text + ")");
+            std::string code = "(" + text + ")";
+            op_id res3 = g->fennel_(code);
             if(res3 > 0) {
                 $o = res3;
             } else {
-                throw std::invalid_argument("standalone fennel call must return some op!");
+                throw error::fennel_did_not_return_op(code);
             }
         }
     | FENNEL_CALL f=CALL_CODE {
             std::string text{$f.text};
-            op_id res4 = g->fennel_("(" + text + ")");
+            std::string code = "(" + text + ")";
+            op_id res4 = g->fennel_(code);
             if(res4 > 0) {
                 $o = res4;
             } else {
-                throw std::invalid_argument("standalone fennel call must return some op!");
+                throw error::fennel_did_not_return_op(code);
             }
         }
     ;

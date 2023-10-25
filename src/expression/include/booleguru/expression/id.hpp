@@ -53,16 +53,7 @@ struct id {
     return id_;
   }
   inline explicit constexpr operator uint32_t() const { return id_; }
-  inline explicit constexpr operator uint64_t() const { return id_; }
-
-#if !defined(__GLIBCXX__) && !defined(__GLIBCPP__)
-  // This is only required when building on llvm's libc++, as it apparently
-  // defines uint64_t differently from size type. This could still be improved,
-  // so it is a TODO.
-  inline explicit constexpr operator size_t() const {
-    return id_;
-  }
-#endif
+  inline explicit constexpr operator std::size_t() const { return id_; }
 };
 
 struct var_id : public id<var_id> {

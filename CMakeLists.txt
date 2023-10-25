@@ -54,7 +54,7 @@ if(EMSCRIPTEN)
   set(CMAKE_C_FLAGS "-fwasm-exceptions")
 endif()
 
-if(${CMAKE_BUILD_TYPE} MATCHES "Release")
+if(${CMAKE_BUILD_TYPE} MATCHES "Release" OR ${CMAKE_BUILD_TYPE} MATCHES "Fuzz")
   include(CheckIPOSupported)
   check_ipo_supported(RESULT LTO_SUPPORTED OUTPUT error)
 
@@ -100,20 +100,20 @@ set(CMAKE_SHARED_LINKER_FLAGS_SANITIZE
     "Linker lags to be used to create shared libraries for Sanitize build type." FORCE)
 
 set(CMAKE_C_FLAGS_FUZZ
-    "${CMAKE_C_FLAGS_DEBUG} -fsanitize=fuzzer" CACHE STRING
-    "Flags used by the C compiler for Fuzz build type or configuration." FORCE)
+    "${CMAKE_C_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer -fsanitize=undefined" CACHE STRING
+    "Flags used by the C compiler for Sanitize build type or configuration." FORCE)
 
 set(CMAKE_CXX_FLAGS_FUZZ
-    "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=fuzzer" CACHE STRING
-    "Flags used by the C++ compiler for Fuzz build type or configuration." FORCE)
+    "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer -fsanitize=undefined" CACHE STRING
+    "Flags used by the C++ compiler for Sanitize build type or configuration." FORCE)
 
 set(CMAKE_EXE_LINKER_FLAGS_FUZZ
-    "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -fsanitize=fuzzer" CACHE STRING
-    "Linker flags to be used to create executables for Fuzz build type." FORCE)
+    "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -fsanitize=address -fsanitize=undefined" CACHE STRING
+    "Linker flags to be used to create executables for Sanitize build type." FORCE)
 
 set(CMAKE_SHARED_LINKER_FLAGS_FUZZ
-    "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -fsanitize=fuzzer" CACHE STRING
-    "Linker lags to be used to create shared libraries for Fuzz build type." FORCE)
+    "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -fsanitize=address -fsanitize=undefined" CACHE STRING
+    "Linker lags to be used to create shared libraries for Sanitize build type." FORCE)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
@@ -176,6 +176,20 @@ if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
 	target_compile_options(booleguru-serialize PRIVATE -Wall -Wextra -Wpedantic -Werror)
 	target_compile_options(booleguru PRIVATE -Wall -Wextra -Wpedantic -Werror)
   endif()
+endif()
+
+if(${CMAKE_BUILD_TYPE} MATCHES "Fuzz")
+  target_compile_options(antlr4_static PRIVATE -fsanitize=fuzzer,address,undefined)
+  target_compile_options(booleguru-expression PRIVATE -fsanitize=fuzzer,address,undefined)
+  target_compile_options(booleguru-transform PRIVATE -fsanitize=fuzzer,address,undefined)
+  target_compile_options(booleguru-parse PRIVATE -fsanitize=fuzzer,address,undefined)
+  target_compile_options(booleguru-lua PRIVATE -fsanitize=fuzzer,address,undefined)
+  target_compile_options(booleguru-serialize PRIVATE -fsanitize=fuzzer,address,undefined)
+  target_compile_options(booleguru-fuzz PRIVATE -fsanitize=fuzzer,address,undefined)
+
+  target_link_options(booleguru-fuzz PRIVATE -fsanitize=fuzzer,address,undefined)
+  target_link_libraries(booleguru-fuzz PRIVATE -fsanitize=fuzzer,address,undefined)
+  target_link_libraries(booleguru-print-corpus PRIVATE -fsanitize=address,undefined)
 endif()
 
 include(GNUInstallDirs)
