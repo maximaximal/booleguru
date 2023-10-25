@@ -10,6 +10,8 @@
 #include <booleguru/expression/op_manager.hpp>
 #include <booleguru/fuzz/source.hpp>
 
+#include <booleguru/util/base64.hpp>
+
 int
 main(int argc, char** argv) {
   if(argc == 1) {
@@ -22,8 +24,15 @@ main(int argc, char** argv) {
     fmt::println("Corpus File: {}", argv[i]);
 
     std::ifstream f(argv[i], std::ios_base::binary);
+
     std::stringstream buffer;
-    buffer << f.rdbuf();
+    if(f) {
+      buffer << f.rdbuf();
+    } else {
+      // Otherwise, use base64 decode.
+      buffer << base64::from_base64(argv[i]);
+    }
+
     std::string input(buffer.str());
 
     using namespace booleguru::fuzz;
