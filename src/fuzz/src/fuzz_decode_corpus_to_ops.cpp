@@ -46,11 +46,19 @@ main(int argc, char** argv) {
 
     for(size_t i = 1; i <= ops.size(); ++i) {
       const op& o_ = ops.getobj(i);
-      fmt::println("    Op {} is type {}, left: {}, right: {}",
-                   i,
-                   (int)o_.type,
-                   o_.left().id_,
-                   o_.right().id_);
+      if(o_.is_binop() || o_.is_quant()) {
+        fmt::println("    Op {} is type {}, left: {}, right: {}",
+                     i,
+                     (int)o_.type,
+                     o_.left().id_,
+                     o_.right().id_);
+      } else if(o_.type == op_type::Var) {
+        fmt::println("    Op {} is type Var, v: {}, q: {}, i: {}",
+                     i,
+                     o_.var.v.id_,
+                     o_.var.q,
+                     o_.var.i);
+      }
     }
 
     std::cout << "  Last op (last fuzz file): " << ops[ops.size()] << std::endl;
