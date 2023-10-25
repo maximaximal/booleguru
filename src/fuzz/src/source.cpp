@@ -11,7 +11,6 @@ source::ensure_var_exists(expression::op& o) {
     std::string v_name = std::to_string(id);
     uint32_t new_id
       = ops.vars().get_id(std::move(expression::variable{ v_name })).id_;
-    fmt::println("Insert Variable {} to ID {}", v_name, new_id);
     o.var.v = new_id;
   }
 }
