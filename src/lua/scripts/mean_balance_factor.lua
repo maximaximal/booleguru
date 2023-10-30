@@ -68,9 +68,7 @@ function mean_balance_factor(op)
   local progress = 0
 
   local stack = { op }
-  local am = 0.0
-  local hm = 0.0
-  local gm = 1.0
+  local bf = 0.0
   while #stack > 0 do
     local root = table.remove(stack, #stack)
     assert(root ~= nil)
@@ -78,27 +76,26 @@ function mean_balance_factor(op)
       local count_l = node_count(root.l, true)
       local count_r = node_count(root.r, true)
       assert(count_l > 0 and count_r > 0)
-      local ratio
-      if count_l >= count_r then
-        ratio = count_r / count_l
-      else
-        ratio = 1.0 - count_l / count_r
-      end
-      am = am + ratio
-      hm = hm + (1.0 / ratio)
-      gm = gm * ratio
+      local ratio = count_l / count_r
+      bf = bf + math.log(ratio, 2)
       table.insert(stack, 0, root.l)
       table.insert(stack, 0, root.r)
-      -- progress = progress + 1
-      -- io.write(string.format("Progress: %.3f\r", progress / total_count))
     end
   end
-  -- print()
 
-  gm = math.pow(gm, 1.0 / total_count)
-  hm = total_count / hm
-  am = am / total_count
-  print(string.format(" Geometric  Mean Balance Factor: %01.8f",  gm))
-  print(string.format("[Harmonic   Mean Balance Factor: %01.8f]", hm))
-  print(string.format("[Arithmetic Mean Balance Factor: %01.8f]", am))
+  -- bf := log2(r_0) + log2(r_1) + ... + log2(r_n)
+  --    := log2(r_0 * r_1 * ... * r_n)
+  --
+  -- Then, we take the sigmoid-ish function
+  --
+  --                     1.0
+  -- lmbf := 2.0 * -----------------
+  --                 1.0 + a^(-bf)
+  --
+  -- with a > 1. A good choice is a := (total_count + 1.0) / total_count
+  --
+  -- I think this helps with precision..?
+  local a = (1.0 + total_count) / total_count
+  local lmbf = 2.0 / (1.0 + a^(-bf))
+  print(string.format("Log-Mean Balance Factor: %01.8f", lmbf))
 end
