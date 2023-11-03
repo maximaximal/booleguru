@@ -14,6 +14,11 @@
 
 #include <fmt/format.h>
 
+// Enable printing the steps of merging the op tree into the quanttree object.
+// Should be deactivated pretty much always as a comment.
+
+// #define PRINT_STEPS
+
 namespace booleguru::transform {
 
 #define IT(I) ops[I->var] << ":" << *I
@@ -135,6 +140,14 @@ prenex_quantifier::walk_quant(expression::op_ref o) {
                                    static_cast<uint32_t>(bound_v.get_id()),
                                    static_cast<uint32_t>(e->user_int32));
 
+#ifdef PRINT_STEPS
+  fmt::println("Quant {}: quantify {} over {} together to {}",
+               op_type_to_str(o->type),
+               bound_v.to_string(),
+               e.to_string(),
+               user_int32);
+#endif
+
   // Travese all variables downwards again, now that the bound is fixed.
   op_id new_e = o.get_mgr().traverse_postorder_with_stack(
     e.get_id(), [bound_v](op_manager* ops, op_id id) -> op_id {
@@ -170,8 +183,10 @@ prenex_quantifier::walk_not(expression::op_ref o) {
   if(static_cast<uint32_t>(o->user_int32)
      != std::numeric_limits<uint32_t>::max()) {
     uint32_t c = o->user_int32;
-    // fmt::println(
-    //   "Flip op {} which is {} in the quanttree downwards", o.to_string(), c);
+#ifdef PRINT_STEPS
+    fmt::println(
+      "Flip op {} which is {} in the quanttree downwards", o.to_string(), c);
+#endif
     i_->qt.flip_downwards(static_cast<uint32_t>(c));
   }
   return o;
@@ -223,11 +238,10 @@ prenex_quantifier::walk_bin(expression::op_ref o) {
   auto right = static_cast<uint32_t>(o.right()->user_int32);
   int32_t res = i_->qt.add(left, right);
 
-  // Useful print statement: How nodes are added together.
-  //
-  // fmt::println(
-  //  "BinOp {}: add {} and {} together to {}", o.to_string(), left, right,
-  //  res);
+#ifdef PRINT_STEPS
+  fmt::println(
+    "BinOp {}: add {} and {} together to {}", o.to_string(), left, right, res);
+#endif
 
   o->user_int32 = res;
   return o;
