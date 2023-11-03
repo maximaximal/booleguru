@@ -177,8 +177,6 @@ input_file::produce_parser(std::istream& is) {
     type_ = py;
   } else if(name_.ends_with(".lua")) {
     type_ = lua;
-  } else if(name_.ends_with(".fuzz") || name_ == "fuzz") {
-    type_ = fuzz;
   }
 
   switch(type_) {
@@ -223,8 +221,6 @@ input_file::produce_parser(std::istream& is) {
     case qdimacs:
       is >> std::noskipws;
       return std::make_unique<parse::qdimacs>(is, ops_->vars_ptr(), ops_, lua_);
-    case fuzz:
-      break;
     default:
       throw std::runtime_error("Hit some unsupported input file!");
   }
