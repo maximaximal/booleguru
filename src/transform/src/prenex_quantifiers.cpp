@@ -33,7 +33,6 @@ static quanttree::should_inline_checker checkermap[4] = {
 };
 
 struct prenex_quantifier::inner {
-  std::unordered_map<uint32_t, uint32_t> bounds_map;
   expression::quanttree qt;
 
   quanttree::should_inline_checker checker;
@@ -123,15 +122,43 @@ prenex_quantifier::walk_quant(expression::op_ref o) {
   const auto old_v = o.get_mgr()[o->quant.v]->var;
   auto& old_v_obj = o.get_mgr().vars().getobj(old_v.v);
 
-  uint32_t bound = ++old_v_obj.counter;
-  i_->bounds_map[static_cast<uint32_t>(old_v.v)] = bound;
+  uint32_t bound = old_v_obj.counter++;
 
   // Whenever a variable is quantified, it is bound to a new unique number (per
   // variable). Unbound variables are free, i.e. they have never been quantified
   // before.
+  //
+  // Variables only have to actually be replaced, if they are bound more than
+  // once. Otherwise, they are just used as-is. This speeds up well-formed
+  // formulas without overlapping variables. Rebinding variables is very
+  // expensive because of the required full formula traversal, so it is
+  // desirable to avoid this operation.
 
-  auto bound_v = o.get_mgr().get(
-    expression::op(expression::op_type::Var, old_v.v, bound, old_v.i));
+  if(bound > 0) {
+    auto bound_v = o.get_mgr().get(
+      expression::op(expression::op_type::Var, old_v.v, bound, old_v.i));
+    o = rebind_variable(o, bound_v);
+  } else {
+    uint32_t user_int32
+      = i_->qt.add((expression::op_type)o->type,
+                   static_cast<uint32_t>(o.left().get_id()),
+                   static_cast<uint32_t>(o.right()->user_int32));
+    o = o.right();
+    o->user_int32 = user_int32;
+  }
+
+  // This invariant has to hold in order for the value carrying through the
+  // int32_t field of an op to be valid.
+  static_assert(std::numeric_limits<uint32_t>::max()
+                == static_cast<uint32_t>(
+                  static_cast<int32_t>(std::numeric_limits<uint32_t>::max())));
+
+  return o;
+}
+
+expression::op_ref
+prenex_quantifier::rebind_variable(expression::op_ref o,
+                                   expression::op_ref bound_v) {
   bound_v->user_int32
     = static_cast<uint32_t>(std::numeric_limits<uint32_t>::max());
 
@@ -167,12 +194,6 @@ prenex_quantifier::walk_quant(expression::op_ref o) {
   op_ref new_e_op = o.get_mgr()[new_e];
   new_e_op->user_int32 = user_int32;
   e = new_e_op;
-
-  // This invariant has to hold in order for the value carrying through the
-  // int32_t field of an op to be valid.
-  static_assert(std::numeric_limits<uint32_t>::max()
-                == static_cast<uint32_t>(
-                  static_cast<int32_t>(std::numeric_limits<uint32_t>::max())));
 
   return e;
 }
