@@ -1,23 +1,23 @@
-#include <booleguru/transform/prenex_quantifiers.hpp>
-
-#include <algorithm>
 #include <booleguru/expression/op.hpp>
 #include <booleguru/expression/op_manager.hpp>
 #include <booleguru/expression/quanttree.hpp>
 #include <booleguru/expression/var_manager.hpp>
+#include <booleguru/transform/prenex_quantifiers.hpp>
 #include <booleguru/util/reverse.hpp>
 #include <booleguru/util/unsupported.hpp>
 
+#include <algorithm>
 #include <iosfwd>
 #include <iterator>
 #include <limits>
+#include <stack>
 
 #include <fmt/format.h>
 
 // Enable printing the steps of merging the op tree into the quanttree object.
 // Should be deactivated pretty much always as a comment.
 
-#define PRINT_STEPS
+// #define PRINT_STEPS
 
 namespace booleguru::transform {
 
@@ -36,6 +36,8 @@ struct prenex_quantifier::inner {
   expression::quanttree qt;
 
   quanttree::should_inline_checker checker;
+
+  std::stack<uint32_t> qts;
 
   inner(prenex_quantifier::kind k)
     : checker(checkermap[k]) {}
@@ -68,7 +70,8 @@ prenex_quantifier::operator()(op_ref o) {
     return o;
   }
 
-  op_id qt_root = o.get_mgr().getobj(new_root).user_int32;
+  op_id qt_root = i_->qts.top();
+  i_->qts.pop();
 
   i_->qt.prenex(static_cast<uint32_t>(qt_root), i_->checker);
   op_ref prepended = i_->qt.prepend_marked_to_op(static_cast<uint32_t>(qt_root),
@@ -90,7 +93,7 @@ prenex_quantifier::walk(expression::op_ref o) {
     case Exists:
       return walk_quant(o);
     case Var:
-      o->user_int32 = std::numeric_limits<uint32_t>::max();
+      i_->qts.push(std::numeric_limits<uint32_t>::max());
       return o;
     case Not:
       return walk_not(o);
@@ -117,6 +120,15 @@ prenex_quantifier::walk_quant(expression::op_ref o) {
          || o->type == expression::op_type::Exists);
   assert(o.left()->type == expression::op_type::Var);
 
+  // The first is the child.
+  uint32_t c = i_->qts.top();
+  i_->qts.pop();
+
+  // The second is always max, as it is a variable. Currently, there is no way
+  // to stop the generic tree traversal. This is a possible small optimization.
+  assert(i_->qts.top() == std::numeric_limits<uint32_t>::max());
+  i_->qts.pop();
+
   encountered_quant_ = true;
 
   const auto old_v = o.get_mgr()[o->quant.v]->var;
@@ -137,14 +149,14 @@ prenex_quantifier::walk_quant(expression::op_ref o) {
   if(bound > 0) {
     auto bound_v = o.get_mgr().get(
       expression::op(expression::op_type::Var, old_v.v, bound, old_v.i));
-    o = rebind_variable(o, bound_v);
+    o = rebind_variable(o, bound_v, c);
   } else {
-    uint32_t user_int32
-      = i_->qt.add((expression::op_type)o->type,
-                   static_cast<uint32_t>(o->quant.v),
-                   static_cast<uint32_t>(o.right()->user_int32));
+    uint32_t user_int32 = i_->qt.add((expression::op_type)o->type,
+                                     static_cast<uint32_t>(o->quant.v),
+                                     static_cast<uint32_t>(c));
+
 #ifdef PRINT_STEPS
-    fmt::println("Quant with bound==1 {}: quantify {} over {} together to {}",
+    fmt::println("Quant with bound==0 {}: quantify {} over {} together to {}",
                  op_type_to_str(o->type),
                  o.left().to_string(),
                  o.right().to_string(),
@@ -152,7 +164,7 @@ prenex_quantifier::walk_quant(expression::op_ref o) {
 #endif
     o = o.right();
 
-    o->user_int32 = user_int32;
+    i_->qts.push(user_int32);
   }
 
   // This invariant has to hold in order for the value carrying through the
@@ -166,14 +178,12 @@ prenex_quantifier::walk_quant(expression::op_ref o) {
 
 expression::op_ref
 prenex_quantifier::rebind_variable(expression::op_ref o,
-                                   expression::op_ref bound_v) {
-  bound_v->user_int32
-    = static_cast<uint32_t>(std::numeric_limits<uint32_t>::max());
-
+                                   expression::op_ref bound_v,
+                                   uint32_t c) {
   op_ref e = o.right();
   uint32_t user_int32 = i_->qt.add((expression::op_type)o->type,
                                    static_cast<uint32_t>(bound_v.get_id()),
-                                   static_cast<uint32_t>(e->user_int32));
+                                   static_cast<uint32_t>(c));
 
 #ifdef PRINT_STEPS
   fmt::println("Quant {}: quantify {} over {} together to {}",
@@ -200,18 +210,17 @@ prenex_quantifier::rebind_variable(expression::op_ref o,
     });
 
   op_ref new_e_op = o.get_mgr()[new_e];
-  new_e_op->user_int32 = user_int32;
   e = new_e_op;
+
+  i_->qts.push(user_int32);
 
   return e;
 }
 
 expression::op_ref
 prenex_quantifier::walk_not(expression::op_ref o) {
-  o->user_int32 = o.get_mgr().getobj(o->un.c).user_int32;
-  if(static_cast<uint32_t>(o->user_int32)
-     != std::numeric_limits<uint32_t>::max()) {
-    uint32_t c = o->user_int32;
+  uint32_t c = i_->qts.top();
+  if(c != std::numeric_limits<uint32_t>::max()) {
 #ifdef PRINT_STEPS
     fmt::println(
       "Flip op {} which is {} in the quanttree downwards", o.to_string(), c);
@@ -224,34 +233,40 @@ prenex_quantifier::walk_not(expression::op_ref o) {
 // This eliminates impls of the form ->
 expression::op_ref
 prenex_quantifier::walk_impl(expression::op_ref o) {
+  auto lright = i_->qts.top();
+  i_->qts.pop();
+  auto lleft = i_->qts.top();
+  i_->qts.pop();
+
   op_ref left
     = o.get_mgr().get(expression::op(expression::op_type::Not, o->left(), 0));
 
-  if(static_cast<uint32_t>(o.left()->user_int32)
-     != std::numeric_limits<uint32_t>::max())
-    i_->qt.flip_downwards(static_cast<uint32_t>(o.left()->user_int32));
+  if(lleft != std::numeric_limits<uint32_t>::max())
+    i_->qt.flip_downwards(static_cast<uint32_t>(lleft));
 
   op_ref impl = o.get_mgr().get(
     expression::op(expression::op_type::Or, left.get_id(), o->right()));
-  impl->user_int32 = i_->qt.add(static_cast<uint32_t>(o.left()->user_int32),
-                                static_cast<uint32_t>(o.right()->user_int32));
+  i_->qts.push(i_->qt.add(lleft, lright));
   return impl;
 }
 
 // This eliminates impls of the form <-
 expression::op_ref
 prenex_quantifier::walk_lpmi(expression::op_ref o) {
+  auto lright = i_->qts.top();
+  i_->qts.pop();
+  auto lleft = i_->qts.top();
+  i_->qts.pop();
+
   op_ref right
     = o.get_mgr().get(expression::op(expression::op_type::Not, o->right(), 0));
 
-  if(static_cast<uint32_t>(o.right()->user_int32)
-     != std::numeric_limits<uint32_t>::max())
-    i_->qt.flip_downwards(static_cast<uint32_t>(o.right()->user_int32));
+  if(lright != std::numeric_limits<uint32_t>::max())
+    i_->qt.flip_downwards(lright);
 
   op_ref impl = o.get_mgr().get(
     expression::op(expression::op_type::Or, o->left(), right.get_id()));
-  impl->user_int32 = i_->qt.add(static_cast<uint32_t>(o.left()->user_int32),
-                                static_cast<uint32_t>(o.right()->user_int32));
+  i_->qts.push(i_->qt.add(lleft, lright));
   return impl;
 }
 
@@ -263,20 +278,18 @@ prenex_quantifier::walk_equi(expression::op_ref o) {
 
 expression::op_ref
 prenex_quantifier::walk_bin(expression::op_ref o) {
-  auto left = static_cast<uint32_t>(o.left()->user_int32);
-  auto right = static_cast<uint32_t>(o.right()->user_int32);
-  int32_t res = i_->qt.add(left, right);
+  auto right = i_->qts.top();
+  i_->qts.pop();
+  auto left = i_->qts.top();
+  i_->qts.pop();
+  uint32_t res = i_->qt.add(left, right);
 
 #ifdef PRINT_STEPS
-  fmt::println("BinOp {}: add {} and {} together to {} (was {})",
-               o.to_string(),
-               left,
-               right,
-               res,
-               (int)o->user_int32);
+  fmt::println(
+    "BinOp {}: add {} and {} together to {}", o.to_string(), left, right, res);
 #endif
 
-  o->user_int32 = res;
+  i_->qts.push(res);
   return o;
 }
 

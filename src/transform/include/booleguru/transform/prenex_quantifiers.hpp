@@ -23,7 +23,8 @@ struct prenex_quantifier {
   void animate(const std::string& path);
 
   expression::op_ref rebind_variable(expression::op_ref o,
-                                     expression::op_ref bound_v);
+                                     expression::op_ref bound_v,
+                                     uint32_t c);
 
   private:
   struct inner;
