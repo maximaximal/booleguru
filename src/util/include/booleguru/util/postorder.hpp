@@ -3,7 +3,7 @@
 #include <vector>
 
 namespace booleguru::util {
-/* This class implements an inorder tree traversal following Knuth's Algorithm
+/* This class implements a postorder tree traversal following Knuth's Algorithm
  * T. This is useful whenever one has to traverse some tree, as often happens in
  * this code.
  *

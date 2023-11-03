@@ -17,7 +17,7 @@
 // Enable printing the steps of merging the op tree into the quanttree object.
 // Should be deactivated pretty much always as a comment.
 
-// #define PRINT_STEPS
+#define PRINT_STEPS
 
 namespace booleguru::transform {
 
@@ -141,9 +141,17 @@ prenex_quantifier::walk_quant(expression::op_ref o) {
   } else {
     uint32_t user_int32
       = i_->qt.add((expression::op_type)o->type,
-                   static_cast<uint32_t>(o.left().get_id()),
+                   static_cast<uint32_t>(o->quant.v),
                    static_cast<uint32_t>(o.right()->user_int32));
+#ifdef PRINT_STEPS
+    fmt::println("Quant with bound==1 {}: quantify {} over {} together to {}",
+                 op_type_to_str(o->type),
+                 o.left().to_string(),
+                 o.right().to_string(),
+                 user_int32);
+#endif
     o = o.right();
+
     o->user_int32 = user_int32;
   }
 
@@ -260,8 +268,12 @@ prenex_quantifier::walk_bin(expression::op_ref o) {
   int32_t res = i_->qt.add(left, right);
 
 #ifdef PRINT_STEPS
-  fmt::println(
-    "BinOp {}: add {} and {} together to {}", o.to_string(), left, right, res);
+  fmt::println("BinOp {}: add {} and {} together to {} (was {})",
+               o.to_string(),
+               left,
+               right,
+               res,
+               (int)o->user_int32);
 #endif
 
   o->user_int32 = res;

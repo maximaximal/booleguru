@@ -449,8 +449,9 @@ quanttree::last_path(uint32_t i) {
 
 void
 quanttree::prenex(uint32_t root, should_inline_checker should_inline) {
+  if(animate)
+    create_animation_step(root);
   mark_critical_path(root);
-  animate_step += 10;
   if(animate)
     create_animation_step(root);
 
@@ -602,9 +603,6 @@ quanttree::mark_critical_path(uint32_t root) {
       uint32_t left = v[p].f.left;
       uint32_t right = v[p].f.right;
 
-      if(animate)
-        create_animation_step(p);
-
       v[p].is_fork_ = false;
       if(v[left].marked_) {
         v[p].p.next = left;
@@ -625,9 +623,6 @@ quanttree::mark_critical_path(uint32_t root) {
       next = p;
       p = v[p].parent_;
     }
-
-    if(animate)
-      create_animation_step(root);
   }
 }
 
