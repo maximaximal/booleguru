@@ -4,6 +4,8 @@ set(TEST_SRCS
   test-quanttree.cpp
   test-expression-traverse.cpp
   test-bvop.cpp
+  test_mutation_sampler.cpp
+  test_mutator.cpp
 )
 
 add_executable(booleguru-expression-test ${TEST_SRCS})

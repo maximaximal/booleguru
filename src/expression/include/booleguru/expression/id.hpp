@@ -46,6 +46,7 @@ struct id {
   inline constexpr bool operator==(id const& o_id) const {
     return id_ == o_id.id_;
   }
+  inline constexpr void operator++() { ++id_; }
 
   inline explicit constexpr operator bool() const { return id_ != 0; }
   inline explicit constexpr operator uint16_t() const {

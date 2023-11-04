@@ -45,6 +45,30 @@ check_op_invariants(op_manager& ops, op& o) {
   return true;
 }
 
+extern "C" size_t
+LLVMFuzzerMutate(uint8_t* data, size_t size, size_t max_size);
+
+extern "C" size_t
+LLVMFuzzerCustomMutator(uint8_t* data,
+                        size_t size,
+                        size_t max_size,
+                        unsigned int seed) {
+  static bool env_checked = false;
+  static bool ops_fuzzing = false;
+  if(!env_checked) {
+    const char* env_args = std::getenv("BOOLEGURU_ARGS");
+    if(env_args)
+      ops_fuzzing = true;
+    env_checked = true;
+  }
+
+  if(ops_fuzzing) {
+    // TODO Use our custom expression mutator.
+  } else {
+    return LLVMFuzzerMutate(data, size, max_size);
+  }
+}
+
 extern "C" int
 LLVMFuzzerTestOneInput(const uint8_t* data_ptr, size_t size) {
   static_assert(sizeof(uint8_t) == sizeof(char));

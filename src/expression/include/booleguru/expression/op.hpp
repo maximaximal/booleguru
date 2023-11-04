@@ -217,7 +217,10 @@ struct op {
 class op_ref;
 
 std::ostream&
-operator<<(std::ostream& o, op_type t);
+operator<<(std::ostream& o, const op_type &t);
+
+std::ostream&
+operator<<(std::ostream& o, const op &op);
 }
 
 // This was tested against fully hashing with the hash provided by Ankerl, but
