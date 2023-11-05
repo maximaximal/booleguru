@@ -1,5 +1,4 @@
-#include "booleguru/util/is_number.hpp"
-#include "booleguru/util/unsupported.hpp"
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
@@ -8,13 +7,18 @@
 
 #include <antlr4-runtime.h>
 
+#include <booleguru/expression/mutator.hpp>
+#include <booleguru/expression/ops_invariant_checker.hpp>
 #include <booleguru/lua/lua-context.hpp>
 #include <booleguru/parse/cli.hpp>
 #include <booleguru/parse/error.hpp>
 #include <booleguru/parse/result.hpp>
+#include <booleguru/util/is_number.hpp>
 #include <booleguru/util/istringviewstream.hpp>
+#include <booleguru/util/unsupported.hpp>
 
 #include <booleguru/fuzz/source.hpp>
+#include <random>
 
 using namespace booleguru;
 using namespace booleguru::expression;
@@ -63,7 +67,25 @@ LLVMFuzzerCustomMutator(uint8_t* data,
   }
 
   if(ops_fuzzing) {
-    // TODO Use our custom expression mutator.
+    assert(max_size >= sizeof(op));
+    op* begin = reinterpret_cast<op*>(data);
+    size_t ops_size = size / sizeof(op);
+    size_t ops_capacity = max_size / sizeof(op);
+    op* end = begin + ops_size;
+    const ops_invariant_checker checker(begin);
+    if(std::none_of(begin, end, checker)) {
+      begin->type = booleguru::expression::op_type::Var;
+      begin->var.v = 1;
+      begin->var.q = 0;
+      begin->var.i = 0;
+      ops_size = 1;
+      return sizeof(op);
+    }
+    // Run one mutation round if the input is already ok.
+    std::minstd_rand rd(seed);
+    mutator m(rd);
+    m.mutate(begin, ops_size, ops_capacity);
+    return ops_size * sizeof(op);
   } else {
     return LLVMFuzzerMutate(data, size, max_size);
   }

@@ -38,9 +38,15 @@ struct id {
   inline constexpr bool operator>(id const& o_id) const {
     return id_ > o_id.id_;
   }
+  inline constexpr bool operator>=(id const& o_id) const {
+    return id_ >= o_id.id_;
+  }
   inline constexpr bool operator<(uint32_t o_id) const { return id_ < o_id; }
   inline constexpr bool operator<(id const& o_id) const {
     return id_ < o_id.id_;
+  }
+  inline constexpr bool operator<=(id const& o_id) const {
+    return id_ <= o_id.id_;
   }
   inline constexpr bool operator==(uint32_t o_id) const { return id_ == o_id; }
   inline constexpr bool operator==(id const& o_id) const {

@@ -54,6 +54,7 @@ if(EMSCRIPTEN)
   set(CMAKE_C_FLAGS "-fwasm-exceptions")
 endif()
 
+# Here, we don't want to enable LTO for FuzzDebug, as it makes recompiles very expensive.
 if(${CMAKE_BUILD_TYPE} MATCHES "Release" OR ${CMAKE_BUILD_TYPE} MATCHES "Fuzz")
   include(CheckIPOSupported)
   check_ipo_supported(RESULT LTO_SUPPORTED OUTPUT error)
@@ -72,10 +73,14 @@ if(isMultiConfig)
     endif()
 
     if(NOT "Fuzz" IN_LIST CMAKE_CONFIGURATION_TYPES)
-        list(APPEND CMAKE_CONFIGURATION_TYPES Sanitize)
+        list(APPEND CMAKE_CONFIGURATION_TYPES Fuzz)
+    endif()
+
+    if(NOT "FuzzDebug" IN_LIST CMAKE_CONFIGURATION_TYPES)
+        list(APPEND CMAKE_CONFIGURATION_TYPES FuzzDebug)
     endif()
 else()
-    set(allowedBuildTypes Sanitize Fuzz Debug Release RelWithDebInfo MinSizeRel)
+    set(allowedBuildTypes Sanitize Fuzz FuzzDebug Debug Release RelWithDebInfo MinSizeRel)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "${allowedBuildTypes}")
 
     if(CMAKE_BUILD_TYPE AND NOT CMAKE_BUILD_TYPE IN_LIST allowedBuildTypes)
@@ -115,9 +120,25 @@ set(CMAKE_SHARED_LINKER_FLAGS_FUZZ
     "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -fsanitize=address -O2 -fsanitize=undefined" CACHE STRING
     "Linker lags to be used to create shared libraries for Sanitize build type." FORCE)
 
+set(CMAKE_C_FLAGS_FUZZDEBUG
+    "${CMAKE_C_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer -fsanitize=undefined" CACHE STRING
+    "Flags used by the C compiler for Sanitize build type or configuration." FORCE)
+
+set(CMAKE_CXX_FLAGS_FUZZDEBUG
+    "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer -fsanitize=undefined" CACHE STRING
+    "Flags used by the C++ compiler for Sanitize build type or configuration." FORCE)
+
+set(CMAKE_EXE_LINKER_FLAGS_FUZZDEBUG
+    "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -fsanitize=address -fsanitize=undefined" CACHE STRING
+    "Linker flags to be used to create executables for Sanitize build type." FORCE)
+
+set(CMAKE_SHARED_LINKER_FLAGS_FUZZDEBUG
+    "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -fsanitize=address -fsanitize=undefined" CACHE STRING
+    "Linker lags to be used to create shared libraries for Sanitize build type." FORCE)
+
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-if(${CMAKE_BUILD_TYPE} MATCHES "Fuzz")
+if(${CMAKE_BUILD_TYPE} MATCHES "Fuzz" OR {CMAKE_BUILD_TYPE} MATCHES "FuzzDebug")
     if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
         message(STATUS "Compiler is Clang, the Fuzz target works.")
         if(TESTS)
@@ -160,7 +181,7 @@ endif()
 add_subdirectory(third_party)
 add_subdirectory(src)
 
-if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
   if(MSVC)
 	target_compile_options(booleguru-expression PRIVATE /W4 /WX)
 	target_compile_options(booleguru-transform PRIVATE /W4 /WX)
@@ -178,7 +199,7 @@ if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
   endif()
 endif()
 
-if(${CMAKE_BUILD_TYPE} MATCHES "Fuzz")
+if(${CMAKE_BUILD_TYPE} MATCHES "Fuzz" OR ${CMAKE_BUILD_TYPE} MATCHES "FuzzDebug")
   target_compile_options(antlr4_static PRIVATE -fsanitize=fuzzer,address,undefined)
   target_compile_options(booleguru-expression PRIVATE -fsanitize=fuzzer,address,undefined)
   target_compile_options(booleguru-transform PRIVATE -fsanitize=fuzzer,address,undefined)
