@@ -95,8 +95,10 @@ extern "C" int
 LLVMFuzzerTestOneInput(const uint8_t* data_ptr, size_t size) {
   static_assert(sizeof(uint8_t) == sizeof(char));
 
-  std::shared_ptr<op_manager> ops = std::make_shared<op_manager>();
-  std::shared_ptr<lua_context> lua = std::make_shared<lua_context>(ops);
+  static std::shared_ptr<op_manager> ops = std::make_shared<op_manager>();
+  static std::shared_ptr<lua_context> lua = std::make_shared<lua_context>(ops);
+  ops->reset();
+  ops->vars().reset();
 
   const char* env_args = std::getenv("BOOLEGURU_ARGS");
 
@@ -126,7 +128,7 @@ LLVMFuzzerTestOneInput(const uint8_t* data_ptr, size_t size) {
 
       size_t fuzz_file_counter = 0;
 
-      cli.parse_file_using([ops, fuzz_files, &fuzz_file_counter](
+      cli.parse_file_using([fuzz_files, &fuzz_file_counter](
                              std::string_view v, util::type type) -> op_ref {
         // Just return different sections of the op tree.
         if(v == "fuzz") {
@@ -160,7 +162,7 @@ LLVMFuzzerTestOneInput(const uint8_t* data_ptr, size_t size) {
       booleguru::parse::cli cli(view, ops->vars_ptr(), ops, lua);
 
       cli.parse_file_using(
-        [ops](std::string_view v, util::type type) { return ops->top(); });
+        [](std::string_view v, util::type type) { return ops->top(); });
 
       auto res = cli();
       if(!res) {
