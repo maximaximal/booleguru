@@ -1,6 +1,6 @@
 #pragma once
 
-#include <booleguru/parse/type.hpp>
+#include <booleguru/util/type.hpp>
 
 #include <map>
 #include <memory>
@@ -38,7 +38,7 @@ class input_file {
   std::unique_ptr<parse::base> parser_;
   std::shared_ptr<expression::op_manager> ops_;
   std::shared_ptr<lua::lua_context> lua_;
-  parse::type type_ = parse::type::boole;
+  util::type type_ = util::type::boole;
   bool eval_ = false;
 
   std::istream& produce_istream();
@@ -56,7 +56,7 @@ class input_file {
              std::shared_ptr<lua::lua_context> lua);
   ~input_file();
 
-  void type(parse::type t) { type_ = t; }
+  void type(util::type t) { type_ = t; }
 
   expression::op_ref process();
 };

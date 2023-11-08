@@ -38,14 +38,21 @@ struct id {
   inline constexpr bool operator>(id const& o_id) const {
     return id_ > o_id.id_;
   }
+  inline constexpr bool operator>=(id const& o_id) const {
+    return id_ >= o_id.id_;
+  }
   inline constexpr bool operator<(uint32_t o_id) const { return id_ < o_id; }
   inline constexpr bool operator<(id const& o_id) const {
     return id_ < o_id.id_;
+  }
+  inline constexpr bool operator<=(id const& o_id) const {
+    return id_ <= o_id.id_;
   }
   inline constexpr bool operator==(uint32_t o_id) const { return id_ == o_id; }
   inline constexpr bool operator==(id const& o_id) const {
     return id_ == o_id.id_;
   }
+  inline constexpr void operator++() { ++id_; }
 
   inline explicit constexpr operator bool() const { return id_ != 0; }
   inline explicit constexpr operator uint16_t() const {
@@ -53,7 +60,7 @@ struct id {
     return id_;
   }
   inline explicit constexpr operator uint32_t() const { return id_; }
-  inline explicit constexpr operator uint64_t() const { return id_; }
+  inline explicit constexpr operator std::size_t() const { return id_; }
 };
 
 struct var_id : public id<var_id> {
@@ -73,4 +80,3 @@ struct script_id : public id<script_id> {
     : id(id_){};
 };
 }
-

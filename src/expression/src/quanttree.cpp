@@ -42,7 +42,7 @@ booleguru::expression::quanttree::entry::stream(std::ostream& o,
     o << f.left << ":" << f.right;
   } else {
     o << p.type << ":";
-    if(ops) {
+    if(ops && p.var < ops->size()) {
       auto varop = (*ops)[p.var];
       o << varop;
     } else {
@@ -398,8 +398,10 @@ quanttree::next_marked(uint32_t i) {
   }
 
   uint32_t left_ = e.f.left;
+  assert(left_ != i);
   const entry& left = v[left_];
   uint32_t right_ = e.f.right;
+  assert(right_ != i);
   const entry& right = v[right_];
   if(left.marked_) {
     return left_;
@@ -414,8 +416,10 @@ uint32_t
 quanttree::next_unmarked(const entry& e) {
   assert(e.is_fork_);
   uint32_t left_ = e.f.left;
+  assert(left_ != e.index(v.data()));
   const entry& left = v[left_];
   uint32_t right_ = e.f.right;
+  assert(right_ != e.index(v.data()));
   const entry& right = v[right_];
   if(!left.marked_) {
     return left_;
@@ -445,6 +449,8 @@ quanttree::last_path(uint32_t i) {
 
 void
 quanttree::prenex(uint32_t root, should_inline_checker should_inline) {
+  if(animate)
+    create_animation_step(root);
   mark_critical_path(root);
   if(animate)
     create_animation_step(root);
@@ -570,25 +576,53 @@ quanttree::mark_critical_path(uint32_t root) {
     i = next_highest_QAs(i);
   }
 
+  // Root cannot be a fork, as it has to already be a path! The next best path
+  // should be put at the root and the fork must happen after the path.
+  /*
+  // Dangerous:
+  //     r
+  //    / \
+  //   f   f
+  //  / \ / \
+  // p  p p  p
+  //
+  // If there are multiple forks, they have to be swapped correctly. The root
+  // shall be made a path (the next best path that can be found). Find this
+  // next-best path and traverse upwards as long as the root is not reached. The
+  // path is converted to the fork that was at its parent. Then continue with
+  // the parent and convert it to its parent fork.
+  */
+
   if(v[root].is_fork_) {
     uint32_t next = next_path(root);
-    uint32_t left = v[root].f.left;
-    uint32_t right = v[root].f.right;
-    v[root].is_fork_ = false;
-    if(v[left].marked_) {
-      v[root].p.next = left;
-      left = next_marked(left);
-      v[right].parent_ = next;
-    } else {
-      v[root].p.next = right;
-      right = next_marked(right);
-      v[left].parent_ = next;
+    uint32_t p = v[next].parent_;
+    while(v[root].is_fork_) {
+      assert(v[p].is_fork_);
+      assert(!v[next].is_fork_);
+      assert(next != p);
+      uint32_t left = v[p].f.left;
+      uint32_t right = v[p].f.right;
+
+      v[p].is_fork_ = false;
+      if(v[left].marked_) {
+        v[p].p.next = left;
+        left = next_marked(left);
+        v[right].parent_ = next;
+      } else {
+        v[p].p.next = right;
+        right = next_marked(right);
+        v[left].parent_ = next;
+      }
+
+      v[p].p.var = v[next].p.var;
+      v[p].p.type = v[next].p.type;
+      v[next].is_fork_ = true;
+      v[next].f.left = left;
+      v[next].f.right = right;
+
+      next = p;
+      p = v[p].parent_;
     }
-    v[root].p.var = v[next].p.var;
-    v[root].p.type = v[next].p.type;
-    v[next].is_fork_ = true;
-    v[next].f.left = left;
-    v[next].f.right = right;
   }
 }
 

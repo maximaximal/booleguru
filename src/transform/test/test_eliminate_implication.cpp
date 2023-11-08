@@ -26,7 +26,7 @@ TEST_CASE("Test resolving simple equivalence") {
 
   auto equiv_ = distribute_to_cnf(formula);
 
-  const char* expected = "(x | !a | !b | !c) & (!x | a) & (!x | b) & (!x | c)";
+  const char* expected = "(x | !a | !b | !c) & (a | !x) & (b | !x) & (c | !x)";
 
   REQUIRE(equiv_.to_string() == expected);
 }
@@ -47,8 +47,8 @@ TEST_CASE("Test resolving equivalence") {
   // CAPTURE(formula);
   // REQUIRE(false);
 
-  const char* expected = "(a | !c | !d | !e) & (b | !c | !d | !e) & (!a | !b | "
-                         "c) & (!a | !b | d) & (!a | !b | e)";
+  const char* expected = "(a | !c | !d | !e) & (b | !c | !d | !e) & (c | !a | !b) "
+                         "& (d | !a | !b) & (e | !a | !b)";
 
   REQUIRE(equiv_.to_string() == expected);
 }
@@ -68,7 +68,7 @@ TEST_CASE(
   CAPTURE(formula);
 
   const char* expected
-    = "(!p | q | p) & (!p | q | !r) & (p | !p | r) & (!q | !p | r)";
+    = "(!p | q | p) & (!p | q | !r) & (!p | r | p) & (!p | r | !q)";
 
   REQUIRE(equiv_.to_string() == expected);
 }
@@ -109,7 +109,7 @@ TEST_CASE("Test resolving equivalence and implication and others") {
   CAPTURE(formula);
 
   const char* expected
-    = "(a | !b | !c | !d) & (a | !b | e) & (!a | b | !c | !d) & (!a | b | e)";
+    = "(a | !b | !c | !d) & (a | !b | e) & (b | !a | !c | !d) & (b | !a | e)";
 
   REQUIRE(equiv_.to_string() == expected);
 }

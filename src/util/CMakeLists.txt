@@ -1,5 +1,6 @@
 set(SRCS
   src/util.cpp
+  src/file.cpp
 )
 
 add_library(booleguru-util STATIC ${SRCS})

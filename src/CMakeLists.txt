@@ -14,9 +14,14 @@ endif()
 add_subdirectory(parse)
 add_subdirectory(serialize)
 
-if(NOT EMSCRIPTEN)
-  add_subdirectory(cli)
+if(${CMAKE_BUILD_TYPE} MATCHES "Fuzz")
+    add_subdirectory(fuzz)
+else()
+    if(NOT EMSCRIPTEN)
+        add_subdirectory(cli)
+    endif()
 endif()
+
 
 if(EMSCRIPTEN)
   add_subdirectory(js-api)

@@ -6,6 +6,9 @@ set(SRCS
   src/bvop_manager.cpp
   src/literals.cpp
   src/quanttree.cpp
+  src/mutator.cpp
+  src/mutation.cpp
+  src/mutation_sampler.cpp
 )
 
 add_library(booleguru-expression STATIC ${SRCS})

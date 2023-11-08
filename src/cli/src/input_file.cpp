@@ -160,52 +160,53 @@ input_file::produce_istream_from_popen(std::string command, std::string args) {
 
 std::unique_ptr<parse::base>
 input_file::produce_parser(std::istream& is) {
+  using enum util::type;
   if(name_.ends_with(".smtlib2") || name_.ends_with(".smt")
      || name_.ends_with(".smtlib")) {
-    type_ = parse::type::smtlib;
+    type_ = smtlib;
   } else if(name_.ends_with(".boole") || name_.ends_with(".limboole")) {
-    type_ = parse::type::boole;
+    type_ = boole;
   } else if(name_.ends_with(".dimacs") || name_.ends_with(".qdimacs")
             || name_.ends_with(".cnf") || name_.ends_with(".pcnf")) {
-    type_ = parse::type::qdimacs;
+    type_ = qdimacs;
   } else if(name_.ends_with(".qcir")) {
-    type_ = parse::type::qcir;
+    type_ = qcir;
   } else if(name_.ends_with(".aag") || name_.ends_with(".aig")) {
-    type_ = parse::type::aiger;
+    type_ = aiger;
   } else if(name_.ends_with(".py")) {
-    type_ = parse::type::py;
+    type_ = py;
   } else if(name_.ends_with(".lua")) {
-    type_ = parse::type::lua;
+    type_ = lua;
   }
 
   switch(type_) {
-    case parse::type::smtlib: {
+    case smtlib: {
       throw std::runtime_error("SMTLIB Not supported yet!");
     }
-    case parse::type::aiger: {
+    case aiger: {
       auto aiger
         = std::make_unique<parse::aiger>(is, ops_->vars_ptr(), ops_, lua_);
       return aiger;
     }
-    case parse::type::qcir: {
+    case qcir: {
       is >> std::noskipws;
       auto qcir = std::make_unique<parse::qcir>(is, ops_);
       return qcir;
     }
-    case parse::type::boole: {
+    case boole: {
       is >> std::noskipws;
       auto boole
         = std::make_unique<parse::boole>(is, ops_->vars_ptr(), ops_, lua_);
       boole->eval(eval_);
       return boole;
     }
-    case parse::type::lua: {
+    case lua: {
       is >> std::noskipws;
       auto lua
         = std::make_unique<parse::luascript>(is, ops_->vars_ptr(), ops_, lua_);
       return lua;
     }
-    case parse::type::py: {
+    case py: {
 #ifdef BOOLEGURU_PARSE_PY
       is >> std::noskipws;
       auto py = std::make_unique<parse::pythonscript>(
@@ -217,7 +218,7 @@ input_file::produce_parser(std::istream& is) {
 #endif
     }
 
-    case parse::type::qdimacs:
+    case qdimacs:
       is >> std::noskipws;
       return std::make_unique<parse::qdimacs>(is, ops_->vars_ptr(), ops_, lua_);
     default:

@@ -38,6 +38,12 @@ class manager {
     static_cast<C*>(this)->init();
   };
 
+  void reset() noexcept {
+    objects_map_.clear();
+    counter_ = 1;
+    static_cast<C*>(this)->init();
+  }
+
   inline const vec& objects() const noexcept {
     return objects_map_.values();
   }

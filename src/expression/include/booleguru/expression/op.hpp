@@ -206,12 +206,21 @@ struct op {
   constexpr inline bool is_quant() const {
     return type == op_type::Exists || type == op_type::Forall;
   }
+  constexpr inline bool is_binop() const {
+    return type == op_type::And || type == op_type::Or || type == op_type::Equi
+           || type == op_type::Impl || type == op_type::Lpmi
+           || type == op_type::Xor;
+  }
+  constexpr inline bool is_unop() const { return type == op_type::Not; }
 };
 
 class op_ref;
 
 std::ostream&
-operator<<(std::ostream& o, op_type t);
+operator<<(std::ostream& o, const op_type &t);
+
+std::ostream&
+operator<<(std::ostream& o, const op &op);
 }
 
 // This was tested against fully hashing with the hash provided by Ankerl, but

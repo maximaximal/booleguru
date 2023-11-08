@@ -127,7 +127,11 @@ return_to_eval_result(auto&& result) {
   }
 
   if(result.get_type() == sol::type::number) {
-    return static_cast<long int>(result);
+    try {
+      return static_cast<long int>(result);
+    } catch(sol::error& e) {
+      return std::string("script did not return an integer!");
+    }
   }
 
   if(result.get_type() == sol::type::string) {

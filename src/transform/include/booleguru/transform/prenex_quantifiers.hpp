@@ -13,12 +13,18 @@ struct prenex_quantifier {
     Edown_Adown,
   };
 
+  bool encountered_quant_ = false;
+
   prenex_quantifier(kind k = Eup_Aup);
   ~prenex_quantifier();
 
   expression::op_ref operator()(expression::op_ref o);
 
   void animate(const std::string& path);
+
+  expression::op_ref rebind_variable(expression::op_ref o,
+                                     expression::op_ref bound_v,
+                                     uint32_t c);
 
   private:
   struct inner;

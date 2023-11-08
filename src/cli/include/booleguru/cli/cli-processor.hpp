@@ -4,7 +4,7 @@
 #include <string_view>
 #include <vector>
 
-#include <booleguru/parse/type.hpp>
+#include <booleguru/util/type.hpp>
 
 namespace booleguru::expression {
 class op_ref;
@@ -34,7 +34,7 @@ struct fennel_invalid_return_type : public std::invalid_argument {
 namespace booleguru::cli {
 class cli_processor {
   private:
-  parse::type output_type_ = parse::type::boole;
+  util::type output_type_ = util::type::boole;
   const char** begin_;
   const char** end_;
 
@@ -48,7 +48,7 @@ class cli_processor {
 
   expression::op_ref process();
 
-  parse::type output_type() const { return output_type_; };
+  util::type output_type() const { return output_type_; };
 
   void ensure_lua_initialized();
 

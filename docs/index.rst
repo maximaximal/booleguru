@@ -75,4 +75,6 @@ instance
 New features are first introduced there or in feature branches and then merged
 with the `main branch <https://gitlab.sai.jku.at/booleguru/booleguru>`_.
 
+During development, Booleguru's integrated fuzzer may be useful: :ref:`Fuzzer`.
+
 In order to contribute, please see the guide for developers: :ref:`Development`.

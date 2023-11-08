@@ -43,15 +43,16 @@ cli_processor::process() {
   fmt::format_to(
     std::back_inserter(cmd), "{}", fmt::join(begin_ + 1, end_, " "));
   std::string_view cmd_view(cmd.data(), cmd.size());
+
   isviewstream cmd_istream(cmd_view);
   parse::cli cli(cmd_istream, ops_->vars_ptr(), ops_, lua_);
 
   cli.parse_file_using(
-    [this](std::string_view path, booleguru::parse::type type) {
+    [this](std::string_view path, booleguru::util::type type) {
       input_file in(path, ops_, lua_);
       in.type(type);
-    return in.process();
-  });
+      return in.process();
+    });
 
   parse::result result = cli();
   output_type_ = cli.output_type();

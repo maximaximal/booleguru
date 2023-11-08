@@ -28,9 +28,10 @@ function dotter (op, out)
 
   o:write("digraph {\n")
 
+  visited[op.id] = true
+
   while #unvisited > 0 do
     local top = table.remove(unvisited, #unvisited)
-    visited[top.id] = true
 
     local symb = optype_symbol[top.t]
     if symb == nil then
@@ -42,12 +43,14 @@ function dotter (op, out)
       o:write("  " .. tostring(top.id) .. " -> " .. tostring(top.l.id) .. " [ label=\"l\" ];\n")
       if visited[top.l.id] ~= true then
         table.insert(unvisited, top.l)
+        visited[top.l.id] = true
       end
     end
     if top.r ~= nil then
       o:write("  " .. tostring(top.id) .. " -> " .. tostring(top.r.id) .. " [ label=\"r\" ];\n")
       if visited[top.r.id] ~= true then
         table.insert(unvisited, top.r)
+        visited[top.r.id] = true
       end
     end
   end
