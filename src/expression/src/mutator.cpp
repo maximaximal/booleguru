@@ -84,7 +84,7 @@ mutator::mutate(op* ops, size_t& size, size_t capacity) {
     gen_possibilities(ops, i, size, ops[i], change, s_);
   }
   if(size < capacity) {
-    gen_possibilities(ops, size, size, ops[size], push, s_);
+    gen_possibilities(ops, size, size + 1, ops[size], push, s_);
   }
 
   switch(s_.selected().m) {
