@@ -1,11 +1,14 @@
 #include <iostream>
 #include <sstream>
 
+#include <catch2/benchmark/catch_benchmark.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
 
+#include <booleguru/cli/input_file.hpp>
 #include <booleguru/expression/literals.hpp>
 #include <booleguru/expression/op_manager.hpp>
+#include <booleguru/lua/lua-context.hpp>
 #include <booleguru/parse/qcir.hpp>
 #include <booleguru/parse/result.hpp>
 #include <booleguru/util/istringviewstream.hpp>
@@ -538,4 +541,38 @@ TEST_CASE("Parse example QCIR formulas", "[parser][qcir]") {
       }
     }
   }
+}
+
+inline op_ref
+read_compressed_file(std::string_view const& path,
+                     std::shared_ptr<op_manager> const& ops) {
+  std::shared_ptr<booleguru::lua::lua_context> lua
+    = std::make_shared<booleguru::lua::lua_context>(ops);
+  booleguru::cli::input_file infile(path, ops, lua);
+  return infile.process();
+};
+
+TEST_CASE("Parse big QCIR formulas", "[parser][qcir][!benchmark]") {
+  SKIP("This benchmark is *really* slow if you don't decrease the"
+       " sample number! Try with '--benchmark-samples 5'.");
+
+  BENCHMARK("Big") {
+    op_ref op = read_compressed_file("./src/parse/test/artifacts/0.1.qcir.gz",
+                                     std::make_shared<op_manager>());
+    REQUIRE(op.valid());
+    return op;
+  };
+  BENCHMARK("Huge") {
+    op_ref op = read_compressed_file(
+      "./src/parse/test/artifacts/voter_size_202219_1U43.qcir.gz",
+      std::make_shared<op_manager>());
+    REQUIRE(op.valid());
+    return op;
+  };
+  BENCHMARK("Gigantic") {
+    op_ref op = read_compressed_file("./src/parse/test/artifacts/11.1.qcir.gz",
+                                     std::make_shared<op_manager>());
+    REQUIRE(op.valid());
+    return op;
+  };
 }

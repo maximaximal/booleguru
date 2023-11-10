@@ -10,7 +10,7 @@ set(TEST_SRCS
 add_executable(booleguru-parse-test ${TEST_SRCS})
 
 target_link_libraries(booleguru-parse-test PRIVATE Catch2::Catch2WithMain)
-target_link_libraries(booleguru-parse-test PRIVATE booleguru-parse)
+target_link_libraries(booleguru-parse-test PRIVATE booleguru-parse booleguru-cli)
 target_link_libraries(booleguru-parse-test PRIVATE antlr4_static)
 
 target_include_directories(booleguru-parse-test PRIVATE SYSTEM ${ANTLR_boole_lexer_OUTPUT_DIR})

@@ -5,6 +5,7 @@
 
 #include <cassert>
 #include <cstdint>
+#include <functional>
 #include <limits>
 
 namespace booleguru::expression {
@@ -79,4 +80,26 @@ struct script_id : public id<script_id> {
   constexpr script_id(uint32_t id_ = 0)
     : id(id_){};
 };
+}
+
+namespace std {
+// TODO(Marcel): There has *got* to be a better way..?
+template<class T>
+struct trivial_hash {
+  size_t operator()(T const& x) const noexcept {
+    return static_cast<size_t>(x);
+  }
+};
+template<>
+struct hash<booleguru::expression::var_id>
+  : trivial_hash<booleguru::expression::var_id> {};
+template<>
+struct hash<booleguru::expression::op_id>
+  : trivial_hash<booleguru::expression::op_id> {};
+template<>
+struct hash<booleguru::expression::bvop_id>
+  : trivial_hash<booleguru::expression::bvop_id> {};
+template<>
+struct hash<booleguru::expression::script_id>
+  : trivial_hash<booleguru::expression::script_id> {};
 }
