@@ -553,9 +553,6 @@ read_compressed_file(std::string_view const& path,
 };
 
 TEST_CASE("Parse big QCIR formulas", "[parser][qcir][!benchmark]") {
-  SKIP("This benchmark is *really* slow if you don't decrease the"
-       " sample number! Try with '--benchmark-samples 5'.");
-
   BENCHMARK("Big") {
     op_ref op = read_compressed_file("./src/parse/test/artifacts/0.1.qcir.gz",
                                      std::make_shared<op_manager>());
