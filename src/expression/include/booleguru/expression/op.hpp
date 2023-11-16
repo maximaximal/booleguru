@@ -83,6 +83,12 @@ struct op {
     this->type = type;
   }
 
+  inline explicit constexpr op(op_type type, op_id c)
+    : op(type) {
+    assert(type == op_type::Not);
+    un.c = c;
+  }
+
   inline explicit constexpr op(op_type type, op_id r1, op_id r2)
     : op(type) {
     switch(type) {
@@ -217,10 +223,10 @@ struct op {
 class op_ref;
 
 std::ostream&
-operator<<(std::ostream& o, const op_type &t);
+operator<<(std::ostream& o, const op_type& t);
 
 std::ostream&
-operator<<(std::ostream& o, const op &op);
+operator<<(std::ostream& o, const op& op);
 }
 
 // This was tested against fully hashing with the hash provided by Ankerl, but

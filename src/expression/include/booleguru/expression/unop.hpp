@@ -16,5 +16,9 @@ struct unop {
   inline constexpr op_id right() const { return 0; }
 
   inline constexpr bool operator==(const unop& o) const { return c == o.c; }
+
+  explicit unop() = default;
+  explicit unop(op_id c)
+    : c(c){};
 };
 }

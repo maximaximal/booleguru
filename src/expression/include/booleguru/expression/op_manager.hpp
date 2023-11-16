@@ -171,6 +171,8 @@ operator!(op_ref r) {
 
 op_ref inline constexpr
 operator&&(op_ref l, op_ref r) {
+  if(!l.valid() && r.valid()) [[unlikely]] return r;
+  if(l.valid() && !r.valid()) [[unlikely]] return l;
   assert(l.valid());
   assert(r.valid());
   return l.get_mgr().get(op(op_type::And, l.get_id(), r.get_id()));
@@ -178,6 +180,8 @@ operator&&(op_ref l, op_ref r) {
 
 op_ref inline constexpr
 operator||(op_ref l, op_ref r) {
+  if(!l.valid() && r.valid()) [[unlikely]] return r;
+  if(l.valid() && !r.valid()) [[unlikely]] return l;
   assert(l.valid());
   assert(r.valid());
   return l.get_mgr().get(op(op_type::Or, l.get_id(), r.get_id()));
@@ -185,6 +189,8 @@ operator||(op_ref l, op_ref r) {
 
 op_ref inline constexpr
 operator^(op_ref l, op_ref r) {
+  if(!l.valid() && r.valid()) [[unlikely]] return r;
+  if(l.valid() && !r.valid()) [[unlikely]] return l;
   assert(l.valid());
   assert(r.valid());
   return l.get_mgr().get(op(op_type::Xor, l.get_id(), r.get_id()));

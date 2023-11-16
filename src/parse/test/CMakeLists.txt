@@ -3,6 +3,7 @@ set(TEST_SRCS
   test-parse-qcir.cpp
   test-parse-aiger.cpp
   test-parse-qdimacs.cpp
+  test-parse-smtlib2.cpp
   test-sexp-tracker.cpp
   test-antlr-boole-parse.cpp
 )
