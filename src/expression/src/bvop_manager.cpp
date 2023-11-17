@@ -39,6 +39,7 @@ encode_bvnot(op_manager& ops,
              const bvop& bb,
              std::vector<op_id>& op_vec,
              std::stack<uint16_t>& width_stack) {
+  (void)bb; (void)bvops;
   uint16_t width = width_stack.top();
 
   // Width stays constant. Ops are modified in-place to be their notted
@@ -59,6 +60,7 @@ encode_bin(op_manager& ops,
            const bvop& bb,
            std::vector<op_id>& op_vec,
            std::stack<uint16_t>& width_stack) {
+  (void)bb; (void)bvops;
   uint16_t width_l = width_stack.top();
   width_stack.pop();
   uint16_t width_r = width_stack.top();
@@ -84,6 +86,7 @@ encode_bvbin(op_manager& ops,
              const bvop& bb,
              std::vector<op_id>& op_vec,
              std::stack<uint16_t>& width_stack) {
+  (void)bb; (void)bvops;
   uint16_t width_l = width_stack.top();
   width_stack.pop();
   uint16_t width_r = width_stack.top();
@@ -110,6 +113,7 @@ encode_bveq(op_manager& ops,
             const bvop& bb,
             std::vector<op_id>& op_vec,
             std::stack<uint16_t>& width_stack) {
+  (void)bb; (void)bvops;
   uint16_t width_l = width_stack.top();
   width_stack.pop();
   uint16_t width_r = width_stack.top();
@@ -144,6 +148,7 @@ encode_bvvar(op_manager& ops,
              const bvop& bb,
              std::vector<op_id>& op_vec,
              std::stack<uint16_t>& width_stack) {
+  (void)bb; (void)bvops;
   width_stack.push(bb.varop.width);
   for(uint16_t i = 0; i < bb.varop.width; ++i) {
     op_vec.push_back(ops.get_id(op(Var, bb.varop.v, 0, i)));
@@ -159,6 +164,7 @@ encode_bvquant(op_manager& ops,
                const bvop& bb,
                std::vector<op_id>& op_vec,
                std::stack<uint16_t>& width_stack) {
+  (void)bb; (void)bvops;
   uint16_t width_r = width_stack.top();
   width_stack.pop();
   uint16_t width_l = width_stack.top();
@@ -186,6 +192,7 @@ encode_bvconst(op_manager& ops,
                const bvop& bb,
                std::vector<op_id>& op_vec,
                std::stack<uint16_t>& width_stack) {
+  (void)bb; (void)bvops;
   width_stack.push(bb.constop.width);
   size_t j = op_vec.size();
   op_vec.resize(op_vec.size() + bb.constop.width);

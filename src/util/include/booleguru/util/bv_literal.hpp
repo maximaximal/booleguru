@@ -32,8 +32,7 @@ struct bv_literal {
     }
 
     int64_t n = 0;
-    std::from_chars_result res
-      = std::from_chars(num.data(), num.data() + num.size(), n);
+    std::from_chars(num.data(), num.data() + num.size(), n);
     return n;
   }
 };
