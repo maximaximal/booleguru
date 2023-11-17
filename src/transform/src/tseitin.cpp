@@ -23,7 +23,11 @@ compute_number_of_clauses_and_variables_in_marked(const expression::op_ref& o,
   int32_t num_clauses = 1;
   int32_t num_variables = 0;
 
-  for(const auto& e : mgr.objects()) {
+  bool insert_top = false;
+  bool insert_bottom = false;
+
+  for(size_t i = 0; i < mgr.size(); ++i) {
+    const auto& e = mgr.objects()[i];
     const expression::op& op = e.first;
 
     if(!op.mark)
@@ -56,9 +60,13 @@ compute_number_of_clauses_and_variables_in_marked(const expression::op_ref& o,
       case expression::op_type::Var:
         ++num_variables;
         op.user_int32 = num_variables;
+        if(op.var.v == expression::var_manager::LITERAL_TOP) {
+          insert_top = true;
+        } else if(op.var.v == expression::var_manager::LITERAL_BOTTOM) {
+          insert_bottom = true;
+        }
         if(mappings)
-          o_.insert_mapping_comment(op.user_int32,
-                                    o.get_mgr().vars()[op.var.v]->name);
+          o_.insert_mapping_comment(op.user_int32, i + 1, o.get_mgr());
         break;
       case expression::op_type::None:
         [[fallthrough]];
@@ -68,6 +76,12 @@ compute_number_of_clauses_and_variables_in_marked(const expression::op_ref& o,
         break;
     }
   }
+
+  if(insert_top)
+    ++num_clauses;
+
+  if(insert_bottom)
+    ++num_clauses;
 
   return std::make_pair(num_clauses, num_variables);
 }
@@ -94,6 +108,8 @@ tseitin<O>::operator()(expression::op_ref o) {
     auto [num_clauses, num_variables]
       = compute_number_of_clauses_and_variables_in_marked(
         o, o_, mapping_comments_);
+    clauses_ = num_clauses;
+    variables_ = num_variables;
     o_.problem(num_variables, num_clauses);
   }
 
@@ -152,9 +168,12 @@ tseitin<O>::operator()(expression::op_ref o) {
 
   o_.end_prefix();
 
+  uint32_t top_id = 0;
+  uint32_t bottom_id = 0;
+
   for(size_t i = 0; i < mgr.size(); ++i) {
     auto& e = mgr.objects()[i];
-    const expression::op op = e.first;
+    const expression::op& op = e.first;
     id t = o_.op_ref_to_ref(op, e.second);
 
     if(!op.mark)
@@ -218,9 +237,15 @@ tseitin<O>::operator()(expression::op_ref o) {
         o_.binary(l, t);
         break;
       }
-      case expression::op_type::None:
-        [[fallthrough]];
       case expression::op_type::Var:
+        if(op.var.v == expression::var_manager::LITERAL_TOP) {
+          top_id = op.user_int32;
+        }
+        if(op.var.v == expression::var_manager::LITERAL_BOTTOM) {
+          bottom_id = op.user_int32;
+        }
+        break;
+      case expression::op_type::None:
         [[fallthrough]];
       case expression::op_type::Forall:
         [[fallthrough]];
@@ -228,6 +253,11 @@ tseitin<O>::operator()(expression::op_ref o) {
         break;
     }
   }
+
+  if(top_id)
+    o_.unit(top_id);
+  if(bottom_id)
+    o_.unit(o_.not_op(bottom_id));
 
   o_.unit(o_.op_ref_to_ref(q.get_obj(), q.get_id()));
 

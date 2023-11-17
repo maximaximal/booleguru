@@ -70,8 +70,12 @@ xcc_sat_solver_init(xcc_sat_solver* solver,
     solver->p.outfd_handle = fdopen(solver->p.outfd[0], "r");
     assert(solver->p.outfd_handle);
 
-    solver->assignments
-      = (char*)realloc(solver->assignments, sizeof(char) * (variables + 1));
+    if(variables > 0) {
+      solver->assignments
+        = (char*)realloc(solver->assignments, sizeof(char) * (variables + 1));
+    } else {
+      solver->assignments = nullptr;
+    }
   } else {
     // Child
     dup2(solver->p.infd[0], STDIN_FILENO);
@@ -261,6 +265,10 @@ sat::solve_with_solver(expression::op_ref& o, xcc_sat_solver& solver) {
     transform::tseitin<transform::output_to_qdimacs> tseitin(os);
     tseitin.mapping_comments(false);
     tseitin(o);
+
+    solver.assignments = (char*)malloc(tseitin.variables() * sizeof(char) + 1);
+    solver.variables = tseitin.variables();
+    solver.clauses = tseitin.clauses();
 #else
     throw(std::runtime_error("Cannot write non-cnf using tseitin transform and "
                              "unsupported platform!"));
@@ -295,6 +303,16 @@ sat::solve(expression::op_ref o) {
       s.pop();
       const expression::op& op = ops.getobj(i);
       switch(op.type) {
+        // The more complex binops are handled by a tseitin transformation, but
+        // to assign results, they have to be traversed.
+        case Equi:
+          [[fallthrough]];
+        case Impl:
+          [[fallthrough]];
+        case Lpmi:
+          [[fallthrough]];
+        case Xor:
+          [[fallthrough]];
         case Or:
           [[fallthrough]];
         case And:
@@ -311,7 +329,9 @@ sat::solve(expression::op_ref o) {
           break;
         case Var:
           op.mark = solver.assignments[op.user_int32];
-          if(op.var.v != tseitin_id) {
+          if(op.var.v != tseitin_id
+             && op.var.v != expression::var_manager::LITERAL_TOP
+             && op.var.v != expression::var_manager::LITERAL_BOTTOM) {
             if(op.mark) {
               varops.emplace(i);
             } else {
@@ -319,9 +339,8 @@ sat::solve(expression::op_ref o) {
             }
           }
           break;
-        default:
+        case None:
           assert(false);
-          break;
       }
     }
   }

@@ -52,8 +52,9 @@ encode_bvnot(op_manager& ops,
 
 // In: BV[1] x BV[1]
 // Out: BV[1]
+template<op_type t>
 static void
-encode_and(op_manager& ops,
+encode_bin(op_manager& ops,
            bvop_manager& bvops,
            const bvop& bb,
            std::vector<op_id>& op_vec,
@@ -69,15 +70,16 @@ encode_and(op_manager& ops,
   assert(width_l == 1);
 
   op_vec[op_vec.size() - 2]
-    = ops.get_id(op(And, op_vec[op_vec.size() - 2], op_vec[op_vec.size() - 1]));
+    = ops.get_id(op(t, op_vec[op_vec.size() - 2], op_vec[op_vec.size() - 1]));
 
   op_vec.pop_back();
 }
 
 // In: BV[n] x BV[n]
 // Out: BV[n]
+template<op_type t>
 static void
-encode_bvand(op_manager& ops,
+encode_bvbin(op_manager& ops,
              bvop_manager& bvops,
              const bvop& bb,
              std::vector<op_id>& op_vec,
@@ -95,7 +97,7 @@ encode_bvand(op_manager& ops,
   for(uint16_t i = 0; i < width_l; ++i) {
     size_t j = op_vec.size() - width_l + i;
     size_t jj = op_vec.size() - width_l - width_r + i;
-    op_vec[jj] = ops.get_id(op(And, op_vec[jj], op_vec[j]));
+    op_vec[jj] = ops.get_id(op(t, op_vec[jj], op_vec[j]));
   }
   op_vec.resize(op_vec.size() - width_l);
 }
@@ -148,6 +150,34 @@ encode_bvvar(op_manager& ops,
   }
 }
 
+// In: BV[n] x BV[1]
+// Out: BV[1]
+template<op_type t>
+static void
+encode_bvquant(op_manager& ops,
+               bvop_manager& bvops,
+               const bvop& bb,
+               std::vector<op_id>& op_vec,
+               std::stack<uint16_t>& width_stack) {
+  uint16_t width_r = width_stack.top();
+  width_stack.pop();
+  uint16_t width_l = width_stack.top();
+  width_stack.pop();
+
+  width_stack.push(1);
+
+  assert(width_l >= 1);
+  assert(width_r == 1);
+
+  op_id q = op_vec[op_vec.size() - 1];
+  for(ssize_t i = width_l - 1; i >= 0; --i) {
+    size_t j = op_vec.size() - width_l - 1 + i;
+    q = ops.get_id(op(t, op_vec[j], q));
+  }
+  op_vec[op_vec.size() - width_l - 1] = q;
+  op_vec.resize(op_vec.size() - width_l);
+}
+
 // In: none
 // Out: BV[n]
 static void
@@ -161,9 +191,9 @@ encode_bvconst(op_manager& ops,
   op_vec.resize(op_vec.size() + bb.constop.width);
   for(uint16_t i = 0; i < bb.constop.width; ++i) {
     if(bb.constop.lit.n & (1u << i)) {
-      op_vec[i + j] = ops.get_id(op(Var, var_manager::LITERAL_TOP, 0, i));
+      op_vec[i + j] = ops.get_id(op(Var, var_manager::LITERAL_TOP, 0, 0));
     } else {
-      op_vec[i + j] = ops.get_id(op(Var, var_manager::LITERAL_BOTTOM, 0, i));
+      op_vec[i + j] = ops.get_id(op(Var, var_manager::LITERAL_BOTTOM, 0, 0));
     }
   }
 }
@@ -201,16 +231,28 @@ bvop_ref::export_as_ops(op_manager& ops) {
         encode_bvnot(ops, get_mgr(), bb, op_vec, width_stack);
         break;
       case bvop_type::and_:
-        encode_and(ops, get_mgr(), bb, op_vec, width_stack);
+        encode_bin<And>(ops, get_mgr(), bb, op_vec, width_stack);
+        break;
+      case bvop_type::or_:
+        encode_bin<Or>(ops, get_mgr(), bb, op_vec, width_stack);
         break;
       case bvand:
-        encode_bvand(ops, get_mgr(), bb, op_vec, width_stack);
+        encode_bvbin<And>(ops, get_mgr(), bb, op_vec, width_stack);
+        break;
+      case bvor:
+        encode_bvbin<Or>(ops, get_mgr(), bb, op_vec, width_stack);
         break;
       case bveq:
         encode_bveq(ops, get_mgr(), bb, op_vec, width_stack);
         break;
       case bvvar:
         encode_bvvar(ops, get_mgr(), bb, op_vec, width_stack);
+        break;
+      case bvforall:
+        encode_bvquant<Forall>(ops, get_mgr(), bb, op_vec, width_stack);
+        break;
+      case bvexists:
+        encode_bvquant<Exists>(ops, get_mgr(), bb, op_vec, width_stack);
         break;
       case bvconst:
         encode_bvconst(ops, get_mgr(), bb, op_vec, width_stack);
@@ -267,6 +309,10 @@ bvop_type_to_str(bvop_type t) noexcept {
       return "bvult";
     case bveq:
       return "bveq";
+    case bvforall:
+      return "forall";
+    case bvexists:
+      return "exists";
     case concat:
       return "concat";
     case extract:

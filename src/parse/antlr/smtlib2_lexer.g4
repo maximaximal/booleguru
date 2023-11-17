@@ -11,12 +11,15 @@ NIL           options { caseInsensitive=true; } : ('()' | 'nil') ;
 QF_BV         options { caseInsensitive=true; } : 'QF_BV' ;
 BV            options { caseInsensitive=true; } : 'BV' ;
 CHECK_SAT     options { caseInsensitive=true; } : 'check-sat' ;
+GET_MODEL     options { caseInsensitive=true; } : 'get-model' ;
 DEFINE_FUN    options { caseInsensitive=true; } : 'define-fun' ;
 DECLARE_CONST options { caseInsensitive=true; } : 'declare-const' ;
 SET_LOGIC     options { caseInsensitive=true; } : 'set-logic' ;
 ASSERT        options { caseInsensitive=true; } : 'assert' ;
 BOOL          options { caseInsensitive=true; } : 'bool' ;
 BITVEC        options { caseInsensitive=true; } : 'BitVec' ;
+FORALL        options { caseInsensitive=true; } : 'forall' ;
+EXISTS        options { caseInsensitive=true; } : 'exists' ;
 
 // Simple
 EQUALS     : '=' ;

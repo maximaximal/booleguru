@@ -77,9 +77,12 @@ class output_to_op {
     return mgr.get_id(expression::op(expression::op_type::Not, id, 0));
   }
 
-  void insert_mapping_comment(expression::op_id id, std::string_view name) {
+  void insert_mapping_comment(id id,
+                              expression::op_id i,
+                              const expression::op_manager& ops) {
     (void)id;
-    (void)name;
+    (void)i;
+    (void)ops;
   }
 };
 }

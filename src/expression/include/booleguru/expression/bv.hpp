@@ -126,6 +126,8 @@ enum class bvop_type : uint8_t {
   bvlshr,
   bvult,
   bveq,
+  bvforall,
+  bvexists,
   concat,
   extract,
 };
@@ -155,11 +157,13 @@ struct bvop {
   explicit bvop(bvop_type t, id l, id r)
     : type(t)
     , binop(l, r) {
-    assert(t == bvop_type::bveq || t == bvop_type::and_ || t == bvop_type::or_
-           || t == bvop_type::bvand || t == bvop_type::bvor
-           || t == bvop_type::bvadd || t == bvop_type::bvmul
-           || t == bvop_type::bvudiv || t == bvop_type::bvurem
-           || t == bvop_type::bvshl || t == bvop_type::bvlshr);
+    assert(t == bvop_type::bveq || t == bvop_type::bvforall
+           || t == bvop_type::bvexists || t == bvop_type::and_
+           || t == bvop_type::or_ || t == bvop_type::bvand
+           || t == bvop_type::bvor || t == bvop_type::bvadd
+           || t == bvop_type::bvmul || t == bvop_type::bvudiv
+           || t == bvop_type::bvurem || t == bvop_type::bvshl
+           || t == bvop_type::bvlshr);
   }
   explicit bvop(bvop_type t, id a1, id a2, id a3)
     : type(t)
@@ -199,6 +203,8 @@ struct bvop {
       case bvlshr:
       case bvult:
       case bveq:
+      case bvforall:
+      case bvexists:
         return f(type, binop);
       case concat:
       case extract:
@@ -242,6 +248,8 @@ struct bvop {
       case bvlshr:
       case bvult:
       case bveq:
+      case bvforall:
+      case bvexists:
         return binop == o.binop;
       case concat:
       case extract:

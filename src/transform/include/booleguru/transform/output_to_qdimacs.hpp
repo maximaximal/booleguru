@@ -92,8 +92,10 @@ class output_to_qdimacs {
 
   TransformResult get_out() const {}
 
-  void insert_mapping_comment(id id, std::string_view name) {
-    o << "c " << id << " " << name << "\n";
+  void insert_mapping_comment(id id,
+                              expression::op_id i,
+                              const expression::op_manager& ops) {
+    o << "c " << id << " " << ops[i] << "\n";
   }
 
   inline constexpr id op_ref_to_ref(const expression::op& o,
@@ -188,7 +190,7 @@ class output_to_qdimacs {
           if(!op.user_int32) {
             op.user_int32 = var_id++;
             if(mapping)
-              insert_mapping_comment(op.user_int32, ops[i].to_string());
+              insert_mapping_comment(op.user_int32, i, ops);
           }
           break;
         default:
@@ -225,8 +227,7 @@ class output_to_qdimacs {
     while(i->is_quant()) {
       if(i->type == Exists) {
         exists(i.left()->user_int32);
-      }
-      else if(i->type == Forall) {
+      } else if(i->type == Forall) {
         forall(i.left()->user_int32);
       }
       i = i.right();

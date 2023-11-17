@@ -17,6 +17,7 @@
 #include <booleguru/parse/luascript.hpp>
 #include <booleguru/parse/qcir.hpp>
 #include <booleguru/parse/qdimacs.hpp>
+#include <booleguru/parse/smtlib2.hpp>
 #include <booleguru/util/stdiobuf.hpp>
 #ifdef BOOLEGURU_PARSE_PY
 #include <booleguru/parse/pythonscript.hpp>
@@ -181,7 +182,9 @@ input_file::produce_parser(std::istream& is) {
 
   switch(type_) {
     case smtlib: {
-      throw std::runtime_error("SMTLIB Not supported yet!");
+      auto smtlib2
+        = std::make_unique<parse::smtlib2>(is, ops_->vars_ptr(), ops_, lua_);
+      return smtlib2;
     }
     case aiger: {
       auto aiger

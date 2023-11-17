@@ -33,22 +33,25 @@ struct smtlib2_variable {
     , t(t) {}
 
   template<class M>
-  static smtlib2_variable& define_variable(M& map,
-                                           expression::var_manager& vars,
-                                           const std::string& v,
-                                           type t,
-                                           uint16_t w = 1) {
+  static expression::var_id define_variable(M& vec_of_maps,
+                                            expression::var_manager& vars,
+                                            const std::string& v,
+                                            type t,
+                                            uint16_t w = 1) {
+    auto& map = vec_of_maps.back();
     assert((t == type::Bool && w == 1) || (t == type::BitVec));
     auto it = map.find(v);
     if(it != map.end()) {
       throw smtlib2_variable_already_defined_error(v);
     }
 
-    auto [inserted_it, _] = map.emplace(
-      std::piecewise_construct,
-      std::forward_as_tuple(v),
-      std::forward_as_tuple(vars.get_id(expression::variable{ v }), t, w));
-    return inserted_it[1].second;
+    expression::var_id id = vars.get_id(expression::variable{ v });
+
+    auto p = map.emplace(std::piecewise_construct,
+                         std::forward_as_tuple(v),
+                         std::forward_as_tuple(id, t, w));
+
+    return id;
   }
 };
 }
