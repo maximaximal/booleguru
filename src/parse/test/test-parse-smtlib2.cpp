@@ -18,12 +18,14 @@ static const std::string_view test_simple_boolean = R"((set-logic BV)
 (declare-const a Bool)
 (declare-const b Bool)
 (assert (and a b))
+(check-sat)
 )";
 
 static const std::string_view test_simple_bitvec = R"((set-logic BV)
 (declare-const a (_ BitVec 2))
 (declare-const b (_ BitVec 2))
-(assert (bvand a b))
+(assert (= (bvand a b) (_ bv2 2)))
+(check-sat)
 )";
 
 TEST_CASE("Parse simple SMTLIB2 file without BV", "[smtlib2]") {
@@ -40,8 +42,11 @@ TEST_CASE("Parse simple SMTLIB2 file with BV", "[smtlib2]") {
   smtlib2 parser(is);
   auto res = parser();
 
+  if(!res) {
+    CAPTURE(res.message);
+    REQUIRE(false);
+  }
+
   REQUIRE(res);
   CAPTURE(res->to_string());
-
-  REQUIRE(false);
 }

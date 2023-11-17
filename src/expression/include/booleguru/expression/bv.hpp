@@ -1,5 +1,6 @@
 #pragma once
 
+#include "booleguru/util/bv_literal.hpp"
 #include <cassert>
 #include <functional>
 #include <stddef.h>
@@ -63,6 +64,24 @@ struct bvvarop {
   inline constexpr bvop_id right() const { return 0; }
 };
 
+struct bvconstop {
+  const util::bv_literal lit;
+  const uint16_t width;
+
+  inline explicit bvconstop(util::bv_literal lit, uint16_t width)
+    : lit(lit)
+    , width(width) {}
+  inline constexpr bool operator==(const bvconstop& o) const {
+    return lit.n == o.lit.n && width == o.width;
+  }
+  inline constexpr size_t hash() const {
+    return 4017271 * static_cast<size_t>(lit.n)
+           + 70200511 * static_cast<size_t>(width);
+  }
+  inline constexpr bvop_id left() const { return 0; }
+  inline constexpr bvop_id right() const { return 0; }
+};
+
 struct bvternop {
   const bvop_id a1 = 0;
   const bvop_id a2 = 0;
@@ -91,6 +110,7 @@ struct bvternop {
 // https://smtlib.cs.uiowa.edu/theories-FixedSizeBitVectors.shtml
 enum class bvop_type : uint8_t {
   bvvar,
+  bvconst,
   and_,
   or_,
   not_,
@@ -110,6 +130,9 @@ enum class bvop_type : uint8_t {
   extract,
 };
 
+const char*
+bvop_type_to_str(bvop_type t) noexcept;
+
 struct bvop {
   using objtype = bvop;
   using id = bvop_id;
@@ -117,6 +140,7 @@ struct bvop {
   bvop_type type;
   union {
     bvvarop varop;
+    bvconstop constop;
     bvunop unop;
     bvbinop binop;
     bvternop ternop;
@@ -131,11 +155,11 @@ struct bvop {
   explicit bvop(bvop_type t, id l, id r)
     : type(t)
     , binop(l, r) {
-    assert(t == bvop_type::and_ || t == bvop_type::or_ || t == bvop_type::bvand
-           || t == bvop_type::bvor || t == bvop_type::bvadd
-           || t == bvop_type::bvmul || t == bvop_type::bvudiv
-           || t == bvop_type::bvurem || t == bvop_type::bvshl
-           || t == bvop_type::bvlshr);
+    assert(t == bvop_type::bveq || t == bvop_type::and_ || t == bvop_type::or_
+           || t == bvop_type::bvand || t == bvop_type::bvor
+           || t == bvop_type::bvadd || t == bvop_type::bvmul
+           || t == bvop_type::bvudiv || t == bvop_type::bvurem
+           || t == bvop_type::bvshl || t == bvop_type::bvlshr);
   }
   explicit bvop(bvop_type t, id a1, id a2, id a3)
     : type(t)
@@ -145,6 +169,11 @@ struct bvop {
     , varop(v, width) {
     assert(t == bvop_type::bvvar);
   }
+  explicit bvop(bvop_type t, util::bv_literal lit, uint16_t width)
+    : type(t)
+    , constop(lit, width) {
+    assert(t == bvop_type::bvconst);
+  }
 
   template<typename Functor>
   inline constexpr auto visit(Functor f) const {
@@ -152,6 +181,8 @@ struct bvop {
     switch(type) {
       case bvvar:
         return f(type, varop);
+      case bvconst:
+        return f(type, constop);
       case not_:
       case bvnot:
       case bvneg:
@@ -193,6 +224,8 @@ struct bvop {
     switch(type) {
       case bvvar:
         return varop == o.varop;
+      case bvconst:
+        return constop == o.constop;
       case not_:
       case bvnot:
       case bvneg:
@@ -230,9 +263,6 @@ struct bvop {
     });
   }
 };
-
-const char*
-bvop_type_to_str(bvop_type t) noexcept;
 }
 
 namespace std {

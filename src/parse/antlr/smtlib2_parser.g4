@@ -5,6 +5,7 @@ options { tokenVocab=smtlib2_lexer; }
 #include <ankerl/unordered_dense.h>
 
 #include <booleguru/util/is_number.hpp>
+#include <booleguru/util/bv_literal.hpp>
 
 #include <booleguru/expression/op_manager.hpp>
 #include <booleguru/expression/var_manager.hpp>
@@ -64,4 +65,9 @@ expr returns [ bvop_id o ]
     | L BVOR l=expr {$o = $l.o;} (r=expr { $o = bvops->get_id(bvop(bvor, $o, $r.o)); })* R
     | L EQUALS l=expr {$o = $l.o;} (r=expr { $o = bvops->get_id(bvop(bveq, $o, $r.o)); })* R
     | L NOT c=expr { $o = bvops->get_id(bvop(bvnot, $c.o)); } R
+    | L UNDERSCORE n=ID w=INT R {
+            util::bv_literal lit($n.text);
+            int width = atoi($w.text.c_str());
+            $o = bvops->get_id(bvop(bvconst, lit, width));
+        }
     ;
