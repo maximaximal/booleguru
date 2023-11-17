@@ -28,6 +28,8 @@ class qcir : public base<qcir> {
   bool on_quant_prefix_ = true;
   bool cleansed_ = false;
   bool dry_walk_ = false;
+  bool top_defined_ = false;
+  bool bottom_defined_ = false;
   uint32_t number_of_variables_ = 0;
 
   public:

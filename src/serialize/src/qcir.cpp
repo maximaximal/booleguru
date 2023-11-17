@@ -234,11 +234,13 @@ qcir::walk_var(op_ref o) {
      && on_quant_prefix_) {
     o_ << "output(" << o->user_int32 << ")\n";
   }
-  if(!dry_walk_ && o->var.v == var_manager::LITERAL_TOP) {
+  if(!dry_walk_ && o->var.v == var_manager::LITERAL_TOP && !top_defined_) {
     o_ << o->user_int32 << " = and()\n";
+    top_defined_ = true;
   }
-  if(!dry_walk_ && o->var.v == var_manager::LITERAL_BOTTOM) {
+  if(!dry_walk_ && o->var.v == var_manager::LITERAL_BOTTOM && !bottom_defined_) {
     o_ << o->user_int32 << " = or()\n";
+    bottom_defined_ = true;
   }
 }
 
