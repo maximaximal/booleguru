@@ -3,6 +3,7 @@
 #include <booleguru/expression/var_manager.hpp>
 
 #include <booleguru/util/postorder.hpp>
+#include <booleguru/util/expect.hpp>
 
 #include <booleguru/util/unsupported.hpp>
 
@@ -61,15 +62,17 @@ encode_bin(op_manager& ops,
            std::vector<op_id>& op_vec,
            std::stack<uint16_t>& width_stack) {
   (void)bb; (void)bvops;
+  EXPECTE(!width_stack.empty(), tree_traversal);
   uint16_t width_l = width_stack.top();
   width_stack.pop();
+  EXPECTE(!width_stack.empty(), tree_traversal);
   uint16_t width_r = width_stack.top();
   width_stack.pop();
 
   width_stack.push(1);
 
-  assert(width_l == width_r);
-  assert(width_l == 1);
+  EXPECT(width_l == width_r);
+  EXPECT(width_l == 1);
 
   op_vec[op_vec.size() - 2]
     = ops.get_id(op(t, op_vec[op_vec.size() - 2], op_vec[op_vec.size() - 1]));
@@ -87,8 +90,10 @@ encode_bvbin(op_manager& ops,
              std::vector<op_id>& op_vec,
              std::stack<uint16_t>& width_stack) {
   (void)bb; (void)bvops;
+  assert(!width_stack.empty());
   uint16_t width_l = width_stack.top();
   width_stack.pop();
+  assert(!width_stack.empty());
   uint16_t width_r = width_stack.top();
   width_stack.pop();
 
@@ -115,8 +120,10 @@ encode_bveq(op_manager& ops,
             std::stack<uint16_t>& width_stack) {
   (void)bb; (void)bvops;
   uint16_t width_l = width_stack.top();
+  assert(!width_stack.empty());
   width_stack.pop();
   uint16_t width_r = width_stack.top();
+  assert(!width_stack.empty());
   width_stack.pop();
 
   width_stack.push(1);
