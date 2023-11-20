@@ -94,7 +94,15 @@ transform_prenex_animated(expression::op_ref& o, std::string animate = "") {
 template<class Transformer, transform::prenex_quantifier::kind k>
 expression::op_ref
 transform_prenex(expression::op_ref& o) {
-  return Transformer(k)(o);
+  Transformer t(k);
+  expression::op_ref out;
+  try {
+    out = t(o);
+  } catch(const std::runtime_error& e) {
+    fmt::println("Error during prenex-quantifier: {}", e.what());
+    throw e;
+  }
+  return out;
 }
 
 expression::op_ref
