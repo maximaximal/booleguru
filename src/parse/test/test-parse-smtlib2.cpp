@@ -34,6 +34,12 @@ static const std::string_view test_simple_bitvec_quantified = R"((set-logic BV)
 (check-sat)
 )";
 
+static const std::string_view test_duplicate_bitvec_quantified = R"((set-logic BV)
+(declare-const a (_ BitVec 2))
+(assert (and (exists ((b (_ BitVec 2))) (= (bvor a b) (_ bv2 2))) (exists ((b (_ BitVec 2))) (= (bvor a b) (_ bv2 2)))))
+(check-sat)
+)";
+
 TEST_CASE("Parse simple SMTLIB2 file without BV", "[smtlib2]") {
   auto is = isviewstream(test_simple_boolean);
   smtlib2 parser(is);
@@ -59,6 +65,20 @@ TEST_CASE("Parse simple SMTLIB2 file with BV", "[smtlib2]") {
 
 TEST_CASE("Parse simple SMTLIB2 file with quantified BV", "[smtlib2]") {
   auto is = isviewstream(test_simple_bitvec_quantified);
+  smtlib2 parser(is);
+  auto res = parser();
+
+  if(!res) {
+    CAPTURE(res.message);
+    REQUIRE(false);
+  }
+
+  REQUIRE(res);
+  CAPTURE(res->to_string());
+}
+
+TEST_CASE("Parse duplicate SMTLIB2 file with quantified BV", "[smtlib2]") {
+  auto is = isviewstream(test_duplicate_bitvec_quantified);
   smtlib2 parser(is);
   auto res = parser();
 
