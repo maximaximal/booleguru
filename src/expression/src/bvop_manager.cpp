@@ -1,9 +1,10 @@
+#include "booleguru/expression/bv.hpp"
 #include <booleguru/expression/bvop_manager.hpp>
 #include <booleguru/expression/op_manager.hpp>
 #include <booleguru/expression/var_manager.hpp>
 
-#include <booleguru/util/postorder.hpp>
 #include <booleguru/util/expect.hpp>
+#include <booleguru/util/postorder.hpp>
 
 #include <booleguru/util/unsupported.hpp>
 
@@ -40,7 +41,9 @@ encode_bvnot(op_manager& ops,
              const bvop& bb,
              std::vector<op_id>& op_vec,
              std::stack<uint16_t>& width_stack) {
-  (void)bb; (void)bvops;
+  (void)bb;
+  (void)bvops;
+  EXPECTE(!width_stack.empty(), tree_traversal);
   uint16_t width = width_stack.top();
 
   // Width stays constant. Ops are modified in-place to be their notted
@@ -61,12 +64,13 @@ encode_bin(op_manager& ops,
            const bvop& bb,
            std::vector<op_id>& op_vec,
            std::stack<uint16_t>& width_stack) {
-  (void)bb; (void)bvops;
-  EXPECTE(!width_stack.empty(), tree_traversal);
-  uint16_t width_l = width_stack.top();
-  width_stack.pop();
+  (void)bb;
+  (void)bvops;
   EXPECTE(!width_stack.empty(), tree_traversal);
   uint16_t width_r = width_stack.top();
+  width_stack.pop();
+  EXPECTE(!width_stack.empty(), tree_traversal);
+  uint16_t width_l = width_stack.top();
   width_stack.pop();
 
   width_stack.push(1);
@@ -89,12 +93,13 @@ encode_bvbin(op_manager& ops,
              const bvop& bb,
              std::vector<op_id>& op_vec,
              std::stack<uint16_t>& width_stack) {
-  (void)bb; (void)bvops;
-  assert(!width_stack.empty());
-  uint16_t width_l = width_stack.top();
-  width_stack.pop();
+  (void)bb;
+  (void)bvops;
   assert(!width_stack.empty());
   uint16_t width_r = width_stack.top();
+  width_stack.pop();
+  assert(!width_stack.empty());
+  uint16_t width_l = width_stack.top();
   width_stack.pop();
 
   width_stack.push(width_l);
@@ -118,11 +123,12 @@ encode_bveq(op_manager& ops,
             const bvop& bb,
             std::vector<op_id>& op_vec,
             std::stack<uint16_t>& width_stack) {
-  (void)bb; (void)bvops;
-  uint16_t width_l = width_stack.top();
+  (void)bb;
+  (void)bvops;
+  uint16_t width_r = width_stack.top();
   assert(!width_stack.empty());
   width_stack.pop();
-  uint16_t width_r = width_stack.top();
+  uint16_t width_l = width_stack.top();
   assert(!width_stack.empty());
   width_stack.pop();
 
@@ -155,7 +161,8 @@ encode_bvvar(op_manager& ops,
              const bvop& bb,
              std::vector<op_id>& op_vec,
              std::stack<uint16_t>& width_stack) {
-  (void)bb; (void)bvops;
+  (void)bb;
+  (void)bvops;
   width_stack.push(bb.varop.width);
   for(uint16_t i = 0; i < bb.varop.width; ++i) {
     op_vec.push_back(ops.get_id(op(Var, bb.varop.v, 0, i)));
@@ -171,7 +178,8 @@ encode_bvquant(op_manager& ops,
                const bvop& bb,
                std::vector<op_id>& op_vec,
                std::stack<uint16_t>& width_stack) {
-  (void)bb; (void)bvops;
+  (void)bb;
+  (void)bvops;
   uint16_t width_r = width_stack.top();
   width_stack.pop();
   uint16_t width_l = width_stack.top();
@@ -199,7 +207,8 @@ encode_bvconst(op_manager& ops,
                const bvop& bb,
                std::vector<op_id>& op_vec,
                std::stack<uint16_t>& width_stack) {
-  (void)bb; (void)bvops;
+  (void)bb;
+  (void)bvops;
   width_stack.push(bb.constop.width);
   size_t j = op_vec.size();
   op_vec.resize(op_vec.size() + bb.constop.width);
@@ -239,6 +248,16 @@ bvop_ref::export_as_ops(op_manager& ops) {
 
   auto visit = [this, &ops, &op_vec, &width_stack](bvop_id b) -> void {
     const bvop& bb = get_mgr().getobj(b);
+
+    // If left and right were identical, the tree traversal leaves out one
+    // branch. This means the other branch has to be duplicated on the stacks in
+    // order for the traversal to have correct states.
+    if(bb.is_binop(bb.type) && bb.binop.l == bb.binop.r) {
+      width_stack.push(width_stack.top());
+      std::copy(op_vec.begin() + op_vec.size() - width_stack.top(),
+                op_vec.begin() + op_vec.size(),
+                std::back_inserter(op_vec));
+    }
 
     switch(bb.type) {
       case bvnot:
@@ -280,10 +299,40 @@ bvop_ref::export_as_ops(op_manager& ops) {
   util::postorder<bvop_id, decltype(llink), decltype(rlink)> p(llink, rlink);
   p(get_id(), visit);
 
+  assert(!width_stack.empty());
   assert(width_stack.top() == 1);
   assert(op_vec.size() == 1);
 
   return ops[op_vec[0]];
+}
+
+void
+bvop_manager::render_as_dot(std::ostream& o, bvop_id id) const noexcept {
+  o << "digraph bv {\n";
+
+  std::stack<bvop_id> unvisited;
+  unvisited.push(id);
+  while(!unvisited.empty()) {
+    const bvop_ref& op = (*this)[unvisited.top()];
+    unvisited.pop();
+    if(op->is_binop(op->type)) {
+      o << "  " << op.get_id().id_ << " [label = \""
+        << bvop_type_to_str(op->type) << " {" << op.get_id().id_ << "}\"];\n";
+      o << "  " << op.get_id().id_ << " -> " << op->left().id_
+        << " [ label=\"l\" ];\n";
+      o << "  " << op.get_id().id_ << " -> " << op->right().id_
+        << " [ label=\"r\" ];\n";
+      unvisited.push(op->left());
+      unvisited.push(op->right());
+    } else if(op->type == bvvar) {
+      o << "  " << op.get_id().id_ << " [ label=\"" << op->varop.v.id_ << ","
+        << op->varop.width << "\" ];\n";
+    } else if(op->type == bvconst) {
+      o << "  " << op.get_id().id_ << " [ label=\"" << op->constop.lit.n << ":"
+        << op->constop.width << "\" ];\n";
+    }
+  }
+  o << "}" << std::endl;
 }
 
 const char*

@@ -157,13 +157,7 @@ struct bvop {
   explicit bvop(bvop_type t, id l, id r)
     : type(t)
     , binop(l, r) {
-    assert(t == bvop_type::bveq || t == bvop_type::bvforall
-           || t == bvop_type::bvexists || t == bvop_type::and_
-           || t == bvop_type::or_ || t == bvop_type::bvand
-           || t == bvop_type::bvor || t == bvop_type::bvadd
-           || t == bvop_type::bvmul || t == bvop_type::bvudiv
-           || t == bvop_type::bvurem || t == bvop_type::bvshl
-           || t == bvop_type::bvlshr);
+    assert(is_binop(t));
   }
   explicit bvop(bvop_type t, id a1, id a2, id a3)
     : type(t)
@@ -177,6 +171,13 @@ struct bvop {
     : type(t)
     , constop(lit, width) {
     assert(t == bvop_type::bvconst);
+  }
+
+  static bool is_binop(bvop_type t) {
+    using enum bvop_type;
+    return t == bveq || t == bvforall || t == bvexists || t == and_ || t == or_
+           || t == bvand || t == bvor || t == bvadd || t == bvmul || t == bvudiv
+           || t == bvurem || t == bvshl || t == bvlshr;
   }
 
   template<typename Functor>

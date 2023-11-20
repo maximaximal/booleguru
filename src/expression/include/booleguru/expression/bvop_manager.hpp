@@ -25,6 +25,8 @@ class bvop_ref : public reference<bvop, bvop_manager, bvop_id> {
 class bvop_manager : public manager<bvop_ref, bvop_manager> {
   public:
   using base = manager<bvop_ref, bvop_manager>;
+
+  void render_as_dot(std::ostream& o, bvop_id id) const noexcept;
 };
 
 }

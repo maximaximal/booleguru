@@ -9,7 +9,11 @@ namespace booleguru::util {
  *
  * This traversal does not modify the tree itself, it just traverses.
  *
- * The reference must be bool-comparable: False means it is NULL. */
+ * The reference must be bool-comparable: False means it is NULL.
+ *
+ * WARNING: This traversal leaves out direct duplicates of siblings and only
+ * traverses such a step once!
+ */
 template<typename Ref, typename LLINK_T, typename RLINK_T>
 class postorder {
   std::vector<Ref> A;
