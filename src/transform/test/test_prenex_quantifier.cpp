@@ -521,7 +521,6 @@ TEST_CASE("QBF prenex on fuzzed input", "[prenexer]") {
   REQUIRE(!root->is_prenex);
 
   prenex_quantifier prenexer(prenex_quantifier::Eup_Aup);
-  prenexer.animate("fuzzed");
   op_ref prenexed = prenexer(root);
 
   REQUIRE(prenexed->is_prenex);
