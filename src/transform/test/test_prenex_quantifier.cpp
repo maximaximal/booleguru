@@ -183,9 +183,9 @@ TEST_CASE("Prenex a formula with multiple sub-trees with quantified variables "
 
   CAPTURE(prenexed.to_string());
 
-  REQUIRE(prenexed.to_string()
-          == "#y[2] #x ?x[2] ?y ?y[1] #x[1] (x & "
-             "y & x[1] & y[1] & !(x[2] & y[2]))");
+  REQUIRE(
+    prenexed.to_string()
+    == "#x #y[2] ?y ?x[2] ?y[1] #x[1] (x & y & x[1] & y[1] & !(x[2] & y[2]))");
 }
 
 TEST_CASE("Transform a Non-Prenex formula into prenex") {
