@@ -84,7 +84,8 @@ class quanttree {
       : p(op_type, var, next)
       , is_fork_(false) {}
     explicit entry(uint32_t left, uint32_t right) noexcept
-      : f(left, right) {}
+      : f(left, right)
+      , is_fork_(true) {}
 
     constexpr uint32_t index(const entry* arr) const { return this - arr; }
 
@@ -103,6 +104,7 @@ class quanttree {
   bool animate = false;
   uint32_t animate_step = 0;
   const op_manager* ops = nullptr;
+  op_type prioritized_quantifier = op_type::Forall;
 
   void create_animation_step(uint32_t root);
 
@@ -158,6 +160,10 @@ class quanttree {
     v.emplace_back(op_type::Exists,
                    std::numeric_limits<uint32_t>::max(),
                    std::numeric_limits<uint32_t>::max());
+  }
+
+  void set_prioritized_quantifier(op_type prioritized_quantifier) {
+    this->prioritized_quantifier = prioritized_quantifier;
   }
 
   void set_lookup_op_manager(const op_manager* ops);
@@ -252,6 +258,8 @@ class quanttree {
   void prenex(uint32_t root, should_inline_checker should_inline);
 
   void mark_critical_path(uint32_t root);
+
+  bool ensure_root_is_path(uint32_t root);
 
   void unmark(uint32_t root);
 

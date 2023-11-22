@@ -40,7 +40,22 @@ struct prenex_quantifier::inner {
   std::stack<uint32_t> qts;
 
   inner(prenex_quantifier::kind k)
-    : checker(checkermap[k]) {}
+    : checker(checkermap[k]) {
+    switch(k) {
+      case Eup_Aup:
+        qt.set_prioritized_quantifier(op_type::Exists);
+        break;
+      case Eup_Adown:
+        qt.set_prioritized_quantifier(op_type::Exists);
+        break;
+      case Edown_Aup:
+        qt.set_prioritized_quantifier(op_type::Forall);
+        break;
+      case Edown_Adown:
+        qt.set_prioritized_quantifier(op_type::Exists);
+        break;
+    }
+  }
 };
 
 prenex_quantifier::prenex_quantifier(kind k)

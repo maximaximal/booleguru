@@ -379,6 +379,32 @@ quanttree::next_highest_QAs(uint32_t i) {
                         }
                       });
     }
+
+    if(left_alternations == right_alternations) {
+      // Still, there is an equal amount of alternations. Then we should
+      // prioritize the prioritized quantifier first and go down in that
+      // direction.
+      entry& pe = v[p];
+
+      bool left_is_prioritized;
+      walk_next_paths(left, [this, &pe, &left_is_prioritized](const entry& e) {
+        if(e.p.type == prioritized_quantifier && !left_is_prioritized) {
+          left_is_prioritized = true;
+        }
+      });
+      if(left_is_prioritized) {
+        return left_;
+      } else {
+        bool right_is_prioritized;
+        walk_next_paths(
+          left, [this, &pe, &right_is_prioritized](const entry& e) {
+            if(e.p.type == prioritized_quantifier && !right_is_prioritized) {
+              right_is_prioritized = true;
+            }
+          });
+        return right_;
+      }
+    }
   }
 
   if(left_alternations > right_alternations) {
@@ -453,6 +479,9 @@ quanttree::prenex(uint32_t root, should_inline_checker should_inline) {
     create_animation_step(root);
   mark_critical_path(root);
   if(animate)
+    create_animation_step(root);
+
+  if(ensure_root_is_path(root) && animate)
     create_animation_step(root);
 
   uint32_t bottom = 0;
@@ -575,55 +604,86 @@ quanttree::mark_critical_path(uint32_t root) {
     v[i].mark();
     i = next_highest_QAs(i);
   }
+}
 
-  // Root cannot be a fork, as it has to already be a path! The next best path
-  // should be put at the root and the fork must happen after the path.
-  /*
-  // Dangerous:
-  //     r
-  //    / \
-  //   f   f
-  //  / \ / \
-  // p  p p  p
-  //
-  // If there are multiple forks, they have to be swapped correctly. The root
-  // shall be made a path (the next best path that can be found). Find this
-  // next-best path and traverse upwards as long as the root is not reached. The
-  // path is converted to the fork that was at its parent. Then continue with
-  // the parent and convert it to its parent fork.
-  */
-
+bool
+quanttree::ensure_root_is_path(uint32_t root) {
   if(v[root].is_fork_) {
     uint32_t next = next_path(root);
-    uint32_t p = v[next].parent_;
-    while(v[root].is_fork_) {
-      assert(v[p].is_fork_);
-      assert(!v[next].is_fork_);
-      assert(next != p);
-      uint32_t left = v[p].f.left;
-      uint32_t right = v[p].f.right;
 
-      v[p].is_fork_ = false;
-      if(v[left].marked_) {
-        v[p].p.next = left;
-        left = next_marked(left);
-        v[right].parent_ = next;
-      } else {
-        v[p].p.next = right;
-        right = next_marked(right);
-        v[left].parent_ = next;
+    uint32_t root_left = v[root].f.left;
+    uint32_t root_right = v[root].f.right;
+    v[root_left].parent_ = next;
+    v[root_right].parent_ = next;
+
+    assert(v[next].is_path());
+    op_type next_type = v[next].p.type;
+    uint32_t next_var = v[next].p.var;
+    uint32_t next_parent = v[next].parent_;
+    uint32_t next_after_next = next_marked(next);
+
+    v[root].is_fork_ = false;
+    v[root].p.next = next;
+    v[root].p.type = next_type;
+    v[root].p.var = next_var;
+
+    v[next].is_fork_ = true;
+    v[next].f.left = root_left;
+    v[next].f.right = root_right;
+    v[next].parent_ = root;
+
+    if(v[next_parent].is_fork() && next_parent != root) {
+      if(v[next_parent].f.left == next) {
+        v[next_parent].f.left = next_after_next;
+      } else if(v[next_parent].f.right == next) {
+        v[next_parent].f.right = next_after_next;
       }
 
-      v[p].p.var = v[next].p.var;
-      v[p].p.type = v[next].p.type;
-      v[next].is_fork_ = true;
-      v[next].f.left = left;
-      v[next].f.right = right;
+      // If there was no element afterwards, the fork disappears, getting
+      // replaced by the next element.
 
-      next = p;
-      p = v[p].parent_;
+      uint32_t other = std::numeric_limits<uint32_t>::max();
+
+      if(v[next_parent].f.left == std::numeric_limits<uint32_t>::max()) {
+        other = v[next_parent].f.right;
+      } else if(v[next_parent].f.right
+                == std::numeric_limits<uint32_t>::max()) {
+        other = v[next_parent].f.left;
+      }
+
+      if(other != std::numeric_limits<uint32_t>::max()) {
+        uint32_t pp = v[next_parent].parent_;
+        v[other].parent_ = pp;
+
+        if(v[pp].is_fork()) {
+          if(v[pp].f.left == next_parent) {
+            v[pp].f.left = other;
+          } else if(v[pp].f.right == next_parent) {
+            v[pp].f.right = other;
+          } else {
+            assert(false);
+          }
+        } else {
+          v[pp].p.next = other;
+        }
+
+        // As the other branch was marked and was now removed, this other branch
+        // has to be marked.
+        mark_critical_path(other);
+      }
+    } else {
+      v[next_parent].p.next = next_marked(next);
+
+      if(v[next_parent].p.next != std::numeric_limits<uint32_t>::max()) {
+        v[v[next_parent].p.next].parent_ = next_parent;
+      }
+
+      // The case that there is no element afterwards is covered by the logic of
+      // paths.
     }
+    return true;
   }
+  return false;
 }
 
 void
@@ -644,7 +704,7 @@ quanttree::to_dot(std::string_view name, std::ostream& o, uint32_t root) {
     unvisited.pop();
     const entry& e = v[i];
     o << i << " [ label=\"";
-    e.stream(o, ops) << "\"";
+    e.stream(o, ops) << "^" << i << "\"";
     if(e.marked_) {
       o << ", color=\"red\"";
     }
@@ -653,7 +713,9 @@ quanttree::to_dot(std::string_view name, std::ostream& o, uint32_t root) {
     if(e.is_fork()) {
       o << i << "->" << e.f.left << ";\n";
       o << i << "->" << e.f.right << ";\n";
+      assert(e.f.left < v.size());
       unvisited.emplace(e.f.left);
+      assert(e.f.right < v.size());
       unvisited.emplace(e.f.right);
     } else if(e.has_next()) {
       o << i << "->" << e.p.next << ";\n";

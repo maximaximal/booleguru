@@ -508,3 +508,21 @@ TEST_CASE("QBF prenex with duplicated structure", "[prenexer]") {
 
   REQUIRE(prenexed->is_prenex);
 }
+
+TEST_CASE("QBF prenex on fuzzed input", "[prenexer]") {
+  std::string_view in_str = "((?2 (1)) | !(?2 (1))) & ((?2 (1)) | !(?2 (1)))";
+
+  isviewstream in(in_str);
+  boole parser(in);
+  auto result = parser();
+  REQUIRE(result);
+  op_ref root = *result;
+
+  REQUIRE(!root->is_prenex);
+
+  prenex_quantifier prenexer(prenex_quantifier::Eup_Aup);
+  prenexer.animate("fuzzed");
+  op_ref prenexed = prenexer(root);
+
+  REQUIRE(prenexed->is_prenex);
+}
