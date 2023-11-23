@@ -3,6 +3,7 @@
 #include <booleguru/expression/mutation_sampler.hpp>
 #include <booleguru/expression/mutator.hpp>
 #include <booleguru/expression/op.hpp>
+#include <booleguru/expression/var_manager.hpp>
 
 #include <bitset>
 #include <iostream>
@@ -20,6 +21,11 @@ gen_possibilities(op* begin,
   using enum op_type;
   using enum mutation;
   op o_;
+
+  // Don't change existing variables! This leads to weird issues.
+  if(o.type == Var && mut == change) {
+    return;
+  }
 
   // All unops
   for(op_id c{ 0 }; c < id; ++c) {
@@ -43,8 +49,11 @@ gen_possibilities(op* begin,
           s.try_mutation(id, mut, o_);
       }
 
-      // Quantifiers, if left was a variable.
-      if(begin[l.id_].type == Var) {
+      // Quantifiers, if left was a variable. The variable must not be a
+      // constant, otherwise this doesn't make sense.
+      if(begin[l.id_].type == Var
+         && begin[l.id_].var.v != var_manager::LITERAL_TOP
+         && begin[l.id_].var.v != var_manager::LITERAL_BOTTOM) {
         o_.quant.v = l;
         o_.quant.e = r;
         o_.type = Exists;
@@ -57,14 +66,17 @@ gen_possibilities(op* begin,
     }
   }
 
-  // Varops. These can be endless, so we limit them to the ID count.
-  for(var_id v{ 1 }; v.id_ <= max_var_id; ++v) {
-    o_.type = Var;
-    o_.var.v = v;
-    o_.var.q = 0;
-    o_.var.i = 0;
-    if(o != o_)
-      s.try_mutation(id, mut, o_);
+  // Varops. These can be endless, so we limit them to the ID count. They can
+  // only be pushed, but not changed.
+  if(mut == change) {
+    for(var_id v{ 1 }; v.id_ <= max_var_id; ++v) {
+      o_.type = Var;
+      o_.var.v = v;
+      o_.var.q = 0;
+      o_.var.i = 0;
+      if(o != o_)
+        s.try_mutation(id, mut, o_);
+    }
   }
 }
 

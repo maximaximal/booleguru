@@ -386,7 +386,7 @@ quanttree::next_highest_QAs(uint32_t i) {
       // direction.
       entry& pe = v[p];
 
-      bool left_is_prioritized;
+      bool left_is_prioritized = false;
       walk_next_paths(left, [this, &pe, &left_is_prioritized](const entry& e) {
         if(e.p.type == prioritized_quantifier && !left_is_prioritized) {
           left_is_prioritized = true;
@@ -395,7 +395,7 @@ quanttree::next_highest_QAs(uint32_t i) {
       if(left_is_prioritized) {
         return left_;
       } else {
-        bool right_is_prioritized;
+        bool right_is_prioritized = false;
         walk_next_paths(
           left, [this, &pe, &right_is_prioritized](const entry& e) {
             if(e.p.type == prioritized_quantifier && !right_is_prioritized) {

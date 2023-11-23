@@ -49,7 +49,7 @@ main(int argc, char** argv) {
       if(o_.is_binop() || o_.is_quant()) {
         fmt::println("    Op {} is type {}, left: {}, right: {}",
                      i,
-                     (int)o_.type,
+                     op_type_to_str(o_.type),
                      o_.left().id_,
                      o_.right().id_);
       } else if(o_.type == op_type::Var) {

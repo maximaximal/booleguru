@@ -9,8 +9,10 @@ source::ensure_var_exists(expression::op& o) {
     // Replace variable ID with a valid one.
     uint32_t id = o.var.v.id_;
     std::string v_name = std::to_string(id);
-    uint32_t new_id
-      = ops.vars().get_id(std::move(expression::variable{ v_name })).id_;
+    expression::var_id new_id
+      = ops.vars().get_id(std::move(expression::variable{ v_name }));
+    assert(new_id != expression::var_manager::LITERAL_TOP);
+    assert(new_id != expression::var_manager::LITERAL_BOTTOM);
     o.var.v = new_id;
   }
 }

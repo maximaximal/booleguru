@@ -8,6 +8,8 @@
 
 #include <booleguru/transform/variable_extend.hpp>
 
+#include <booleguru/transform/eliminate_xor.hpp>
+
 using namespace booleguru::expression;
 using namespace booleguru::lua::helpers;
 
@@ -67,6 +69,10 @@ lua_context::register_booleguru_types() {
                "eliminate_implication",
                "eliminate-implication",
                &transform_op<transform::eliminate_implication>);
+  set_to_state(s,
+               "eliminate_xor",
+               "eliminate-xor",
+               &transform_op<transform::eliminate_xor>);
   set_to_state(s,
                "distribute_nots",
                "distribute-nots",
