@@ -163,7 +163,7 @@ std::unique_ptr<parse::base>
 input_file::produce_parser(std::istream& is) {
   using enum util::type;
   if(name_.ends_with(".smtlib2") || name_.ends_with(".smt")
-     || name_.ends_with(".smtlib")) {
+     || name_.ends_with(".smtlib") || name_.ends_with(".smt2")) {
     type_ = smtlib;
   } else if(name_.ends_with(".boole") || name_.ends_with(".limboole")) {
     type_ = boole;
