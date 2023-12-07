@@ -172,6 +172,12 @@ class op_manager : public manager<op_ref, op_manager> {
     id r_and = get_id(op(op_type::And, l, not_r));
     return get_id(op(op_type::Or, l_and, r_and));
   }
+  id encode_ite(id pred, id then, id otherwise) {
+    id l = get_id(op(op_type::And, pred, then));
+    id not_pred = get_id(op(op_type::Not, pred, 0));
+    id r = get_id(op(op_type::And, not_pred, otherwise));
+    return get_id(op(op_type::Or, l, r));
+  }
 };
 
 op_ref inline

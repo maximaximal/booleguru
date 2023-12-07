@@ -4,11 +4,14 @@ lexer grammar smtlib2_lexer;
 AND           options { caseInsensitive=true; } : ('and' | '&') ;
 OR            options { caseInsensitive=true; } : ('or' | '|') ;
 NOT           options { caseInsensitive=true; } : ('not' | '!') ;
-BVAND         options { caseInsensitive=true; } : ('bvand') ;
-BVADD         options { caseInsensitive=true; } : ('bvadd') ;
-BVNEG         options { caseInsensitive=true; } : ('bvneg') ;
-BVOR          options { caseInsensitive=true; } : ('bvor') ;
-BVNOT         options { caseInsensitive=true; } : ('bvnot') ;
+ITE           options { caseInsensitive=true; } : 'ite' ;
+BVAND         options { caseInsensitive=true; } : 'bvand' ;
+BVADD         options { caseInsensitive=true; } : 'bvadd' ;
+BVNEG         options { caseInsensitive=true; } : 'bvneg' ;
+BVOR          options { caseInsensitive=true; } : 'bvor' ;
+BVNOT         options { caseInsensitive=true; } : 'bvnot' ;
+BVULT         options { caseInsensitive=true; } : 'bvult' ;
+IMPLIES       options { caseInsensitive=true; } : ('=>') ;
 NIL           options { caseInsensitive=true; } : ('()' | 'nil') ;
 QF_BV         options { caseInsensitive=true; } : 'QF_BV' ;
 BV            options { caseInsensitive=true; } : 'BV' ;
@@ -33,7 +36,7 @@ R          : ')' ;
 UNDERSCORE : '_' ;
 
 
-ID: [?A-Za-z\u0080-\u2199\u22FF-\uFFFF_'"][0-9A-Za-z\u0080-\u2199\u22FF-\uFFFF_'"]* ;
+ID: [?A-Za-z\u0080-\u2199\u22FF-\uFFFF_'"][.0-9A-Za-z\u0080-\u2199\u22FF-\uFFFF_'"]* ;
 KEY: ':'[-0-9A-Za-z\u0080-\u2199\u22FF-\uFFFF_'"]* ;
 STR: '"' STR_CONTENT '"' ;
 TEXTBLOCK : '|' TEXTBLOCK_CONTENT '|';

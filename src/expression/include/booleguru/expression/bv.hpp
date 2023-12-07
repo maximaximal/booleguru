@@ -85,8 +85,7 @@ struct bvconstop {
 struct bvternop {
   const bvop_id a1 = 0;
   const bvop_id a2 = 0;
-  // TODO(Marcel): Not sure about the type here..?
-  const uint32_t a3 = 0;
+  const bvop_id a3 = 0;
 
   bvternop(bvop_id a1, bvop_id a2, bvop_id a3)
     : a1(a1)
@@ -96,7 +95,7 @@ struct bvternop {
   inline constexpr size_t hash() const {
     return (4017271 * static_cast<size_t>(a1)
             + 70200511 * static_cast<size_t>(a2))
-           ^ a3;
+           ^ static_cast<size_t>(a3);
   }
   inline constexpr bvop_id left() const { return 0; }
   inline constexpr bvop_id right() const { return 0; }
@@ -114,6 +113,7 @@ enum class bvop_type : uint8_t {
   and_,
   or_,
   not_,
+  implies,
   bvnot,
   bvand,
   bvor,
@@ -130,6 +130,7 @@ enum class bvop_type : uint8_t {
   bvexists,
   concat,
   extract,
+  ite,
 };
 
 const char*
@@ -176,8 +177,14 @@ struct bvop {
   static bool is_binop(bvop_type t) {
     using enum bvop_type;
     return t == bveq || t == bvforall || t == bvexists || t == and_ || t == or_
-           || t == bvand || t == bvor || t == bvadd || t == bvmul || t == bvudiv
-           || t == bvurem || t == bvshl || t == bvlshr;
+           || t == bvand || t == implies || t == bvor || t == bvadd
+           || t == bvmul || t == bvudiv || t == bvurem || t == bvshl
+           || t == bvlshr || t == bvult;
+  }
+
+  static bool is_ternop(bvop_type t) {
+    using enum bvop_type;
+    return t == concat || t == extract || t == ite;
   }
 
   template<typename Functor>
@@ -194,6 +201,7 @@ struct bvop {
         return f(type, unop);
       case and_:
       case or_:
+      case implies:
       case bvand:
       case bvor:
       case bvadd:
@@ -209,6 +217,7 @@ struct bvop {
         return f(type, binop);
       case concat:
       case extract:
+      case ite:
         return f(type, ternop);
     }
 
@@ -239,6 +248,7 @@ struct bvop {
         return unop == o.unop;
       case and_:
       case or_:
+      case implies:
       case bvand:
       case bvor:
       case bvadd:
@@ -254,6 +264,7 @@ struct bvop {
         return binop == o.binop;
       case concat:
       case extract:
+      case ite:
         return ternop == o.ternop;
     }
     return false;

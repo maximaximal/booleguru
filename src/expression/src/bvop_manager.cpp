@@ -203,6 +203,43 @@ encode_bvadd(op_manager& ops,
   op_vec.resize(op_vec.size() - width_l);
 }
 
+// In: BV[n] x BV[n]
+// Out: BV[1]
+static void
+encode_bvadd_cout(op_manager& ops,
+                  bvop_manager& bvops,
+                  const bvop& bb,
+                  std::vector<op_id>& op_vec,
+                  std::stack<uint16_t>& width_stack,
+                  op_id cin) {
+  (void)bb;
+  (void)bvops;
+  assert(!width_stack.empty());
+  const uint16_t width_r = width_stack.top();
+  width_stack.pop();
+  assert(!width_stack.empty());
+  const uint16_t width_l = width_stack.top();
+  width_stack.pop();
+
+  assert(width_l == width_r);
+  assert(width_l > 0);
+
+  width_stack.push(1);
+
+  size_t A = op_vec.size() - width_r - width_l;
+  size_t B = op_vec.size() - width_r;
+
+  std::unique_ptr<op_id[]> carry_bits{ std::make_unique<op_id[]>(width_l) };
+
+  carry_bits[0] = cin;
+  for(uint16_t i = 1; i < width_l; ++i) {
+    carry_bits[i]
+      = carry(ops, op_vec[A + i - 1], op_vec[B + i - 1], carry_bits[i - 1]);
+  }
+
+  op_vec.resize(op_vec.size() - width_l - width_r + 1);
+}
+
 // In: BV[n]
 // Out: BV[n]
 static void
@@ -238,6 +275,70 @@ encode_bvvar(op_manager& ops,
   for(uint16_t i = 0; i < bb.varop.width; ++i) {
     op_vec.push_back(ops.get_id(op(Var, bb.varop.v, 0, i)));
   }
+}
+
+// In: BV[1] x BV[n] x BV[n]
+// Out: BV[n]
+static void
+encode_ite(op_manager& ops,
+           bvop_manager& bvops,
+           const bvop& bb,
+           std::vector<op_id>& op_vec,
+           std::stack<uint16_t>& width_stack) {
+  (void)bb;
+  (void)bvops;
+  uint16_t width_r = width_stack.top();
+  width_stack.pop();
+  uint16_t width_l = width_stack.top();
+  width_stack.pop();
+  uint16_t width_p = width_stack.top();
+  width_stack.pop();
+
+  width_stack.push(width_l);
+
+  // fmt::println("Width l: {} r: {} p: {}", width_l, width_r, width_p);
+  EXPECTE(width_p == 1, tree_traversal);
+  EXPECTE(width_l == width_r, tree_traversal);
+
+  op_id pred = op_vec[op_vec.size() - width_l - width_r - 1];
+
+  for(uint16_t i = 0; i < width_l; ++i) {
+    size_t j = op_vec.size() - width_l + i;
+    size_t jj = op_vec.size() - width_l - width_r + i;
+
+    // j-1 is subtracting the predicate, so that we assign to one before the
+    // predicate (width 1).
+
+    op_vec[j - 1] = ops.encode_ite(pred, op_vec[j], op_vec[jj]);
+  }
+
+  op_vec.resize(op_vec.size() - width_r - 1);
+}
+
+// In: BV[n] x BV[n]
+// Out: BV[1]
+static void
+encode_bvult(op_manager& ops,
+             bvop_manager& bvops,
+             const bvop& bb,
+             std::vector<op_id>& op_vec,
+             std::stack<uint16_t>& width_stack) {
+  (void)bb;
+  (void)bvops;
+
+  // The following assumes, that all bitvectors are of fitting length.
+  // Otherwise, the error is somewhere in the inner asserts.
+
+  encode_bvneg(ops, bvops, bb, op_vec, width_stack);
+
+  // Then, we encode add(a,~b,1).cout
+  encode_bvadd_cout(ops, bvops, bb, op_vec, width_stack, ops.top().get_id());
+
+  EXPECTE(width_stack.top() == 1, tree_traversal);
+
+  // Finally, we negate it.
+  op_vec[op_vec.size() - 1]
+    = ops.get_id(op(op_type::Not, op_vec[op_vec.size() - 1], 0));
 }
 
 // In: BV[n] x BV[1]
@@ -317,6 +418,8 @@ bvop_ref::export_as_ops(op_manager& ops) {
   std::vector<op_id> op_vec;
   std::stack<uint16_t> width_stack;
 
+  // get_mgr().render_as_dot(std::cout, get_id());
+
   auto visit = [this, &ops, &op_vec, &width_stack](bvop_id b) -> void {
     const bvop& bb = get_mgr().getobj(b);
 
@@ -330,6 +433,12 @@ bvop_ref::export_as_ops(op_manager& ops) {
                 std::back_inserter(op_vec));
     }
 
+    // fmt::println("Currently visiting {} ({})", bvop_type_to_str(bb.type),
+    // b.id_);
+
+    // ITE and other ternaries have to be handled separately. They have to be
+    // traversed correctly! Traverse a1, then a2, then a3.
+
     switch(bb.type) {
       case bvnot:
         encode_bvnot(ops, get_mgr(), bb, op_vec, width_stack);
@@ -340,6 +449,9 @@ bvop_ref::export_as_ops(op_manager& ops) {
       case bvop_type::or_:
         encode_bin<Or>(ops, get_mgr(), bb, op_vec, width_stack);
         break;
+      case bvop_type::implies:
+        encode_bin<Impl>(ops, get_mgr(), bb, op_vec, width_stack);
+        break;
       case bvand:
         encode_bvbin<And>(ops, get_mgr(), bb, op_vec, width_stack);
         break;
@@ -348,6 +460,9 @@ bvop_ref::export_as_ops(op_manager& ops) {
         break;
       case bveq:
         encode_bveq(ops, get_mgr(), bb, op_vec, width_stack);
+        break;
+      case bvult:
+        encode_bvult(ops, get_mgr(), bb, op_vec, width_stack);
         break;
       case bvneg:
         encode_bvneg(ops, get_mgr(), bb, op_vec, width_stack);
@@ -367,6 +482,9 @@ bvop_ref::export_as_ops(op_manager& ops) {
         break;
       case bvconst:
         encode_bvconst(ops, get_mgr(), bb, op_vec, width_stack);
+        break;
+      case ite:
+        encode_ite(ops, get_mgr(), bb, op_vec, width_stack);
         break;
       default:
         throw util::unsupported(fmt::format("Unsupported SMT-LIB2 op: {}",
@@ -402,6 +520,18 @@ bvop_manager::render_as_dot(std::ostream& o, bvop_id id) const noexcept {
         << " [ label=\"r\" ];\n";
       unvisited.push(op->left());
       unvisited.push(op->right());
+    } else if(op->is_ternop(op->type)) {
+      o << "  " << op.get_id().id_ << " [label = \""
+        << bvop_type_to_str(op->type) << " {" << op.get_id().id_ << "}\"];\n";
+      o << "  " << op.get_id().id_ << " -> " << op->ternop.a1.id_
+        << " [ label=\"a1\" ];\n";
+      o << "  " << op.get_id().id_ << " -> " << op->ternop.a2.id_
+        << " [ label=\"a2\" ];\n";
+      o << "  " << op.get_id().id_ << " -> " << op->ternop.a3.id_
+        << " [ label=\"a3\" ];\n";
+      unvisited.push(op->ternop.a1);
+      unvisited.push(op->ternop.a2);
+      unvisited.push(op->ternop.a3);
     } else if(op->type == bvvar) {
       o << "  " << op.get_id().id_ << " [ label=\"" << op->varop.v.id_ << ","
         << op->varop.width << "\" ];\n";
@@ -422,6 +552,10 @@ bvop_type_to_str(bvop_type t) noexcept {
       return "or";
     case not_:
       return "not";
+    case ite:
+      return "ite";
+    case implies:
+      return "implies";
     case bvvar:
       return "bvvar";
     case bvconst:

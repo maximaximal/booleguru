@@ -140,13 +140,7 @@ gate_statement locals [op_id id]
         { $id = ops->get_id(op(op_type::Xor, $l0.id, $l1.id)); }
     | ITE LPAR l0=literal[$var.v_id] COMMA l1=literal[$var.v_id]
         COMMA  l2=literal[$var.v_id]
-          { op_id const neg_l0 = ops->get_id(op(op_type::Not, $l0.id, 0));
-            op_id const if_branch   = ops->get_id(op(op_type::And,
-                                                     $l0.id, $l1.id)),
-                        else_branch = ops->get_id(op(op_type::And,
-                                                     neg_l0, $l2.id));
-            $id = ops->get_id(op(op_type::Or, if_branch, else_branch));
-          }
+          { $id = ops->encode_ite($l0.id, $l1.id, $l2.id); }
     | ( qu=EXISTS | qu=FORALL ) LPAR vl=var_list SEMICOLON l=literal[$var.v_id]
         { // An empty variable list should never occur.
           assert($vl.ctx->vars.size() > 0);
