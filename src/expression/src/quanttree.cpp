@@ -384,10 +384,8 @@ quanttree::next_highest_QAs(uint32_t i) {
       // Still, there is an equal amount of alternations. Then we should
       // prioritize the prioritized quantifier first and go down in that
       // direction.
-      entry& pe = v[p];
-
       bool left_is_prioritized = false;
-      walk_next_paths(left, [this, &pe, &left_is_prioritized](const entry& e) {
+      walk_next_paths(left, [this, &left_is_prioritized](const entry& e) {
         if(e.p.type == prioritized_quantifier && !left_is_prioritized) {
           left_is_prioritized = true;
         }
@@ -396,12 +394,11 @@ quanttree::next_highest_QAs(uint32_t i) {
         return left_;
       } else {
         bool right_is_prioritized = false;
-        walk_next_paths(
-          left, [this, &pe, &right_is_prioritized](const entry& e) {
-            if(e.p.type == prioritized_quantifier && !right_is_prioritized) {
-              right_is_prioritized = true;
-            }
-          });
+        walk_next_paths(left, [this, &right_is_prioritized](const entry& e) {
+          if(e.p.type == prioritized_quantifier && !right_is_prioritized) {
+            right_is_prioritized = true;
+          }
+        });
         return right_;
       }
     }
