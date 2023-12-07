@@ -12,6 +12,7 @@ options { tokenVocab=smtlib2_lexer; }
 #include <booleguru/expression/bvop_manager.hpp>
 
 #include <booleguru/parse/smtlib2_variable.hpp>
+#include <booleguru/parse/let_map.hpp>
 }
 
 @members {
@@ -33,6 +34,8 @@ options { tokenVocab=smtlib2_lexer; }
   std::shared_ptr<bvop_manager> bvops;
 
   op_ref assertions;
+
+  let_map lets;
 }
 
 formula
@@ -42,12 +45,14 @@ formula
 stmt
     : CHECK_SAT
     | GET_MODEL
+    | SET_INFO KEY ( ID | INT | NUMBER | TEXTBLOCK | STR )
     | SET_LOGIC ( QF_BV | BV )
-    | DEFINE_FUN name=ID NIL t=fun_type
+    | DECLARE_FUN name=ID NIL t=fun_type
         { smtlib2_variable::define_variable(smtvars, ops->vars(), $name.text, $t.t, $t.w); }
     | DECLARE_CONST name=ID t=fun_type
         { smtlib2_variable::define_variable(smtvars, ops->vars(), $name.text, $t.t, $t.w); }
     | ASSERT e=expr { assertions = assertions && (*bvops)[$e.o].export_as_ops(*ops); }
+    | EXIT
     ;
 
 fun_type returns [ smtlib2_variable::type t, uint16_t w ]
@@ -56,26 +61,17 @@ fun_type returns [ smtlib2_variable::type t, uint16_t w ]
     ;
 
 expr returns [ bvop_id o ]
-    : name=ID {
-            var_id id = 0;
-            uint16_t width;
-            for(ssize_t i = smtvars.size() - 1; i >= 0; --i) {
-                const auto &it = smtvars[i].find($name.text);
-                if(it != smtvars[i].end()) {
-                    id = it->second.id;
-                    width = it->second.width;
-                }
-            }
-            if(!id)
-                throw std::runtime_error(fmt::format("Variable {} not defined!", $name.text));
-            $o = bvops->get_id(bvop(bvvar, id, width));
-        }
+    : v=variable_ { $o = $v.o; }
     | L AND l=expr {$o = $l.o;} (r=expr { $o = bvops->get_id(bvop(and_, $o, $r.o)); })* R
     | L OR l=expr {$o = $l.o;} (r=expr { $o = bvops->get_id(bvop(or_, $o, $r.o)); })* R
     | L BVAND l=expr {$o = $l.o;} (r=expr { $o = bvops->get_id(bvop(bvand, $o, $r.o)); })* R
     | L BVOR l=expr {$o = $l.o;} (r=expr { $o = bvops->get_id(bvop(bvor, $o, $r.o)); })* R
     | L EQUALS l=expr {$o = $l.o;} (r=expr { $o = bvops->get_id(bvop(bveq, $o, $r.o)); })* R
     | L NOT c=expr { $o = bvops->get_id(bvop(bvnot, $c.o)); } R
+    | L LET { lets.push(); }
+            L ( L name=ID e=expr R { lets.add($name.text, $e.o); } )* R
+            e=expr { $o = $e.o; }
+            { lets.pop(); } R
     | L {expression::bvop_type qt; std::vector<expression::bvop_id> vars;}
             ( FORALL {qt = bvforall;} | EXISTS {qt = bvexists;})
             L {smtvars.emplace_back();}
@@ -99,5 +95,27 @@ expr returns [ bvop_id o ]
             util::bv_literal lit($n.text);
             int width = atoi($w.text.c_str());
             $o = bvops->get_id(bvop(bvconst, lit, width));
+        }
+    ;
+
+variable_ returns [ bvop_id o ]
+    : name=ID {
+            // First, check lets. Only afterwards, check if there is some variable defined.
+            if(bvop_id let = lets[$name.text]) {
+                $o = let;
+            } else {
+                var_id id = 0;
+                uint16_t width;
+                for(ssize_t i = smtvars.size() - 1; i >= 0; --i) {
+                    const auto &it = smtvars[i].find($name.text);
+                    if(it != smtvars[i].end()) {
+                        id = it->second.id;
+                        width = it->second.width;
+                    }
+                }
+                if(!id)
+                    throw std::runtime_error(fmt::format("Variable {} not defined!", $name.text));
+                $o = bvops->get_id(bvop(bvvar, id, width));
+            }
         }
     ;

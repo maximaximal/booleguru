@@ -50,6 +50,7 @@ set(SRCS
   src/smtlib2.cpp
   src/luascript.cpp
   src/cli.cpp
+  src/let_map.cpp
 )
 
 if(TARGET booleguru-py-embed)

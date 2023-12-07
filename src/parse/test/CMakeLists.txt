@@ -6,6 +6,7 @@ set(TEST_SRCS
   test-parse-smtlib2.cpp
   test-sexp-tracker.cpp
   test-antlr-boole-parse.cpp
+  test-let-map.cpp
 )
 
 add_executable(booleguru-parse-test ${TEST_SRCS})
