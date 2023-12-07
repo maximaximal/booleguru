@@ -153,6 +153,77 @@ encode_bveq(op_manager& ops,
   op_vec.resize(op_vec.size() - width_l - width_r + 1);
 }
 
+static op_id
+sum(op_manager& ops, op_id a, op_id b, op_id cin) {
+  return ops.encode_xor(ops.encode_xor(a, b), cin);
+}
+
+static op_id
+carry(op_manager& ops, op_id a, op_id b, op_id cin) {
+  auto t1 = ops.encode_and(a, b);
+  auto t2 = ops.encode_and(ops.encode_xor(a, b), cin);
+  return ops.encode_or(t1, t2);
+}
+
+// In: BV[n] x BV[n]
+// Out: BV[n]
+static void
+encode_bvadd(op_manager& ops,
+             bvop_manager& bvops,
+             const bvop& bb,
+             std::vector<op_id>& op_vec,
+             std::stack<uint16_t>& width_stack,
+             op_id cin) {
+  (void)bb;
+  (void)bvops;
+  assert(!width_stack.empty());
+  const uint16_t width_r = width_stack.top();
+  width_stack.pop();
+  assert(!width_stack.empty());
+  const uint16_t width_l = width_stack.top();
+
+  assert(width_l == width_r);
+  assert(width_l > 0);
+
+  size_t A = op_vec.size() - width_r - width_l;
+  size_t B = op_vec.size() - width_r;
+
+  std::unique_ptr<op_id[]> carry_bits{ std::make_unique<op_id[]>(width_l) };
+
+  carry_bits[0] = cin;
+  for(uint16_t i = 1; i < width_l; ++i) {
+    carry_bits[i]
+      = carry(ops, op_vec[A + i - 1], op_vec[B + i - 1], carry_bits[i - 1]);
+  }
+
+  for(uint16_t i = 0; i < width_l; ++i) {
+    size_t jj = op_vec.size() - width_l - width_r + i;
+    op_vec[jj] = sum(ops, op_vec[A + i], op_vec[B + i], carry_bits[i]);
+  }
+  op_vec.resize(op_vec.size() - width_l);
+}
+
+// In: BV[n]
+// Out: BV[n]
+static void
+encode_bvneg(op_manager& ops,
+             bvop_manager& bvops,
+             const bvop& bb,
+             std::vector<op_id>& op_vec,
+             std::stack<uint16_t>& width_stack) {
+  (void)bb;
+  (void)bvops;
+  assert(!width_stack.empty());
+  uint16_t width = width_stack.top();
+
+  assert(width > 0);
+
+  for(uint16_t i = 0; i < width; ++i) {
+    size_t j = op_vec.size() - width + i;
+    op_vec[j] = ops.get_id(op(Not, op_vec[j], 0));
+  }
+}
+
 // In: none
 // Out: BV[n]
 static void
@@ -277,6 +348,13 @@ bvop_ref::export_as_ops(op_manager& ops) {
         break;
       case bveq:
         encode_bveq(ops, get_mgr(), bb, op_vec, width_stack);
+        break;
+      case bvneg:
+        encode_bvneg(ops, get_mgr(), bb, op_vec, width_stack);
+        break;
+      case bvadd:
+        encode_bvadd(
+          ops, get_mgr(), bb, op_vec, width_stack, ops.bottom().get_id());
         break;
       case bvvar:
         encode_bvvar(ops, get_mgr(), bb, op_vec, width_stack);

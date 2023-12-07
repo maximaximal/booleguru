@@ -66,6 +66,8 @@ expr returns [ bvop_id o ]
     | L OR l=expr {$o = $l.o;} (r=expr { $o = bvops->get_id(bvop(or_, $o, $r.o)); })* R
     | L BVAND l=expr {$o = $l.o;} (r=expr { $o = bvops->get_id(bvop(bvand, $o, $r.o)); })* R
     | L BVOR l=expr {$o = $l.o;} (r=expr { $o = bvops->get_id(bvop(bvor, $o, $r.o)); })* R
+    | L BVADD l=expr {$o = $l.o;} (r=expr { $o = bvops->get_id(bvop(bvadd, $o, $r.o)); })* R
+    | L BVNEG l=expr {$o = $l.o;} (r=expr { $o = bvops->get_id(bvop(bvneg, $o, $r.o)); })* R
     | L EQUALS l=expr {$o = $l.o;} (r=expr { $o = bvops->get_id(bvop(bveq, $o, $r.o)); })* R
     | L NOT c=expr { $o = bvops->get_id(bvop(bvnot, $c.o)); } R
     | L LET { lets.push(); }

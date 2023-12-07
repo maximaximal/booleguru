@@ -134,3 +134,22 @@ TEST_CASE("Parse SMTLIB2 containing a let", "[smtlib2]") {
   REQUIRE(res);
   CAPTURE(res->to_string());
 }
+
+TEST_CASE("Parse SMTLIB2 containing a bvadd", "[smtlib2]") {
+  const std::string_view str = R"(
+(set-logic BV)
+(declare-const a (_ BitVec 2))
+(assert (= (bvadd a a) a)))";
+
+  auto is = isviewstream(str);
+  smtlib2 parser(is);
+  auto res = parser();
+
+  if(!res) {
+    CAPTURE(res.message);
+    REQUIRE(false);
+  }
+
+  REQUIRE(res);
+  CAPTURE(res->to_string());
+}

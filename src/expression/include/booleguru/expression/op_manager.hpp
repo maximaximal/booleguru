@@ -161,6 +161,17 @@ class op_manager : public manager<op_ref, op_manager> {
         s.emplace(current_obj.left());
     }
   }
+
+  // Some shorthands that come in handy when working purely with IDs.
+  id encode_and(id l, id r) { return get_id(op(op_type::And, l, r)); }
+  id encode_or(id l, id r) { return get_id(op(op_type::Or, l, r)); }
+  id encode_xor(id l, id r) {
+    id not_l = get_id(op(op_type::Not, l, 0));
+    id not_r = get_id(op(op_type::Not, r, 0));
+    id l_and = get_id(op(op_type::And, not_l, r));
+    id r_and = get_id(op(op_type::And, l, not_r));
+    return get_id(op(op_type::Or, l_and, r_and));
+  }
 };
 
 op_ref inline
@@ -171,8 +182,10 @@ operator!(op_ref r) {
 
 op_ref inline constexpr
 operator&&(op_ref l, op_ref r) {
-  if(!l.valid() && r.valid()) [[unlikely]] return r;
-  if(l.valid() && !r.valid()) [[unlikely]] return l;
+  if(!l.valid() && r.valid()) [[unlikely]]
+    return r;
+  if(l.valid() && !r.valid()) [[unlikely]]
+    return l;
   assert(l.valid());
   assert(r.valid());
   return l.get_mgr().get(op(op_type::And, l.get_id(), r.get_id()));
@@ -180,8 +193,10 @@ operator&&(op_ref l, op_ref r) {
 
 op_ref inline constexpr
 operator||(op_ref l, op_ref r) {
-  if(!l.valid() && r.valid()) [[unlikely]] return r;
-  if(l.valid() && !r.valid()) [[unlikely]] return l;
+  if(!l.valid() && r.valid()) [[unlikely]]
+    return r;
+  if(l.valid() && !r.valid()) [[unlikely]]
+    return l;
   assert(l.valid());
   assert(r.valid());
   return l.get_mgr().get(op(op_type::Or, l.get_id(), r.get_id()));
@@ -189,8 +204,10 @@ operator||(op_ref l, op_ref r) {
 
 op_ref inline constexpr
 operator^(op_ref l, op_ref r) {
-  if(!l.valid() && r.valid()) [[unlikely]] return r;
-  if(l.valid() && !r.valid()) [[unlikely]] return l;
+  if(!l.valid() && r.valid()) [[unlikely]]
+    return r;
+  if(l.valid() && !r.valid()) [[unlikely]]
+    return l;
   assert(l.valid());
   assert(r.valid());
   return l.get_mgr().get(op(op_type::Xor, l.get_id(), r.get_id()));
