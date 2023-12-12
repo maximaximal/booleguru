@@ -483,7 +483,11 @@ bvop_ref::export_as_ops(op_manager& ops) {
       case bvconst:
         encode_bvconst(ops, get_mgr(), bb, op_vec, width_stack);
         break;
-      case ite:
+      case ite_l:
+        // Don't do anything, this abstraction lets us treat the ternary op like
+        // two binops. The right branch is handled below.
+        break;
+      case ite_r:
         encode_ite(ops, get_mgr(), bb, op_vec, width_stack);
         break;
       default:
@@ -520,18 +524,6 @@ bvop_manager::render_as_dot(std::ostream& o, bvop_id id) const noexcept {
         << " [ label=\"r\" ];\n";
       unvisited.push(op->left());
       unvisited.push(op->right());
-    } else if(op->is_ternop(op->type)) {
-      o << "  " << op.get_id().id_ << " [label = \""
-        << bvop_type_to_str(op->type) << " {" << op.get_id().id_ << "}\"];\n";
-      o << "  " << op.get_id().id_ << " -> " << op->ternop.a1.id_
-        << " [ label=\"a1\" ];\n";
-      o << "  " << op.get_id().id_ << " -> " << op->ternop.a2.id_
-        << " [ label=\"a2\" ];\n";
-      o << "  " << op.get_id().id_ << " -> " << op->ternop.a3.id_
-        << " [ label=\"a3\" ];\n";
-      unvisited.push(op->ternop.a1);
-      unvisited.push(op->ternop.a2);
-      unvisited.push(op->ternop.a3);
     } else if(op->type == bvvar) {
       o << "  " << op.get_id().id_ << " [ label=\"" << op->varop.v.id_ << ","
         << op->varop.width << "\" ];\n";
@@ -552,8 +544,10 @@ bvop_type_to_str(bvop_type t) noexcept {
       return "or";
     case not_:
       return "not";
-    case ite:
-      return "ite";
+    case ite_l:
+      return "ite_l";
+    case ite_r:
+      return "ite_r";
     case implies:
       return "implies";
     case bvvar:
@@ -588,10 +582,6 @@ bvop_type_to_str(bvop_type t) noexcept {
       return "forall";
     case bvexists:
       return "exists";
-    case concat:
-      return "concat";
-    case extract:
-      return "extract";
   }
 }
 }

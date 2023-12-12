@@ -69,7 +69,7 @@ expr returns [ bvop_id o ]
     | L BVADD l=expr {$o = $l.o;} (r=expr { $o = bvops->get_id(bvop(bvadd, $o, $r.o)); })* R
     | L BVNEG l=expr {$o = $l.o;} (r=expr { $o = bvops->get_id(bvop(bvneg, $o, $r.o)); })* R
     | L EQUALS l=expr {$o = $l.o;} (r=expr { $o = bvops->get_id(bvop(bveq, $o, $r.o)); })* R
-    | L ITE pred=expr then=expr otherwise=expr { $o = bvops->get_id(bvop(ite, $pred.o, $then.o, $otherwise.o)); } R
+    | L ITE pred=expr then=expr otherwise=expr { $o = bvops->get_id(bvop(ite_r, bvops->get_id(bvop(ite_l, $pred.o, $then.o)), $otherwise.o)); } R
     | L NOT c=expr { $o = bvops->get_id(bvop(bvnot, $c.o)); } R
     | L IMPLIES l=expr r=expr { $o = bvops->get_id(bvop(implies, $l.o, $r.o)); } R
     | L BVULT l=expr r=expr { $o = bvops->get_id(bvop(bvult, $l.o, $r.o)); } R

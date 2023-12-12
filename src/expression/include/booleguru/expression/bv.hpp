@@ -82,28 +82,6 @@ struct bvconstop {
   inline constexpr bvop_id right() const { return 0; }
 };
 
-struct bvternop {
-  const bvop_id a1 = 0;
-  const bvop_id a2 = 0;
-  const bvop_id a3 = 0;
-
-  bvternop(bvop_id a1, bvop_id a2, bvop_id a3)
-    : a1(a1)
-    , a2(a2)
-    , a3(a3) {}
-
-  inline constexpr size_t hash() const {
-    return (4017271 * static_cast<size_t>(a1)
-            + 70200511 * static_cast<size_t>(a2))
-           ^ static_cast<size_t>(a3);
-  }
-  inline constexpr bvop_id left() const { return 0; }
-  inline constexpr bvop_id right() const { return 0; }
-  inline constexpr bool operator==(const bvternop& o) const {
-    return a1 == o.a1 && a2 == o.a2 && a3 == o.a3;
-  }
-};
-
 // Types of binops for fixed-size bit-vectors as known from SMT-LIB:
 //
 // https://smtlib.cs.uiowa.edu/theories-FixedSizeBitVectors.shtml
@@ -128,9 +106,8 @@ enum class bvop_type : uint8_t {
   bveq,
   bvforall,
   bvexists,
-  concat,
-  extract,
-  ite,
+  ite_l,
+  ite_r,
 };
 
 const char*
@@ -146,7 +123,6 @@ struct bvop {
     bvconstop constop;
     bvunop unop;
     bvbinop binop;
-    bvternop ternop;
   };
 
   explicit bvop(bvop_type t, id l)
@@ -160,9 +136,6 @@ struct bvop {
     , binop(l, r) {
     assert(is_binop(t));
   }
-  explicit bvop(bvop_type t, id a1, id a2, id a3)
-    : type(t)
-    , ternop(a1, a2, a3) {}
   explicit bvop(bvop_type t, expression::var_id v, uint16_t width)
     : type(t)
     , varop(v, width) {
@@ -179,12 +152,7 @@ struct bvop {
     return t == bveq || t == bvforall || t == bvexists || t == and_ || t == or_
            || t == bvand || t == implies || t == bvor || t == bvadd
            || t == bvmul || t == bvudiv || t == bvurem || t == bvshl
-           || t == bvlshr || t == bvult;
-  }
-
-  static bool is_ternop(bvop_type t) {
-    using enum bvop_type;
-    return t == concat || t == extract || t == ite;
+           || t == bvlshr || t == bvult || t == ite_l || t == ite_r;
   }
 
   template<typename Functor>
@@ -214,11 +182,9 @@ struct bvop {
       case bveq:
       case bvforall:
       case bvexists:
+      case ite_l:
+      case ite_r:
         return f(type, binop);
-      case concat:
-      case extract:
-      case ite:
-        return f(type, ternop);
     }
 
     return f(type, unop);
@@ -261,11 +227,9 @@ struct bvop {
       case bveq:
       case bvforall:
       case bvexists:
+      case ite_l:
+      case ite_r:
         return binop == o.binop;
-      case concat:
-      case extract:
-      case ite:
-        return ternop == o.ternop;
     }
     return false;
   }
