@@ -36,7 +36,7 @@ R          : ')' ;
 UNDERSCORE : '_' ;
 
 
-ID: [?A-Za-z\u0080-\u2199\u22FF-\uFFFF_'"][.0-9A-Za-z\u0080-\u2199\u22FF-\uFFFF_'"]* ;
+ID: ('|' ~'|'* '|') | ([$%?A-Za-z\u0080-\u2199\u22FF-\uFFFF_'"][$!%.0-9A-Za-z\u0080-\u2199\u22FF-\uFFFF_'"]*) ;
 KEY: ':'[-0-9A-Za-z\u0080-\u2199\u22FF-\uFFFF_'"]* ;
 STR: '"' STR_CONTENT '"' ;
 TEXTBLOCK : '|' TEXTBLOCK_CONTENT '|';
