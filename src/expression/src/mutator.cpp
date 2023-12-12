@@ -68,7 +68,7 @@ gen_possibilities(op* begin,
 
   // Varops. These can be endless, so we limit them to the ID count. They can
   // only be pushed, but not changed.
-  if(mut == change) {
+  if(mut == push) {
     for(var_id v{ 1 }; v.id_ <= max_var_id; ++v) {
       o_.type = Var;
       o_.var.v = v;
