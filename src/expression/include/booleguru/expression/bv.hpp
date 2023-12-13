@@ -128,7 +128,7 @@ struct bvop {
   explicit bvop(bvop_type t, id l)
     : type(t)
     , unop(l) {
-    assert(t == bvop_type::not_ | t == bvop_type::bvnot
+    assert(t == bvop_type::not_ || t == bvop_type::bvnot
            || t == bvop_type::bvneg);
   }
   explicit bvop(bvop_type t, id l, id r)

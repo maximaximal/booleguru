@@ -583,5 +583,6 @@ bvop_type_to_str(bvop_type t) noexcept {
     case bvexists:
       return "exists";
   }
+  return "unknown";
 }
 }
