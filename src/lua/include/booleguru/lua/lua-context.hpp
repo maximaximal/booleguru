@@ -25,6 +25,8 @@ class lua_context {
   std::shared_ptr<expression::op_manager> ops_;
   std::unique_ptr<sol::state> state_;
   std::string fennel_last_op_name_;
+  std::string fennel_l_name_;
+  std::string fennel_r_name_;
   bool fully_initialized_ = false;
 
   void ensure_fully_initialized();
@@ -49,6 +51,10 @@ class lua_context {
   eval_result eval_fennel(std::string_view code);
   eval_result eval_fennel(std::string_view code,
                           const expression::op_ref& last_op);
+
+  eval_result eval_fennel(std::string_view code,
+                          const expression::op_ref& l,
+                          const expression::op_ref& r);
 
   expression::op_ref eval_fennel_to_op_or_throw(std::string_view code,
                                                 expression::op_ref last_op);

@@ -14,6 +14,7 @@ options { tokenVocab=cli_lexer; }
 #include <booleguru/util/type.hpp>
 #include <booleguru/util/trim.hpp>
 #include <booleguru/util/is_number.hpp>
+#include <booleguru/util/str_replace.hpp>
 
 #include <booleguru/parse/error.hpp>
 }
@@ -84,6 +85,10 @@ expr returns [op_id o]:
         }
     | FENNEL_CALL f=CALL_CODE {
             std::string text{$f.text};
+            if(text.find("@") != std::string::npos) {
+                text += "\"";
+            }
+            util::str_replace_first_rest( text, "@", "\"", "\"\"");
             std::string code = "(" + text + ")";
             op_id res4 = g->fennel_(code);
             if(res4 > 0) {

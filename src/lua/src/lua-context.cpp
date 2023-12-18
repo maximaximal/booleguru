@@ -1,4 +1,5 @@
 #include <cstdlib>
+#include <sol/error.hpp>
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
@@ -21,6 +22,12 @@ prepare_state(sol::state& s) {
   s["package"]["path"] = package_path + (!package_path.empty() ? ";" : "")
                          + std::string(BOOLEGURU_LUA_AUTOSTART_DIR) + "/?.lua";
 }
+static void
+prepare_state_after_fennel_install(sol::state& s) {
+  const std::string fennel_path = s["fennel"]["path"];
+  s["fennel"]["path"] = fennel_path + (!fennel_path.empty() ? ";" : "")
+                        + std::string(BOOLEGURU_LUA_AUTOSTART_DIR) + "/?.fnl";
+}
 #else
 #include <scripts.h>
 
@@ -31,6 +38,19 @@ prepare_state(sol::state& s) {
     const std::string_view& data = e.data;
 
     if(name.ends_with("_lua")) {
+      name.remove_suffix(4);
+      s.require_script(std::string(name), data);
+      continue;
+    }
+  }
+}
+static void
+prepare_state_after_fennel_install(sol::state& s) {
+  for(const embedded_script& e : embedded_scripts) {
+    std::string_view name = e.name;
+    const std::string_view& data = e.data;
+
+    if(name.ends_with("_fnl")) {
       name.remove_suffix(4);
       s.require_script(std::string(name), data);
       continue;
@@ -71,6 +91,8 @@ lua_context::ensure_fully_initialized() {
 
   init_fennel();
 
+  prepare_state_after_fennel_install(*state_);
+
   register_booleguru_types();
 
   if(const char* lua_path_env = std::getenv("BOOLEGURU_LUA_PATH")) {
@@ -96,7 +118,11 @@ lua_context::ensure_fully_initialized() {
 void
 lua_context::init_fennel() {
   state_->script("fennel = require(\"fennel\").install()");
-  fennel_last_op_name_ = (*state_)["fennel"]["mangle"]("**");
+  auto mangler = (*state_)["fennel"]["mangle"];
+
+  fennel_last_op_name_ = mangler("**");
+  fennel_l_name_ = mangler("*l*");
+  fennel_r_name_ = mangler("*r*");
 }
 
 #ifdef EMSCRIPTEN
@@ -155,6 +181,8 @@ lua_context::eval_fennel(std::string_view code) {
   ensure_fully_initialized();
   auto& s = *state_;
 
+  auto eval = s["fennel"]["eval"];
+
   // Try to auto-load the desired function if it is not known yet.
   if(code.starts_with("(")) {
     std::string_view fun = code;
@@ -164,20 +192,26 @@ lua_context::eval_fennel(std::string_view code) {
     }
     size_t fun_end = fun.find_first_of(" ");
     if(fun_end == std::string_view::npos) {
-      fun_end = fun.find_first_of("(");
+      fun_end = fun.find_first_of("\"");
       if(fun_end == std::string_view::npos) {
-        fun_end = fun.find_first_of(")");
+        fun_end = fun.find_first_of("(");
+        if(fun_end == std::string_view::npos) {
+          fun_end = fun.find_first_of(")");
+        }
       }
     }
     fun.remove_suffix(fun.length() - fun_end);
+
     if(!s[fun].valid()) {
-      auto req = s["require"];
-      assert(req.valid());
-      req(fun);
+      using namespace std::literals::string_literals;
+      std::string fun_str(fun);
+      std::string call = "(let ["s + fun_str + " (require :" + fun_str + ")]\n"
+                         + std::string(code) + ")";
+      auto r = eval(call);
+      return return_to_eval_result(r);
     }
   }
 
-  auto eval = s["fennel"]["eval"];
   auto r = eval(code);
   return return_to_eval_result(r);
 }
@@ -202,6 +236,16 @@ lua_context::eval(std::string_view code, const expression::op_ref& last_op) {
   ensure_fully_initialized();
   (*state_)["**"] = last_op;
   return eval(code);
+}
+
+lua_context::eval_result
+lua_context::eval_fennel(std::string_view code,
+                         const expression::op_ref& l,
+                         const expression::op_ref& r) {
+  ensure_fully_initialized();
+  (*state_)[fennel_l_name_] = l;
+  (*state_)[fennel_r_name_] = r;
+  return eval_fennel(code);
 }
 
 expression::op_ref

@@ -22,6 +22,7 @@ RBRACK : ']';
 
 FENNEL_SUBST : ( ':F(' | ':(' | ':f(' | 'f:(' | 'L:(' ) { pushMode(CODE); };
 FENNEL : ( 'F(' | 'f(' ) { pushMode(CODE); };
+FENNEL_CALL : ( ':' ) { pushMode(CALL); };
 
 LUA_SUBST : ( ':L(' | ':l(' | 'l:(' | 'L:(' ) { pushMode(CODE); };
 LUA : ( 'L(' | 'l(' ) { pushMode(CODE); };
@@ -33,3 +34,7 @@ WS: [ \t\n\r\f]+ -> skip ;
 mode CODE;
 MATCHING_PAREN : ~[()]+ MATCHING_PAREN* | ( '(' ( MATCHING_PAREN | ~[()] )* ')' );
 END_PAREN : ')' -> skip,popMode ;
+
+mode CALL;
+CALL_CODE : ~[ \r\n\t\f]+ ;
+END_CALL : ('\r' | '\n' | '\t' | '\f' | ' ' | EOF) -> skip,popMode ;

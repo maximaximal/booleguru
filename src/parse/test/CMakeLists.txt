@@ -7,6 +7,7 @@ set(TEST_SRCS
   test-sexp-tracker.cpp
   test-antlr-boole-parse.cpp
   test-let-map.cpp
+  test-fennel-binop.cpp
 )
 
 add_executable(booleguru-parse-test ${TEST_SRCS})

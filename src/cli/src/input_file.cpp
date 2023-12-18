@@ -200,6 +200,9 @@ input_file::produce_parser(std::istream& is) {
       is >> std::noskipws;
       auto boole
         = std::make_unique<parse::boole>(is, ops_->vars_ptr(), ops_, lua_);
+      if(std::getenv("BOOLEGURU_EVAL")) {
+        eval_ = true;
+      }
       boole->eval(eval_);
       return boole;
     }
