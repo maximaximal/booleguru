@@ -1,5 +1,6 @@
 #pragma once
 
+#include "booleguru/expression/id.hpp"
 #include <unordered_map>
 
 #include <booleguru/solve/result.hpp>
@@ -42,11 +43,26 @@ get_op_is_ors(const expression::op_ref& r);
 uint32_t
 get_op_varop_v(const expression::op_ref& op);
 
-uint32_t
+expression::op_ref
 get_op_varop_q(const expression::op_ref& op);
+
+expression::op_ref
+get_op_quantop_v(const expression::op_ref& op);
+
+expression::op_ref
+get_op_quantop_e(const expression::op_ref& op);
 
 bool
 get_op_is_cnf(const expression::op_ref& r);
+
+bool
+get_op_is_prenex(const expression::op_ref& r);
+
+bool
+get_op_is_binop(const expression::op_ref& r);
+
+bool
+get_op_is_quantop(const expression::op_ref& r);
 
 size_t
 compute_variables_hash(const expression::op_ref& r);

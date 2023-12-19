@@ -144,6 +144,8 @@ lua_context::register_booleguru_types() {
   set_to_state(s, "b_or", "b-or", &helpers::binop<op_type::Or>);
   set_to_state(s, "b_not", "b-not", &helpers::unop<op_type::Not>);
 
+  set_to_state(s, "noop", [](expression::op_ref& o) { return o; });
+
   set_to_state(
     s,
     "solve",
@@ -185,8 +187,14 @@ lua_context::register_booleguru_types() {
   reftype.set("v", sol::property(&get_op_varop_v));
   reftype.set("q", sol::property(&get_op_varop_q));
 
+  reftype.set("qv", sol::property(&get_op_quantop_v));
+  reftype.set("qe", sol::property(&get_op_quantop_e));
+
   reftype.set("and_inside", sol::property(&get_op_and_inside));
   reftype.set("is_ors", sol::property(&get_op_is_ors));
   reftype.set("is_cnf", sol::property(&get_op_is_cnf));
+  reftype.set("is_prenex", sol::property(&get_op_is_prenex));
+  reftype.set("is_quantop", sol::property(&get_op_is_quantop));
+  reftype.set("is_binop", sol::property(&get_op_is_binop));
 }
 }

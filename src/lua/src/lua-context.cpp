@@ -194,17 +194,21 @@ lua_context::eval_fennel(std::string_view code) {
     if(fun_end == std::string_view::npos) {
       fun_end = fun.find_first_of("\"");
       if(fun_end == std::string_view::npos) {
-        fun_end = fun.find_first_of("(");
+        fun_end = fun.find_first_of(".");
         if(fun_end == std::string_view::npos) {
-          fun_end = fun.find_first_of(")");
+          fun_end = fun.find_first_of("(");
+          if(fun_end == std::string_view::npos) {
+            fun_end = fun.find_first_of(")");
+          }
         }
       }
     }
     fun.remove_suffix(fun.length() - fun_end);
 
-    if(!s[fun].valid()) {
+    std::string fun_str(fun);
+
+    if(!s[fennel_mangle(fun_str)].valid()) {
       using namespace std::literals::string_literals;
-      std::string fun_str(fun);
       std::string call = "(let ["s + fun_str + " (require :" + fun_str + ")]\n"
                          + std::string(code) + ")";
       auto r = eval(call);

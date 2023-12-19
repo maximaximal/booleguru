@@ -46,17 +46,42 @@ get_op_is_ors(const expression::op_ref& r) {
 
 uint32_t
 get_op_varop_v(const expression::op_ref& op) {
-  return static_cast<uint32_t>(op->var.v);
+  return static_cast<uint32_t>(op->var.v.id_);
 }
 
-uint32_t
+expression::op_ref
 get_op_varop_q(const expression::op_ref& op) {
-  return op->var.q;
+  return op.get_mgr()[op->var.q];
+}
+
+expression::op_ref
+get_op_quantop_v(const expression::op_ref& op) {
+  return op.get_mgr()[op->quant.v];
+}
+
+expression::op_ref
+get_op_quantop_e(const expression::op_ref& op) {
+  return op.get_mgr()[op->quant.e];
 }
 
 bool
 get_op_is_cnf(const expression::op_ref& r) {
   return r->is_cnf;
+}
+
+bool
+get_op_is_prenex(const expression::op_ref& r) {
+  return r->is_prenex;
+}
+
+bool
+get_op_is_binop(const expression::op_ref& r) {
+  return r->is_binop();
+}
+
+bool
+get_op_is_quantop(const expression::op_ref& r) {
+  return r->is_quant();
 }
 
 size_t
