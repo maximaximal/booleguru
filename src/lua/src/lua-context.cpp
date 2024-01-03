@@ -84,7 +84,8 @@ lua_context::ensure_fully_initialized() {
                          sol::lib::string,
                          sol::lib::table,
                          sol::lib::math,
-                         sol::lib::io);
+                         sol::lib::io,
+                         sol::lib::debug);
   // Later, this could be handled as autoloads, as described here:
   // https://www.lua.org/pil/15.5.html
   prepare_state(*state_);
@@ -106,6 +107,19 @@ lua_context::ensure_fully_initialized() {
       lua_package_path += (!lua_package_path.empty() ? ";" : "") + p + "/?.lua";
     }
     s["package"]["path"] = lua_package_path;
+  }
+
+  if(const char* lua_fennel_env = std::getenv("BOOLEGURU_FENNEL_PATH")) {
+    auto& s = *state_;
+    std::stringstream lua_path_env_stringstream(lua_fennel_env);
+
+    std::string fennel_path = s["fennel"]["path"];
+
+    std::string p;
+    while(std::getline(lua_path_env_stringstream, p, SEP)) {
+      fennel_path += (!fennel_path.empty() ? ";" : "") + p + "/?.fnl";
+    }
+    s["fennel"]["path"] = fennel_path;
   }
 
 #ifdef EMSCRIPTEN
