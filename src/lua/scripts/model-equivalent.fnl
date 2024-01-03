@@ -40,9 +40,9 @@
             (set mappings (b-and mappings (equi (v a) (v value)))))))
   (let [ll (inner-noncnf *l*)
         rr (inner-noncnf *r*)
-        invariant (b-not (equi ll rr))]
+        invariant (b-not (impl ll rr))]
     (add-quantifier-from-expr-to-expr
      *l*
-     (add-quantifier-from-expr-to-expr-exists
+     (add-quantifier-from-expr-to-expr
       *r*
       (b-and invariant mappings)))))
