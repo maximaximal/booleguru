@@ -493,6 +493,8 @@ quanttree::prenex(uint32_t root, should_inline_checker should_inline) {
         continue;
 
       bool is_above = true;
+      // Choice: We look for possible insertions from the top, but we
+      // could also look from the bottom.
       for(uint32_t f = root; f < size() && (is_above || last_path(f) == c);
           f = next_marked(f)) {
 
@@ -503,6 +505,8 @@ quanttree::prenex(uint32_t root, should_inline_checker should_inline) {
         if(!v[f].is_fork_)
           continue;
 
+        // Choice: Here is a decision on which to take first. We just take all
+        // fitting sub-trees in the given order, but there could be more.
         walk_next_paths(
           v[f],
           [this, root, &should_inline, &e, c, &changing, &is_above](
@@ -530,6 +534,9 @@ quanttree::prenex(uint32_t root, should_inline_checker should_inline) {
 
         bool is_below = true;
 
+        // Choice: Here, we search from the top to find the first ones we could
+        // insert at the bottom. This search could also be done the other way
+        // around, looking from the bottom.
         for(uint32_t f = root;
             f < size() && (is_below || last_path(f) == bottom);
             f = next_marked(f)) {
@@ -538,6 +545,7 @@ quanttree::prenex(uint32_t root, should_inline_checker should_inline) {
           if(!v[f].is_fork_)
             continue;
 
+          // Choice: The ordering of walk_next_paths.
           walk_next_paths(
             v[f],
             [this,
