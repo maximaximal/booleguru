@@ -485,6 +485,15 @@ quanttree::prenex(uint32_t root, should_inline_checker should_inline) {
   bool changing = false;
   bool ignore_QAs = false;
 
+  // Prenexing happens in the loop below. In every iteration it traverses the
+  // critical path (which is defined before). It first goes downwards and in
+  // every path checks the following forks for the next paths. In this set of
+  // next paths, it selects the ones which make the `should_inline` function
+  // return true. The selected ones are spliced into the critical path until the
+  // next fork in the sub-tree.
+  //
+  // With each splicing operation, the critical path of the sub-tree is also
+  // marked, so that splicing happens along this critical path of the sub-tree.
   do {
     changing = false;
     for(uint32_t c = root; c < size(); c = next_marked(c)) {
@@ -523,6 +532,9 @@ quanttree::prenex(uint32_t root, should_inline_checker should_inline) {
       bottom = c;
     }
 
+    // If there are still forks left in the critical path after going downwards,
+    // go up from the `bottom` node as found before and see if anything can be
+    // inserted.
     if(marked_contains_forks(root)) {
       for(;;) {
         uint32_t next_override = std::numeric_limits<uint32_t>::max();
@@ -582,11 +594,17 @@ quanttree::prenex(uint32_t root, should_inline_checker should_inline) {
           break;
       }
     }
+
+    // This is the iterative lessening of constraints. If nothing changes, QAs
+    // should be ignored. If afterwards still nothing changes, append to the
+    // bottom.
     if(!changing && ignore_QAs) {
       ignore_QAs = false;
       // Nothing helped! We have to splice the remaining fork at the very
-      // bottom.
+      // bottom. This happens if there is an equal amount of quantifiers in both
+      // sub-trees and the QA count is zero. Example: (#3 (1)) <- (#3 #3 (1))
       if(uint32_t f = marked_contains_forks(root)) {
+        assert(false);
         uint32_t last = last_entry_on_critical_path(root);
         splice_path_after_path(last, next_unmarked_path(f));
         if(animate)
