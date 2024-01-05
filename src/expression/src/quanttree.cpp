@@ -604,7 +604,6 @@ quanttree::prenex(uint32_t root, should_inline_checker should_inline) {
       // bottom. This happens if there is an equal amount of quantifiers in both
       // sub-trees and the QA count is zero. Example: (#3 (1)) <- (#3 #3 (1))
       if(uint32_t f = marked_contains_forks(root)) {
-        assert(false);
         uint32_t last = last_entry_on_critical_path(root);
         splice_path_after_path(last, next_unmarked_path(f));
         if(animate)
