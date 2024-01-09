@@ -37,7 +37,7 @@ FENNEL_CALL : ( ':' ) { pushMode(CALL); };
 EOL_FENNEL_SUBST : ( '::' ) { pushMode(EOL_CODE); };
 
 ID : [0-9A-Za-z\u0080-\u2199\u22FF-\uFFFF_'"]+ {!std::filesystem::exists(getText()) && getText() != "fuzz";}? ;
-PATH : (( '.' | '/' | '~')? [\-./0-9A-Za-z\u0080-\u2199\u22FF-\uFFFF_'"\][]+ {getText() == "-" || std::filesystem::exists(getText());}?) | 'fuzz' ;
+PATH : (( '.' | '/' | '~')? [#\-./0-9A-Za-z\u0080-\u2199\u22FF-\uFFFF_'"\][]+ {getText() == "-" || std::filesystem::exists(getText());}?) | 'fuzz' ;
 
 WS : [ \t\f]+ -> skip ;
 
