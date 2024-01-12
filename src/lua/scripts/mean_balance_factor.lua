@@ -99,3 +99,5 @@ function mean_balance_factor(op)
   local lmbf = 2.0 / (1.0 + a^(-bf))
   print(string.format("Log-Mean Balance Factor: %01.8f", lmbf))
 end
+
+return mean_balance_factor

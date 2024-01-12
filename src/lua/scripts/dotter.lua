@@ -57,3 +57,5 @@ function dotter (op, out)
 
   o:write("}\n\n")
 end
+
+return dotter

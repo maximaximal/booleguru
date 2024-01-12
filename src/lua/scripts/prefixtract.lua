@@ -24,3 +24,5 @@ function prefixtract(op)
 
   print("QAs: " .. alternations .. " Existential: " .. vars_exists .. " Universal: " .. vars_forall .. " Vars-in-Prefix: " .. (vars_exists + vars_forall))
 end
+
+return prefixtract

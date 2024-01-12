@@ -77,3 +77,5 @@ function quanttree (op, out)
 
   o:write("}\n\n")
 end
+
+return quanttree

@@ -14,3 +14,5 @@ function quantblocks(op)
   end
   print("")
 end
+
+return quantblocks

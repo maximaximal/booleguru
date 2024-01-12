@@ -28,7 +28,7 @@ function counterfactuals(formulas_in_theory, var_count, nesting_depth, clauses_p
     for i = 0,#array do
       --local j = i * math.random()
       --j = j - j%1
-      
+
 
       if(math.random() < 0.5) then
         array[i] = temparray[i]
@@ -341,3 +341,5 @@ function counterfactuals(formulas_in_theory, var_count, nesting_depth, clauses_p
   -- Now, everything is UNSAT. How to fix this? Is this overquantified
   -- (i.e. scopes are bleeding together somehow)? Are invalid variables chosen? What's going on?
 end
+
+return counterfactuals
