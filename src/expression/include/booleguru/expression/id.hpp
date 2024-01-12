@@ -8,6 +8,8 @@
 #include <functional>
 #include <limits>
 
+#include <fmt/format.h>
+
 namespace booleguru::expression {
 
 /* An `id` is a shallow wrapper around a `uint32_t`. This only serves for static
@@ -83,6 +85,27 @@ struct script_id : public id<script_id> {
     : id(id_){};
 };
 }
+
+template<>
+struct fmt::formatter<booleguru::expression::op_id> : formatter<uint32_t> {
+  auto format(booleguru::expression::op_id c, format_context& ctx) const {
+    return formatter<uint32_t>::format(c.id_, ctx);
+  }
+};
+
+template<>
+struct fmt::formatter<booleguru::expression::var_id> : formatter<uint32_t> {
+  auto format(booleguru::expression::var_id c, format_context& ctx) const {
+    return formatter<uint32_t>::format(c.id_, ctx);
+  }
+};
+
+template<>
+struct fmt::formatter<booleguru::expression::bvop_id> : formatter<uint32_t> {
+  auto format(booleguru::expression::bvop_id c, format_context& ctx) const {
+    return formatter<uint32_t>::format(c.id_, ctx);
+  }
+};
 
 namespace std {
 // TODO(Marcel): There has *got* to be a better way..?

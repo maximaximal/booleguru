@@ -17,6 +17,7 @@
 #include <booleguru/transform/hash_variables.hpp>
 #include <booleguru/transform/output_to_op.hpp>
 #include <booleguru/transform/prenex_quantifiers.hpp>
+#include <booleguru/transform/prenex_quantifiers_optimal.hpp>
 #include <booleguru/transform/tseitin.hpp>
 #include <booleguru/transform/variable_extend.hpp>
 #include <booleguru/transform/variable_rename.hpp>
@@ -121,6 +122,31 @@ transform_prenex(expression::op_ref& o) {
   return out;
 }
 
+template<class Transformer, transform::prenex_quantifier_optimal::kind k>
+static expression::op_ref
+transform_prenex_optimal_animated(expression::op_ref& o,
+                                  std::string animate = "") {
+  auto t = Transformer(k);
+  if(animate != "") {
+    t.animate(animate);
+  }
+  return t(o);
+}
+
+template<class Transformer, transform::prenex_quantifier_optimal::kind k>
+expression::op_ref
+transform_prenex_optimal(expression::op_ref& o) {
+  Transformer t(k);
+  expression::op_ref out;
+  try {
+    out = t(o);
+  } catch(const std::runtime_error& e) {
+    fmt::println("Error during prenex-quantifier-optimal: {}", e.what());
+    throw e;
+  }
+  return out;
+}
+
 expression::op_ref
 get_variable_from_manager(const std::string& name, expression::op_manager& mgr);
 
@@ -134,6 +160,11 @@ expression::op_ref
 prenex(expression::op_ref o,
        transform::prenex_quantifier::kind kind,
        const std::string& animation_path = "");
+
+expression::op_ref
+prenex_optimal(expression::op_ref o,
+               transform::prenex_quantifier_optimal::kind kind,
+               const std::string& animation_path = "");
 
 std::optional<expression::op_ref>
 solve_sat(expression::op_ref o,

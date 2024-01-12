@@ -146,6 +146,15 @@ prenex(expression::op_ref o,
   return t(o);
 }
 
+expression::op_ref
+prenex_optimal(expression::op_ref o,
+               transform::prenex_quantifier_optimal::kind kind,
+               const std::string& animation_path) {
+  auto t = transform::prenex_quantifier_optimal(kind);
+  t.animate(animation_path);
+  return t(o);
+}
+
 std::optional<expression::op_ref>
 solve_sat(expression::op_ref o,
           std::string solver,

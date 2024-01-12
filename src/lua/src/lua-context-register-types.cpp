@@ -40,6 +40,21 @@ set_to_state(sol::state& s, const std::string& both, auto&& f) {
   set_to_state(s, both, both, f);
 }
 
+#define xstr(s) str(s)
+#define str(s) #s
+
+#define BIND_PRENEX_OPTIMAL(L, F)                                         \
+  set_to_state(                                                           \
+    s,                                                                    \
+    "prenex_quantifier_optimal_" str(L),                                  \
+    "prenex-quantifier-optimal-" F,                                       \
+    sol::overload(                                                        \
+      &transform_prenex_optimal<transform::prenex_quantifier_optimal,     \
+                                transform::prenex_quantifier_optimal::L>, \
+      &transform_prenex_optimal_animated<                                 \
+        transform::prenex_quantifier_optimal,                             \
+        transform::prenex_quantifier_optimal::L>));
+
 void
 lua_context::register_booleguru_types() {
   sol::state& s = *state_;
@@ -126,6 +141,16 @@ lua_context::register_booleguru_types() {
                         transform::prenex_quantifier::Edown_Aup>,
       &transform_prenex_animated<transform::prenex_quantifier,
                                  transform::prenex_quantifier::Edown_Aup>));
+
+  BIND_PRENEX_OPTIMAL(Eup_up, "Eup-up")
+  BIND_PRENEX_OPTIMAL(Eup_down, "Eup-down")
+  BIND_PRENEX_OPTIMAL(Edown_up, "Edown-up")
+  BIND_PRENEX_OPTIMAL(Edown_down, "Edown-down")
+
+  BIND_PRENEX_OPTIMAL(Aup_up, "Eup-up")
+  BIND_PRENEX_OPTIMAL(Aup_down, "Eup-down")
+  BIND_PRENEX_OPTIMAL(Adown_up, "Edown-up")
+  BIND_PRENEX_OPTIMAL(Adown_down, "Edown-down")
 
   const std::string bvar = s["fennel"]["mangle"]("b-var");
   s.set_function("b_var", &lua_context::get_var, this);
