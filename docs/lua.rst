@@ -16,6 +16,8 @@ Create a `f.lua` file, which contains a Lua function named `f`::
     return a * b
   end
 
+  return f
+
 Then, add the path that contains the `f.lua` file to the `BOOLEGURU_LUA_PATH`
 environment variable, e.g. using the following::
 
