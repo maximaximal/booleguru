@@ -99,7 +99,7 @@ lua_context::register_booleguru_types() {
   set_to_state(
     s, "distribute_to_cnf", "distribute-to-cnf", &transform::distribute_to_cnf);
   set_to_state(s, "vars_hash", "vars-hash", &compute_variables_hash);
-  set_to_state(s, "b_var_rename", "b-var-rename", &helpers::rename);
+  set_to_state(s, "var_rename", "var-rename", &helpers::rename);
   set_to_state(s, "tseitin", "tseitin", [this]() {
     return transform::tseitin<transform::output_to_op>(*ops_);
   }());
