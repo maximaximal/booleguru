@@ -43,6 +43,17 @@ set_to_state(sol::state& s, const std::string& both, auto&& f) {
 #define xstr(s) str(s)
 #define str(s) #s
 
+#define BIND_PRENEX(L, F)                                      \
+  set_to_state(                                                \
+    s,                                                         \
+    "prenex_quantifier_" str(L),                               \
+    "prenex-quantifier-" F,                                    \
+    sol::overload(                                             \
+      &transform_prenex<transform::prenex_quantifier,          \
+                        transform::prenex_quantifier::L>,      \
+      &transform_prenex_animated<transform::prenex_quantifier, \
+                                 transform::prenex_quantifier::L>));
+
 #define BIND_PRENEX_OPTIMAL(L, F)                                         \
   set_to_state(                                                           \
     s,                                                                    \
@@ -104,43 +115,10 @@ lua_context::register_booleguru_types() {
     return transform::tseitin<transform::output_to_op>(*ops_);
   }());
 
-  set_to_state(
-    s,
-    "prenex_quantifier_Eup_Aup",
-    "prenex-quantifier-Eup-Aup",
-    sol::overload(
-      &transform_prenex<transform::prenex_quantifier,
-                        transform::prenex_quantifier::Eup_Aup>,
-      &transform_prenex_animated<transform::prenex_quantifier,
-                                 transform::prenex_quantifier::Eup_Aup>));
-  set_to_state(
-    s,
-    "prenex_quantifier_Edown_Adown",
-    "prenex-quantifier-Edown-Adown",
-    sol::overload(
-      &transform_prenex<transform::prenex_quantifier,
-                        transform::prenex_quantifier::Edown_Adown>,
-      &transform_prenex_animated<transform::prenex_quantifier,
-                                 transform::prenex_quantifier::Edown_Adown>));
-
-  set_to_state(
-    s,
-    "prenex_quantifier_Eup_Adown",
-    "prenex-quantifier-Eup-Adown",
-    sol::overload(
-      &transform_prenex<transform::prenex_quantifier,
-                        transform::prenex_quantifier::Eup_Adown>,
-      &transform_prenex_animated<transform::prenex_quantifier,
-                                 transform::prenex_quantifier::Eup_Adown>));
-  set_to_state(
-    s,
-    "prenex_quantifier_Edown_Aup",
-    "prenex-quantifier-Edown-Aup",
-    sol::overload(
-      &transform_prenex<transform::prenex_quantifier,
-                        transform::prenex_quantifier::Edown_Aup>,
-      &transform_prenex_animated<transform::prenex_quantifier,
-                                 transform::prenex_quantifier::Edown_Aup>));
+  BIND_PRENEX(Eup_Aup, "Eup-Aup")
+  BIND_PRENEX(Eup_Adown, "Eup-Adown")
+  BIND_PRENEX(Edown_Aup, "Edown-Aup")
+  BIND_PRENEX(Edown_Adown, "Edown-Adown")
 
   BIND_PRENEX_OPTIMAL(Eup_up, "Eup-up")
   BIND_PRENEX_OPTIMAL(Eup_down, "Eup-down")
