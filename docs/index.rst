@@ -78,3 +78,25 @@ with the `main branch <https://gitlab.sai.jku.at/booleguru/booleguru>`_.
 During development, Booleguru's integrated fuzzer may be useful: :ref:`Fuzzer`.
 
 In order to contribute, please see the guide for developers: :ref:`Development`.
+
+Building
+========
+
+It is recommended to use a more efficient linker like `mold
+<https://github.com/rui314/mold>`_. Especially for release builds, please also
+consider using `LuaJIT <https://luajit.org/>`_ instead of the bundled Lua.
+
+For general usage, please use the *Release* mode. In order to build Booleguru in
+Release mode, use something like the following::
+
+  mkdir build-release
+  cd build-release
+  cmake .. -DCMAKE_BUILD_TYPE=Release
+  make -j8
+
+The Debug mode is useful during Development. For this, swap *Release* with *Debug*::
+
+  mkdir build
+  cd build
+  cmake .. -DCMAKE_BUILD_TYPE=Debug
+  make -j8
