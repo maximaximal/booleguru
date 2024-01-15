@@ -30,3 +30,5 @@ function unquantified(op)
   end
   print("")
 end
+
+return unquantified
