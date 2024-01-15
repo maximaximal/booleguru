@@ -5,7 +5,7 @@ function(create_resources dir output)
   file(WRITE ${output} "")
   # Collect input files
   file(GLOB bins ${dir}/*)
-  # Iterate through input files
+  # Iterate through input files and compile lua.
   foreach(bin ${bins})
     if(${bin} MATCHES "~$")
       continue()
@@ -17,7 +17,13 @@ function(create_resources dir output)
     # Replace filename spaces & extension separator for C compatibility
     string(REGEX REPLACE "\\.| |-" "_" filename ${filename})
     get_property(using_luajit GLOBAL PROPERTY USING_LUAJIT)
-    if(using_luajit)
+    if(using_luajit AND ${bin} MATCHES ".fnl$")
+        message(STATUS "Convert fnl script ${bin} to lua and then to bytecode prior to embedding using LuaJIT")
+        string(REGEX REPLACE "_fnl$" "_lua" filename ${filename})
+        execute_process(COMMAND bash -c "luajit ${CMAKE_CURRENT_SOURCE_DIR}/bin/fennel --compile | luajit -b /dev/stdin /tmp/booleguru-luajit-bytecode.bin")
+        file(READ /tmp/booleguru-luajit-bytecode.bin filedata HEX)
+        message(STATUS "Change require-name of fennel file ${bin} to ${filename} because the file was converted to Lua")
+    elseif(using_luajit AND ${bin} MATCHES ".lua$")
         message(STATUS "Convert lua script ${bin} to bytecode prior to embedding using LuaJIT")
         execute_process(COMMAND luajit -b ${bin} /tmp/booleguru-luajit-bytecode.bin)
         file(READ /tmp/booleguru-luajit-bytecode.bin filedata HEX)
