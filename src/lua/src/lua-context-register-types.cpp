@@ -20,19 +20,13 @@ lua_context::get_var(const std::string& name) {
   return get_variable_from_manager(name, *ops_);
 }
 
-auto
-fennel_s(sol::state& s, const std::string& fennel) -> auto{
-  const std::string name = s["fennel"]["mangle"](fennel);
-  return s[name];
-}
-
 void
 set_to_state(sol::state& s,
              const std::string& lua,
              const std::string& fennel,
              auto&& f) {
   s[lua] = f;
-  fennel_s(s, fennel) = f;
+  s[s["fennel"]["mangle"](fennel)] = f;
 }
 
 void
@@ -68,6 +62,7 @@ set_to_state(sol::state& s, const std::string& both, auto&& f) {
 
 void
 lua_context::register_booleguru_types() {
+  fmt::println("1");
   sol::state& s = *state_;
   s.new_enum<solve::result::type>("result",
                                   { { "SAT", solve::result::SAT },
