@@ -15,7 +15,7 @@ str_replace(std::string& subject,
   }
 }
 
-inline void
+inline bool
 str_replace_first_rest(std::string& subject,
                        const std::string& search,
                        const std::string& replace_first,
@@ -32,5 +32,6 @@ str_replace_first_rest(std::string& subject,
       pos += replace_rest.length();
     }
   }
+  return !first;
 }
 }

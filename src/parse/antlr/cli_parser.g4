@@ -47,13 +47,29 @@ invocation returns [op_id o]: e=expr {$o = $e.o;}
 
 expr returns [op_id o]:
       e=expr {$o = $e.o;} FENNEL_SUBST f=MATCHING_PAREN {
-            auto res1 = g->fennel_("(" + $f.text + ")", $o);
+            std::string text{$f.text};
+            if(text.find("@") != std::string::npos) {
+                text += "\"";
+            }
+            util::str_replace_first_rest( text, "@", "\"", "\"\"");
+            std::string code = "(" + text + ")";
+            auto res1 = g->fennel_(code, $o);
             if(res1 > 0) {
                 $o = res1;
             }
         }
     | e=expr {$o = $e.o;} FENNEL_CALL f=CALL_CODE {
-            auto res2 = g->fennel_("(" + $f.text + " **)", $o);
+            std::string text{$f.text};
+            if(text.find("@") != std::string::npos) {
+                text += "\"";
+            }
+            bool replaced = util::str_replace_first_rest( text, "@", " ** \"", "\"\"");
+            std::string code;
+            if(replaced)
+                code = "(" + text + ")";
+            else
+                code = "(" + text + " **)";
+            auto res2 = g->fennel_(code, $o);
             if(res2 > 0) {
                 $o = res2;
             }
