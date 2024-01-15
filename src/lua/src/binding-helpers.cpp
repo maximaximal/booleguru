@@ -101,6 +101,25 @@ rename(expression::op_ref& r,
 }
 
 expression::op_ref
+rename_vararg(expression::op_ref& r, sol::variadic_args va) {
+  int i = 0;
+  std::string a;
+
+  std::unordered_map<std::string, std::string> renames;
+
+  for(auto b_arg : va) {
+    std::string b = b_arg;
+    if(++i % 2 == 0) {
+      renames[a] = b;
+    } else {
+      a = b;
+    }
+  }
+
+  return transform::variable_rename(r.get_mgr().vars(), renames)(r);
+}
+
+expression::op_ref
 rename_map(expression::op_ref& r,
            const std::unordered_map<std::string, std::string>& map) {
   return transform::variable_rename(r.get_mgr().vars(), map)(r);

@@ -1,10 +1,12 @@
 #pragma once
 
-#include "booleguru/expression/id.hpp"
 #include <unordered_map>
+
+#include <sol/variadic_args.hpp>
 
 #include <booleguru/solve/result.hpp>
 
+#include <booleguru/expression/id.hpp>
 #include <booleguru/expression/op.hpp>
 #include <booleguru/expression/op_manager.hpp>
 #include <booleguru/expression/var_manager.hpp>
@@ -72,6 +74,9 @@ expression::op_ref
 rename(expression::op_ref& r,
        const std::string& oldname,
        const std::string& newname);
+
+expression::op_ref
+rename_vararg(expression::op_ref& r, sol::variadic_args va);
 
 expression::op_ref
 rename_map(expression::op_ref& r,
