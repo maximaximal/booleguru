@@ -8,6 +8,7 @@ set(SRCS
   src/distribute_ors.cpp
   src/prenex_quantifiers.cpp
   src/prenex_quantifiers_optimal.cpp
+  src/minimize_failing.cpp
   src/tseitin.cpp
   src/cnf.cpp
 )

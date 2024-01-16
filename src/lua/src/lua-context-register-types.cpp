@@ -7,6 +7,7 @@
 #include <booleguru/lua/lua-context.hpp>
 
 #include <booleguru/transform/variable_extend.hpp>
+#include <booleguru/transform/minimize_failing.hpp>
 
 #include <booleguru/transform/eliminate_xor.hpp>
 
@@ -103,6 +104,10 @@ lua_context::register_booleguru_types() {
                "distribute_ors",
                "distribute-ors",
                &transform_op<transform::distribute_ors>);
+  set_to_state(s,
+               "minimize_failing",
+               "minimize-failing",
+               &transform_op<transform::minimize_failing>);
   set_to_state(
     s, "distribute_to_cnf", "distribute-to-cnf", &transform::distribute_to_cnf);
   set_to_state(s, "vars_hash", "vars-hash", &compute_variables_hash);
