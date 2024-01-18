@@ -49,6 +49,9 @@ struct prenex_quantifier_optimal {
   /// of alternating quantifier type. Modifies i->s.
   void preprocess(node_ptr root);
 
+  /// Assign depths and heights to nodes.
+  uint32_t assign_height_depth(node& n, uint32_t h = 1);
+
   /// Prenex the quantifiers according to kind_. Modifies i->s.
   void prenex(node_ptr root);
 

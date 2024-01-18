@@ -28,6 +28,8 @@ struct prenex_quantifier_optimal::node {
   std::set<node_ptr> children;
   std::set<op_id> vars;
   op_type quantifier = op_type::None;
+  uint32_t height = 0;
+  uint32_t depth = 0;
 
   node() = default;
   node(std::set<node_ptr> children, op_type quantifier = op_type::None)
@@ -63,6 +65,7 @@ prenex_quantifier_optimal::operator()(expression::op_ref o) {
     conditionally_create_animation_step(o.get_mgr(), t);
 
   preprocess(t);
+  assign_height_depth(*t);
 
   if(t)
     conditionally_create_animation_step(o.get_mgr(), t);
@@ -118,17 +121,7 @@ prenex_quantifier_optimal::preprocess(node_ptr root) {
 void
 prenex_quantifier_optimal::prenex(node_ptr root) {
   (void)root;
-  switch(kind_) {
-    case Eup_up:
-    case Eup_down:
-    case Edown_up:
-    case Edown_down:
-    case Aup_up:
-    case Aup_down:
-    case Adown_up:
-    case Adown_down:
-      break;
-  }
+  (void)kind_;
 }
 
 op_ref
@@ -411,8 +404,13 @@ prenex_quantifier_optimal::to_dot(op_manager& mgr,
       type = 'A';
     if(p->quantifier == op_type::Exists)
       type = 'E';
-    o << "  " << id << " [ label=\""
-      << fmt::format("{}: {}", type, fmt::join(v, ", ")) << "\" ];\n";
+    o << "  " << id << " [ shape=\"box\", label=\""
+      << fmt::format("{} (ht:{},dp:{}):\n{}",
+                     type,
+                     p->height,
+                     p->depth,
+                     fmt::join(v, ", "))
+      << "\" ];\n";
 
     for(const auto& c : p->children) {
       if(!c)
@@ -423,5 +421,17 @@ prenex_quantifier_optimal::to_dot(op_manager& mgr,
   }
 
   o << "}\n";
+}
+
+uint32_t
+prenex_quantifier_optimal::assign_height_depth(node& n, uint32_t h) {
+  n.height = h;
+  uint32_t dp = 1;
+  for(auto& c : n.children) {
+    const uint32_t dp_c = assign_height_depth(*c, h + 1) + 1;
+    dp = std::max(dp_c, dp);
+  }
+  n.depth = dp;
+  return dp;
 }
 }
