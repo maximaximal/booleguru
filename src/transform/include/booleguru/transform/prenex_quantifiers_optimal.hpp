@@ -6,15 +6,17 @@
 
 namespace booleguru::transform {
 struct prenex_quantifier_optimal {
-  enum kind {
-    Eup_up,
-    Eup_down,
-    Edown_up,
-    Edown_down,
-    Aup_up,
-    Aup_down,
-    Adown_up,
-    Adown_down,
+  /// The bit-pattern is: PRIO,AUP,ADOWN,EUP,EDOWN
+  /// If PRIO is 1, A is up.
+  enum kind : uint8_t {
+    Eup_up = 0b01010,
+    Eup_down = 0b00110,
+    Edown_up = 0b01001,
+    Edown_down = 0b00101,
+    Aup_up = 0b11010,
+    Aup_down = 0b11001,
+    Adown_up = 0b10110,
+    Adown_down = 0b10101,
   };
 
   prenex_quantifier_optimal(kind k = Eup_up);
@@ -53,10 +55,17 @@ struct prenex_quantifier_optimal {
   uint32_t assign_height_depth(node& n, uint32_t h = 1);
 
   /// Extract the critical path into i->critical_path.
-  void extract_critical_path(const node_ptr &root);
+  void extract_critical_path(const node_ptr& root);
+
+  /// Pass 1, compute f
+  void pass1(const node_ptr &root);
 
   /// Prenex the quantifiers according to kind_. Modifies i->s.
   void prenex(node_ptr root);
+
+  uint32_t f(node& n);
+  uint32_t f_down(node& n);
+  uint32_t f_up(node& n);
 
   void conditionally_create_animation_step(expression::op_manager& mgr,
                                            const node_ptr& root);
