@@ -28,6 +28,7 @@ struct prenex_quantifier_optimal::node {
   std::set<node_ptr> children;
   std::set<op_id> vars;
   op_type quantifier = op_type::None;
+  bool on_critical_path = false;
   uint32_t height = 0;
   uint32_t depth = 0;
 
@@ -39,6 +40,7 @@ struct prenex_quantifier_optimal::node {
 
 struct prenex_quantifier_optimal::inner {
   std::stack<node_ptr> s;
+  std::vector<node_ptr> critical_path;
 };
 
 prenex_quantifier_optimal::prenex_quantifier_optimal(kind k)
@@ -66,6 +68,7 @@ prenex_quantifier_optimal::operator()(expression::op_ref o) {
 
   preprocess(t);
   assign_height_depth(*t);
+  extract_critical_path(t);
 
   if(t)
     conditionally_create_animation_step(o.get_mgr(), t);
@@ -114,6 +117,39 @@ prenex_quantifier_optimal::preprocess(node_ptr root) {
 
     for(auto c : n->children) {
       s.emplace(c);
+    }
+  }
+}
+
+uint32_t
+prenex_quantifier_optimal::assign_height_depth(node& n, uint32_t h) {
+  n.height = h;
+  uint32_t dp = 1;
+  for(auto& c : n.children) {
+    const uint32_t dp_c = assign_height_depth(*c, h + 1) + 1;
+    dp = std::max(dp_c, dp);
+  }
+  n.depth = dp;
+  return dp;
+}
+
+void
+prenex_quantifier_optimal::extract_critical_path(const node_ptr& root) {
+  node_ptr n = root;
+  size_t idx = 0;
+  i->critical_path.resize(root->depth);
+  while(n) {
+    i->critical_path[idx++] = n;
+    n->on_critical_path = true;
+    auto it = std::max_element(n->children.begin(),
+                               n->children.end(),
+                               [](const node_ptr& a, const node_ptr& b) {
+                                 return a->height < b->height;
+                               });
+    if(it != n->children.end()) {
+      n = *it;
+    } else {
+      n = nullptr;
     }
   }
 }
@@ -399,12 +435,16 @@ prenex_quantifier_optimal::to_dot(op_manager& mgr,
     });
 
     int id = get_id(p);
-    char type = 'N';
+    const char* type = "N";
     if(p->quantifier == op_type::Forall)
-      type = 'A';
+      type = "∀";
     if(p->quantifier == op_type::Exists)
-      type = 'E';
-    o << "  " << id << " [ shape=\"box\", label=\""
+      type = "∃";
+
+    o << "  " << id << " [ shape=\"box\",";
+    if(p->on_critical_path)
+      o << " color=\"red\", ";
+    o << " label=\""
       << fmt::format("{} (ht:{},dp:{}):\n{}",
                      type,
                      p->height,
@@ -421,17 +461,5 @@ prenex_quantifier_optimal::to_dot(op_manager& mgr,
   }
 
   o << "}\n";
-}
-
-uint32_t
-prenex_quantifier_optimal::assign_height_depth(node& n, uint32_t h) {
-  n.height = h;
-  uint32_t dp = 1;
-  for(auto& c : n.children) {
-    const uint32_t dp_c = assign_height_depth(*c, h + 1) + 1;
-    dp = std::max(dp_c, dp);
-  }
-  n.depth = dp;
-  return dp;
 }
 }

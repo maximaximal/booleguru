@@ -52,6 +52,9 @@ struct prenex_quantifier_optimal {
   /// Assign depths and heights to nodes.
   uint32_t assign_height_depth(node& n, uint32_t h = 1);
 
+  /// Extract the critical path into i->critical_path.
+  void extract_critical_path(const node_ptr &root);
+
   /// Prenex the quantifiers according to kind_. Modifies i->s.
   void prenex(node_ptr root);
 
