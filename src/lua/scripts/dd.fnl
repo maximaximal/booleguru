@@ -1,2 +1,0 @@
-(lambda dd [op program]
-  "")
