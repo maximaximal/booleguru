@@ -6,17 +6,15 @@
 
 namespace booleguru::transform {
 struct prenex_quantifier_optimal {
-  /// The bit-pattern is: PRIO,AUP,ADOWN,EUP,EDOWN
-  /// If PRIO is 1, A is up.
   enum kind : uint8_t {
-    Eup_up = 0b01010,
-    Eup_down = 0b00110,
-    Edown_up = 0b01001,
-    Edown_down = 0b00101,
-    Aup_up = 0b11010,
-    Aup_down = 0b11001,
-    Adown_up = 0b10110,
-    Adown_down = 0b10101,
+    Eup_up,
+    Eup_down,
+    Edown_up,
+    Edown_down,
+    Aup_up,
+    Aup_down,
+    Adown_up,
+    Adown_down,
   };
 
   prenex_quantifier_optimal(kind k = Eup_up);
@@ -47,9 +45,58 @@ struct prenex_quantifier_optimal {
   bool encountered_quant_ = false;
   const kind kind_;
 
+  enum dir { up, down };
+
+  expression::op_type extract_prioritized(kind k) const {
+    switch(k) {
+      case Eup_up:
+      case Eup_down:
+      case Edown_up:
+      case Edown_down:
+        return expression::op_type::Exists;
+      case Aup_up:
+      case Aup_down:
+      case Adown_up:
+      case Adown_down:
+        return expression::op_type::Forall;
+    }
+  }
+  dir extract_d1(kind k) const {
+    switch(k) {
+      case Eup_up:
+      case Eup_down:
+      case Aup_up:
+      case Aup_down:
+        return up;
+      case Edown_up:
+      case Edown_down:
+      case Adown_up:
+      case Adown_down:
+        return down;
+    }
+  }
+  dir extract_d2(kind k) const {
+    switch(k) {
+      case Eup_up:
+      case Aup_up:
+      case Adown_up:
+      case Edown_up:
+        return up;
+      case Edown_down:
+      case Adown_down:
+      case Eup_down:
+      case Aup_down:
+        return down;
+    }
+  }
+
+  const expression::op_type prioritized_ = extract_prioritized(kind_);
+  const dir d1_ = extract_d1(kind_);
+  const dir d2_ = extract_d2(kind_);
+
   /// Pre-process the internal tree, such that all node objects in the tree are
   /// of alternating quantifier type. Modifies i->s.
-  void preprocess(node_ptr root);
+  void preprocess(node_ptr &root);
 
   /// Assign depths and heights to nodes.
   uint32_t assign_height_depth(node& n, uint32_t h = 1);
@@ -58,7 +105,11 @@ struct prenex_quantifier_optimal {
   void extract_critical_path(const node_ptr& root);
 
   /// Pass 1, compute f
-  void pass1(const node_ptr &root);
+  void pass1(const node_ptr& root);
+
+  /// Pass 2, compute g
+  void pass2(const node_ptr& root);
+  void pass2_g(node_ptr n, const node_ptr& parent);
 
   /// Prenex the quantifiers according to kind_. Modifies i->s.
   void prenex(node_ptr root);
