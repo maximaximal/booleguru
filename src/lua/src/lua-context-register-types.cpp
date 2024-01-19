@@ -126,10 +126,10 @@ lua_context::register_booleguru_types() {
   BIND_PRENEX_OPTIMAL(Edown_up, "Edown-up")
   BIND_PRENEX_OPTIMAL(Edown_down, "Edown-down")
 
-  BIND_PRENEX_OPTIMAL(Aup_up, "Eup-up")
-  BIND_PRENEX_OPTIMAL(Aup_down, "Eup-down")
-  BIND_PRENEX_OPTIMAL(Adown_up, "Edown-up")
-  BIND_PRENEX_OPTIMAL(Adown_down, "Edown-down")
+  BIND_PRENEX_OPTIMAL(Aup_up, "Aup-up")
+  BIND_PRENEX_OPTIMAL(Aup_down, "Aup-down")
+  BIND_PRENEX_OPTIMAL(Adown_up, "Adown-up")
+  BIND_PRENEX_OPTIMAL(Adown_down, "Adown-down")
 
   const std::string bvar = s["fennel"]["mangle"]("b-var");
   s.set_function("b_var", &lua_context::get_var, this);
