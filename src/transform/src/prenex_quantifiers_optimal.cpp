@@ -196,17 +196,11 @@ prenex_quantifier_optimal::pass1(const node_ptr& root) {
     node_ptr t = s.top();
     s.pop();
 
-    if(t->on_critical_path) {
-      for(auto& c : t->children) {
-        if(!c->on_critical_path) {
-          s.emplace(c);
-        }
-      }
-    } else {
+    for(auto& c : t->children) {
+      s.emplace(c);
+    }
+    if(!t->on_critical_path) {
       t->f = f(*t);
-      for(auto& c : t->children) {
-        s.emplace(c);
-      }
     }
   }
 }
@@ -241,9 +235,18 @@ prenex_quantifier_optimal::f_up(node& n) {
 void
 prenex_quantifier_optimal::pass2(const node_ptr& root) {
   assert(root->on_critical_path);
+  std::stack<std::pair<node_ptr, node_ptr>> s;
   for(auto& c : root->children) {
-    if(!c->on_critical_path) {
-      pass2_g(c, root);
+    s.emplace(std::make_pair(c, root));
+  }
+  while(!s.empty()) {
+    auto [t, parent] = s.top();
+    s.pop();
+    for(auto& c : t->children) {
+      s.emplace(std::make_pair(c, t));
+    }
+    if(!t->on_critical_path) {
+      pass2_g(t, parent);
     }
   }
 }
@@ -274,16 +277,13 @@ prenex_quantifier_optimal::pass2_g(node_ptr n, const node_ptr& parent) {
     }
 
     auto K
-      = iota(parent->f + 1, max_f_of_children) | filter([&n, this](uint32_t e) {
+      = iota(parent->f, max_f_of_children) | filter([&n, this](uint32_t e) {
           return i->critical_path[e]->quantifier == n->quantifier;
         });
 
     auto it = d2_ == down ? max_element(K) : min_element(K);
+    assert(it != K.end());
     n->g = *it;
-  }
-
-  for(auto& c : n->children) {
-    pass2_g(c, n);
   }
 }
 
@@ -298,10 +298,8 @@ prenex_quantifier_optimal::prenex(node_ptr root) {
     node_ptr p = s.top();
     s.pop();
     for(auto c : p->children) {
-      if(!c->on_critical_path) {
-        assert(c);
-        s.emplace(c);
-      }
+      assert(c);
+      s.emplace(c);
     }
 
     if(!p->on_critical_path) {
