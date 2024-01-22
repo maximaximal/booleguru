@@ -276,10 +276,10 @@ prenex_quantifier_optimal::pass2_g(node_ptr n, const node_ptr& parent) {
       }
     }
 
-    auto K
-      = iota(parent->f, max_f_of_children) | filter([&n, this](uint32_t e) {
-          return i->critical_path[e]->quantifier == n->quantifier;
-        });
+    auto K = iota(parent ? parent->f : 0, max_f_of_children + 1)
+             | filter([&n, this](uint32_t e) {
+                 return i->critical_path[e]->quantifier == n->quantifier;
+               });
 
     auto it = d2_ == down ? max_element(K) : min_element(K);
     assert(it != K.end());
