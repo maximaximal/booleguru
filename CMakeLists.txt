@@ -226,3 +226,18 @@ include(GNUInstallDirs)
 if(DOCS)
   add_subdirectory(docs)
 endif()
+
+
+# We only want to install Release builds that are not EMSCRIPTEN.
+if(${CMAKE_BUILD_TYPE} MATCHES "Release" AND NOT EMSCRIPTEN)
+  install(TARGETS booleguru RUNTIME DESTINATION bin)
+
+  configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/DebianCPackOptions.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/DebianCPackOptions.cmake"
+    @ONLY)
+
+  set(CPACK_PROJECT_CONFIG_FILE "${CMAKE_CURRENT_BINARY_DIR}/DebianCPackOptions.cmake")
+
+  include(CPack)
+endif()

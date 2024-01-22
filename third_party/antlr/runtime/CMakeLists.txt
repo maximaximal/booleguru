@@ -77,15 +77,3 @@ if (ANTLR_BUILD_CPP_TESTS)
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_HOME_DIRECTORY}/dist
     COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:antlr4_static> ${CMAKE_HOME_DIRECTORY}/dist)
 endif()
-
-install(TARGETS antlr4_static
-        EXPORT antlr4-targets
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-install(DIRECTORY "${PROJECT_SOURCE_DIR}/runtime/src/"
-        DESTINATION "include/antlr4-runtime"
-        COMPONENT dev
-        FILES_MATCHING PATTERN "*.h"
-        )

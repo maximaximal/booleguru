@@ -4,8 +4,10 @@ message(STATUS "Found Java: ${Java_VERSION} as ${Java_JAVA_EXECUTABLE}")
 
 if(NOT ANTLR_EXECUTABLE)
   find_program(ANTLR_EXECUTABLE
-               NAMES antlr.jar antlr4.jar antlr-4.jar antlr-4.11.1-complete.jar)
+    NAMES antlr.jar antlr4.jar antlr-4.jar antlr-4.11.1-complete.jar)
 endif()
+
+message(STATUS "Antlr Exec: ${ANTLR_EXECUTABLE}")
 
 if(ANTLR_EXECUTABLE AND Java_JAVA_EXECUTABLE)
   execute_process(

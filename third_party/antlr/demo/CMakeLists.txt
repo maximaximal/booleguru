@@ -4,7 +4,7 @@ if(NOT UNIX)
 endif()
 
 set(antlr4-demo-GENERATED_SRC
-   ${PROJECT_SOURCE_DIR}/demo/generated/TLexer.cpp 
+   ${PROJECT_SOURCE_DIR}/demo/generated/TLexer.cpp
    ${PROJECT_SOURCE_DIR}/demo/generated/TParser.cpp
    ${PROJECT_SOURCE_DIR}/demo/generated/TParserBaseListener.cpp
    ${PROJECT_SOURCE_DIR}/demo/generated/TParserBaseVisitor.cpp
@@ -22,7 +22,7 @@ endforeach(src_file ${antlr4-demo-GENERATED_SRC})
 
 add_custom_target(GenerateParser DEPENDS ${antlr4-demo-GENERATED_SRC})
 add_custom_command(OUTPUT ${antlr4-demo-GENERATED_SRC}
-   COMMAND 
+   COMMAND
    ${CMAKE_COMMAND} -E make_directory ${PROJECT_SOURCE_DIR}/demo/generated/
    COMMAND
    "${Java_JAVA_EXECUTABLE}" -jar ${ANTLR_JAR_LOCATION} -Werror -Dlanguage=Cpp -listener -visitor -o ${PROJECT_SOURCE_DIR}/demo/generated/ -package antlrcpptest ${PROJECT_SOURCE_DIR}/demo/TLexer.g4 ${PROJECT_SOURCE_DIR}/demo/TParser.g4
@@ -41,7 +41,7 @@ include_directories(
   )
 
 #file(GLOB antlr4-demo_SRC "${PROJECT_SOURCE_DIR}/demo/generated/*")
-set(antlr4-demo_SRC 
+set(antlr4-demo_SRC
   ${PROJECT_SOURCE_DIR}/demo/Linux/main.cpp
   ${antlr4-demo-GENERATED_SRC}
   )
@@ -72,9 +72,3 @@ endif()
 add_dependencies(antlr4-demo GenerateParser)
 
 target_link_libraries(antlr4-demo antlr4_static)
-
-install(TARGETS antlr4-demo 
-        DESTINATION "share" 
-        COMPONENT dev 
-        )
-
