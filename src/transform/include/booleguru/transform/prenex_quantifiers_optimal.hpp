@@ -60,6 +60,7 @@ struct prenex_quantifier_optimal {
       case Adown_down:
         return expression::op_type::Forall;
     }
+    assert(false);
   }
   dir extract_d1(kind k) const {
     switch(k) {
@@ -74,6 +75,7 @@ struct prenex_quantifier_optimal {
       case Adown_down:
         return down;
     }
+    assert(false);
   }
   dir extract_d2(kind k) const {
     switch(k) {
@@ -88,6 +90,7 @@ struct prenex_quantifier_optimal {
       case Aup_down:
         return down;
     }
+    assert(false);
   }
 
   const expression::op_type prioritized_ = extract_prioritized(kind_);
