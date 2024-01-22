@@ -1,6 +1,6 @@
 set(CPACK_PACKAGE_VENDOR "Max Heisinger, Symbolic AI, JKU")
 set(CPACK_DEBIAN_PACKAGE_NAME "booleguru")
 set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "libluajit-5.1-2,libpython3.11")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libluajit2-5.1-2 | libluajit-5.1-2,libpython3.11")
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Maximilian Heisinger <mail+packaging@maxheisinger.at>")
 set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "A multitool for propositional formulas.")
