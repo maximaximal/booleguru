@@ -128,8 +128,9 @@ prenex_quantifier_optimal::preprocess(node_ptr& root) {
     bool changing = false;
     do {
       changing = false;
-      for(auto it = n->children.begin(); it != n->children.end(); ++it) {
-        node_ptr c = *it;
+      for(size_t i = 0; i < n->children.size();) {
+        node_ptr c = n->children[i];
+        assert(c);
 
         // Merge nodes if they have the same quantifier! Only alternating sets
         // are allowed.
@@ -143,8 +144,11 @@ prenex_quantifier_optimal::preprocess(node_ptr& root) {
 
           changing = true;
 
-          n->children.erase(it);
+          n->children.erase(n->children.begin() + i);
+          // We deleted the current child, so i now points to the next one.
           break;
+        } else {
+          ++i;
         }
       }
     } while(changing);
