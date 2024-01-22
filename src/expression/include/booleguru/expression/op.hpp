@@ -239,3 +239,11 @@ struct hash<booleguru::expression::op> {
   }
 };
 }
+
+template<>
+struct fmt::formatter<booleguru::expression::op_type> : formatter<uint32_t> {
+  auto format(booleguru::expression::op_type c, format_context& ctx) {
+    return fmt::format_to(
+      ctx.out(), "{}", booleguru::expression::op_type_to_str(c));
+  }
+};
