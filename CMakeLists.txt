@@ -232,6 +232,10 @@ endif()
 if(${CMAKE_BUILD_TYPE} MATCHES "Release" AND NOT EMSCRIPTEN)
   install(TARGETS booleguru RUNTIME DESTINATION bin)
 
+  if(TARGET pybooleguru)
+    install(TARGETS pybooleguru LIBRARY DESTINATION "lib/python3.11")
+  endif()
+
   configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/DebianCPackOptions.cmake.in"
     "${CMAKE_CURRENT_BINARY_DIR}/DebianCPackOptions.cmake"
