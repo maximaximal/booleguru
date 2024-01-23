@@ -267,32 +267,32 @@ prenex_quantifier_optimal::pass2_g(node_ptr n, const node_ptr& parent) {
   if(prioritized_ == n->quantifier) {
     n->g = n->f;
   } else {
-    uint32_t max_f_of_children;
+    uint32_t end;
     {
-      auto it = std::max_element(
+      auto it = std::min_element(
         n->children.begin(),
         n->children.end(),
         [](const auto& a, const auto& b) { return a->f < b->f; });
       if(it != n->children.end()) {
-        max_f_of_children = (*it)->f;
+        end = (*it)->f - 1;
       } else {
         if(i->critical_path.size() == 1) {
-          max_f_of_children = 0;
+          end = 0;
         } else {
           if(i->critical_path[i->critical_path.size() - 1]->quantifier
              == n->quantifier) {
-            max_f_of_children = i->critical_path.size() - 1;
+            end = i->critical_path.size() - 1;
           } else {
-            max_f_of_children = i->critical_path.size() - 2;
+            end = i->critical_path.size() - 2;
           }
         }
       }
     }
 
-    auto K = iota(parent ? parent->f : 0, max_f_of_children + 1)
-             | filter([&n, this](uint32_t e) {
-                 return i->critical_path[e]->quantifier == n->quantifier;
-               });
+    // end + 1, because this range is non inclusive!
+    auto K = iota(parent->f + 1, end + 1) | filter([&n, this](uint32_t e) {
+               return i->critical_path[e]->quantifier == n->quantifier;
+             });
 
     auto it = d2_ == down ? max_element(K) : min_element(K);
     assert(it != K.end());
