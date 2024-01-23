@@ -276,7 +276,16 @@ prenex_quantifier_optimal::pass2_g(node_ptr n, const node_ptr& parent) {
       if(it != n->children.end()) {
         max_f_of_children = (*it)->f;
       } else {
-        max_f_of_children = parent->f + 1;
+        if(i->critical_path.size() == 1) {
+          max_f_of_children = 0;
+        } else {
+          if(i->critical_path[i->critical_path.size() - 1]->quantifier
+             == n->quantifier) {
+            max_f_of_children = i->critical_path.size() - 1;
+          } else {
+            max_f_of_children = i->critical_path.size() - 2;
+          }
+        }
       }
     }
 
