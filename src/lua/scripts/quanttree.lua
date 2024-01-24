@@ -60,7 +60,7 @@ function quanttree (op, out)
     end
 
     if curr_node ~= "" then
-      o:write("  " .. tostring(counter) .. " [ label=\"" .. curr_node .. "\" ];\n" )
+      o:write("  " .. tostring(counter) .. " [ label=\"" .. curr_node .. "\", shape=\"box\" ];\n" )
 
       for c,_ in pairs(children) do
         o:write("  " .. tostring(counter) .. " -> " .. tostring(c) .. ";\n")
