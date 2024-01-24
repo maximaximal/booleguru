@@ -183,10 +183,18 @@ prenex_quantifier_optimal::extract_critical_path(const node_ptr& root) {
   while(n) {
     i->critical_path[idx++] = n;
     n->on_critical_path = true;
-    auto it = std::max_element(
-      n->children.begin(),
-      n->children.end(),
-      [](const node_ptr& a, const node_ptr& b) { return a->depth < b->depth; });
+    auto it = std::max_element(n->children.begin(),
+                               n->children.end(),
+                               [&n](const node_ptr& a, const node_ptr& b) {
+                                 // This check is required, as there may be
+                                 // multiple children with the same depths but
+                                 // different quantifiers. Otherwise, wrong
+                                 // paths may be chosen!
+                                 if(a->depth == b->depth) {
+                                   return n->quantifier == a->quantifier;
+                                 }
+                                 return a->depth < b->depth;
+                               });
     if(it != n->children.end()) {
       n = *it;
     } else {
