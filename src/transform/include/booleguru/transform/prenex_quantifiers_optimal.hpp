@@ -33,6 +33,7 @@ struct prenex_quantifier_optimal {
   private:
   struct node;
   struct inner;
+  struct pass2;
 
   std::string animation_path_;
   bool animate_ = false;
@@ -111,8 +112,7 @@ struct prenex_quantifier_optimal {
   void pass1(const node_ptr& root);
 
   /// Pass 2, compute g
-  void pass2(const node_ptr& root);
-  void pass2_g(node_ptr n, const node_ptr& parent);
+  /// use the pass2 struct.
 
   /// Prenex the quantifiers according to kind_. Modifies i->s.
   void prenex(node_ptr root);

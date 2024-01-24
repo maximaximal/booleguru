@@ -32,7 +32,7 @@ struct prenex_quantifier_optimal::node {
   uint32_t height = 0;
   uint32_t depth = 0;
   uint32_t f = 0;
-  uint32_t g = 0;
+  uint32_t g = std::numeric_limits<uint32_t>::max();
 
   node() = default;
   node(std::vector<node_ptr> children, op_type quantifier = op_type::None)
@@ -43,6 +43,100 @@ struct prenex_quantifier_optimal::node {
 struct prenex_quantifier_optimal::inner {
   std::stack<node_ptr> s;
   std::vector<node_ptr> critical_path;
+};
+
+struct prenex_quantifier_optimal::pass2 {
+  class pass2_down {
+    // Models the recursive function `g_down(x) -> uint32_t`
+    prenex_quantifier_optimal& self;
+    std::stack<node_ptr> s;
+
+    uint32_t g(node_ptr x) {
+      assert(x);
+      if(x->g != std::numeric_limits<uint32_t>::max())
+        return x->g;
+
+      uint32_t last_on_critical_path_is_other_quant
+        = x->quantifier
+              == self.i->critical_path[self.i->critical_path.size() - 1]
+                   ->quantifier
+            ? 0 // same quantifier
+            : 1;// different quantifier
+
+      uint32_t m = self.i->critical_path.size()
+                   - last_on_critical_path_is_other_quant - 1;
+
+      for(auto& y : x->children) {
+        if(y->quantifier != self.prioritized_) {
+          // This child has the secondary quantifier.
+          m = std::min(m, g(y)) - 1;
+        } else {
+          m = std::min(m, y->f - 1);
+        }
+      }
+      x->g = m;
+      return m;
+    }
+
+    public:
+    pass2_down(prenex_quantifier_optimal& self)
+      : self(self) {}
+
+    /// Label the g members of all nodes. Handles the d2=down case.
+    void operator()(node_ptr root) {
+      assert(root);
+      s.emplace(root);
+
+      while(!s.empty()) {
+        node_ptr t = s.top();
+        s.pop();
+
+        if(t->g == std::numeric_limits<uint32_t>::max()) {
+          t->g = g(t);
+        }
+
+        for(auto& c : t->children) {
+          s.emplace(c);
+        }
+      }
+    }
+  };
+
+  class pass2_up {
+    // Models the recursive function `g_down(x) -> uint32_t`
+    prenex_quantifier_optimal& self;
+
+    uint32_t g(node_ptr x, uint32_t last_alternation_f) {
+      assert(x);
+      if(x->g != std::numeric_limits<uint32_t>::max())
+        return x->g;
+
+      if(x->quantifier == self.prioritized_) {
+        if(x->quantifier == self.i->critical_path[x->f]->quantifier) {
+          x->g = x->f;
+        } else {
+          x->g = x->f + 1;
+        }
+      } else {
+        x->g = last_alternation_f + 1;
+      }
+
+      for(auto& y : x->children) {
+        g(y, y->quantifier == x->quantifier ? last_alternation_f : x->f);
+      }
+
+      return x->g;
+    }
+
+    public:
+    pass2_up(prenex_quantifier_optimal& self)
+      : self(self) {}
+
+    void operator()(node_ptr root) {
+      assert(root);
+      g(root, root->quantifier == self.prioritized_ ? 0 : 1);
+    }
+  };
 };
 
 prenex_quantifier_optimal::prenex_quantifier_optimal(kind k)
@@ -70,7 +164,14 @@ prenex_quantifier_optimal::operator()(expression::op_ref o) {
   extract_critical_path(t);
 
   pass1(t);
-  pass2(t);
+
+  if(d2_ == down) {
+    pass2::pass2_down pass2(*this);
+    pass2(t);
+  } else if(d2_ == up) {
+    pass2::pass2_up pass2(*this);
+    pass2(t);
+  }
 
   if(t)
     conditionally_create_animation_step(o.get_mgr(), t);
@@ -152,6 +253,7 @@ prenex_quantifier_optimal::preprocess(node_ptr& root) {
   op_type first_quantifier = prioritized_;
   if(d1_ == down)
     first_quantifier = op_type_flip_quantifier(first_quantifier);
+
   if(root->quantifier != first_quantifier) {
     node_ptr new_root
       = std::make_shared<node>(std::vector<node_ptr>{ root }, first_quantifier);
@@ -234,82 +336,21 @@ prenex_quantifier_optimal::f(node& n) {
 }
 uint32_t
 prenex_quantifier_optimal::f_down(node& n) {
-  uint32_t dp = n.depth;
-  uint32_t idx = i->critical_path.size() - dp;
-  if(i->critical_path[idx]->quantifier == n.quantifier) {
-    return idx;
-  } else {
-    assert(i->critical_path[idx - 1]->quantifier == n.quantifier);
-    return idx - 1;
-  }
+  assert(i->critical_path.size() > 0);
+
+  uint8_t quant_diff = n.quantifier == i->critical_path[0]->quantifier;
+  assert(quant_diff == 0 || quant_diff == 1);
+
+  auto fprime
+    = [this](uint32_t dp) { return i->critical_path.size() - dp + 1; };
+
+  uint32_t fn = fprime(n.depth);
+
+  return fn - ((quant_diff + fn) % 2) - 1;
 }
 uint32_t
 prenex_quantifier_optimal::f_up(node& n) {
   return n.height - 1;
-}
-
-void
-prenex_quantifier_optimal::pass2(const node_ptr& root) {
-  assert(root->on_critical_path);
-  std::stack<std::pair<node_ptr, node_ptr>> s;
-  for(auto& c : root->children) {
-    s.emplace(std::make_pair(c, root));
-  }
-  while(!s.empty()) {
-    auto [t, parent] = s.top();
-    s.pop();
-    for(auto& c : t->children) {
-      s.emplace(std::make_pair(c, t));
-    }
-    if(!t->on_critical_path) {
-      pass2_g(t, parent);
-    }
-  }
-}
-
-void
-prenex_quantifier_optimal::pass2_g(node_ptr n, const node_ptr& parent) {
-  using std::ranges::max_element;
-  using std::ranges::min_element;
-  using std::views::filter;
-  using std::views::iota;
-
-  assert(n->quantifier == op_type::Exists || n->quantifier == op_type::Forall);
-
-  if(prioritized_ == n->quantifier) {
-    n->g = n->f;
-  } else {
-    uint32_t end;
-    {
-      auto it = std::min_element(
-        n->children.begin(),
-        n->children.end(),
-        [](const auto& a, const auto& b) { return a->f < b->f; });
-      if(it != n->children.end()) {
-        end = (*it)->f - 1;
-      } else {
-        if(i->critical_path.size() == 1) {
-          end = 0;
-        } else {
-          if(i->critical_path[i->critical_path.size() - 1]->quantifier
-             == n->quantifier) {
-            end = i->critical_path.size() - 1;
-          } else {
-            end = i->critical_path.size() - 2;
-          }
-        }
-      }
-    }
-
-    // end + 1, because this range is non inclusive!
-    auto K = iota(parent->f + 1, end + 1) | filter([&n, this](uint32_t e) {
-               return i->critical_path[e]->quantifier == n->quantifier;
-             });
-
-    auto it = d2_ == down ? max_element(K) : min_element(K);
-    assert(it != K.end());
-    n->g = *it;
-  }
 }
 
 void
