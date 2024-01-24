@@ -99,7 +99,7 @@ struct prenex_quantifier_optimal {
 
   /// Pre-process the internal tree, such that all node objects in the tree are
   /// of alternating quantifier type. Modifies i->s.
-  void preprocess(node_ptr &root);
+  void preprocess(node_ptr& root);
 
   /// Assign depths and heights to nodes.
   uint32_t assign_height_depth(node& n, uint32_t h = 1);

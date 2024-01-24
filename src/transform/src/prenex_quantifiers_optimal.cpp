@@ -125,37 +125,37 @@ prenex_quantifier_optimal::preprocess(node_ptr& root) {
     node_ptr n = s.top();
     s.pop();
 
-    bool changing = false;
-    do {
-      changing = false;
-      for(size_t i = 0; i < n->children.size();) {
-        node_ptr c = n->children[i];
-        assert(c);
-
-        // Merge nodes if they have the same quantifier! Only alternating sets
-        // are allowed.
-        if(n->quantifier == c->quantifier) {
-          for(auto cc : c->children) {
-            n->children.emplace_back(cc);
-          }
-          for(auto v : c->vars) {
-            n->vars.emplace_back(v);
-          }
-
-          changing = true;
-
-          n->children.erase(n->children.begin() + i);
-          // We deleted the current child, so i now points to the next one.
-          break;
+    if(n->children.size() == 1) {
+      node_ptr c = n->children[0];
+      n->children.clear();
+      while(c->quantifier == n->quantifier) {
+        std::copy(c->vars.begin(), c->vars.end(), std::back_inserter(n->vars));
+        if(c->children.size() == 1) {
+          c = c->children[0];
         } else {
-          ++i;
+          c = nullptr;
+          for(auto c : c->children) {
+            s.emplace(c);
+          }
         }
       }
-    } while(changing);
-
-    for(auto c : n->children) {
-      s.emplace(c);
+      if(c && c->quantifier != n->quantifier) {
+        n->children.emplace_back(c);
+      }
+    } else {
+      for(auto c : n->children) {
+        s.emplace(c);
+      }
     }
+  }
+
+  op_type first_quantifier = prioritized_;
+  if(d1_ == down)
+    first_quantifier = op_type_flip_quantifier(first_quantifier);
+  if(root->quantifier != first_quantifier) {
+    node_ptr new_root
+      = std::make_shared<node>(std::vector<node_ptr>{ root }, first_quantifier);
+    root = new_root;
   }
 }
 
@@ -164,7 +164,11 @@ prenex_quantifier_optimal::assign_height_depth(node& n, uint32_t h) {
   n.height = h;
   uint32_t dp = 1;
   for(auto& c : n.children) {
-    const uint32_t dp_c = assign_height_depth(*c, h + 1) + 1;
+    uint32_t dp_c
+      = assign_height_depth(*c, c->quantifier != n.quantifier ? h + 1 : h);
+    if(c->quantifier != n.quantifier) {
+      ++dp_c;
+    }
     dp = std::max(dp_c, dp);
   }
   n.depth = dp;
