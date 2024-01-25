@@ -31,8 +31,7 @@ struct prenex_quantifier_optimal::node {
   bool on_critical_path = false;
   uint32_t height = 0;
   uint32_t depth = 0;
-  uint32_t f = 0;
-  uint32_t g = std::numeric_limits<uint32_t>::max();
+  uint32_t f = std::numeric_limits<uint32_t>::max();
 
   node() = default;
   node(std::vector<node_ptr> children, op_type quantifier = op_type::None)
@@ -43,100 +42,6 @@ struct prenex_quantifier_optimal::node {
 struct prenex_quantifier_optimal::inner {
   std::stack<node_ptr> s;
   std::vector<node_ptr> critical_path;
-};
-
-struct prenex_quantifier_optimal::pass2 {
-  class pass2_down {
-    // Models the recursive function `g_down(x) -> uint32_t`
-    prenex_quantifier_optimal& self;
-    std::stack<node_ptr> s;
-
-    uint32_t g(node_ptr x) {
-      assert(x);
-      if(x->g != std::numeric_limits<uint32_t>::max())
-        return x->g;
-
-      uint32_t last_on_critical_path_is_other_quant
-        = x->quantifier
-              == self.i->critical_path[self.i->critical_path.size() - 1]
-                   ->quantifier
-            ? 0 // same quantifier
-            : 1;// different quantifier
-
-      uint32_t m = self.i->critical_path.size()
-                   - last_on_critical_path_is_other_quant - 1;
-
-      for(auto& y : x->children) {
-        if(y->quantifier != self.prioritized_) {
-          // This child has the secondary quantifier.
-          m = std::min(m, g(y)) - 1;
-        } else {
-          m = std::min(m, y->f - 1);
-        }
-      }
-      x->g = m;
-      return m;
-    }
-
-    public:
-    pass2_down(prenex_quantifier_optimal& self)
-      : self(self) {}
-
-    /// Label the g members of all nodes. Handles the d2=down case.
-    void operator()(node_ptr root) {
-      assert(root);
-      s.emplace(root);
-
-      while(!s.empty()) {
-        node_ptr t = s.top();
-        s.pop();
-
-        if(t->g == std::numeric_limits<uint32_t>::max()) {
-          t->g = g(t);
-        }
-
-        for(auto& c : t->children) {
-          s.emplace(c);
-        }
-      }
-    }
-  };
-
-  class pass2_up {
-    // Models the recursive function `g_down(x) -> uint32_t`
-    prenex_quantifier_optimal& self;
-
-    uint32_t g(node_ptr x, uint32_t last_alternation_f) {
-      assert(x);
-      if(x->g != std::numeric_limits<uint32_t>::max())
-        return x->g;
-
-      if(x->quantifier == self.prioritized_) {
-        if(x->quantifier == self.i->critical_path[x->f]->quantifier) {
-          x->g = x->f;
-        } else {
-          x->g = x->f + 1;
-        }
-      } else {
-        x->g = last_alternation_f + 1;
-      }
-
-      for(auto& y : x->children) {
-        g(y, y->quantifier == x->quantifier ? last_alternation_f : x->f);
-      }
-
-      return x->g;
-    }
-
-    public:
-    pass2_up(prenex_quantifier_optimal& self)
-      : self(self) {}
-
-    void operator()(node_ptr root) {
-      assert(root);
-      g(root, root->quantifier == self.prioritized_ ? 0 : 1);
-    }
-  };
 };
 
 prenex_quantifier_optimal::prenex_quantifier_optimal(kind k)
@@ -163,15 +68,9 @@ prenex_quantifier_optimal::operator()(expression::op_ref o) {
   assign_height_depth(*t);
   extract_critical_path(t);
 
-  pass1(t);
+  root_quantifier_ = t->quantifier;
 
-  if(d2_ == down) {
-    pass2::pass2_down pass2(*this);
-    pass2(t);
-  } else if(d2_ == up) {
-    pass2::pass2_up pass2(*this);
-    pass2(t);
-  }
+  f(t);
 
   if(t)
     conditionally_create_animation_step(o.get_mgr(), t);
@@ -305,52 +204,97 @@ prenex_quantifier_optimal::extract_critical_path(const node_ptr& root) {
   }
 }
 
-void
-prenex_quantifier_optimal::pass1(const node_ptr& root) {
-  std::stack<node_ptr> s;
-  s.emplace(root);
-
-  while(!s.empty()) {
-    node_ptr t = s.top();
-    s.pop();
-
-    for(auto& c : t->children) {
-      s.emplace(c);
-    }
-    if(!t->on_critical_path) {
-      t->f = f(*t);
-    }
-  }
-}
-
 uint32_t
-prenex_quantifier_optimal::f(node& n) {
-  assert(n.quantifier != op_type::None);
-  assert(n.quantifier == op_type::Exists || n.quantifier == op_type::Forall);
+prenex_quantifier_optimal::f(node_ptr n, node_ptr parent) {
+  assert(n->quantifier != op_type::None);
+  assert(n->quantifier == op_type::Exists || n->quantifier == op_type::Forall);
 
-  if(d1_ == down) {
-    return f_down(n);
+  uint32_t x;
+  if(n->quantifier == prioritized_) {
+    x = f_1(n, parent);
   } else {
-    return f_up(n);
+    x = f_2(n, parent);
+  }
+  return x;
+}
+
+uint32_t
+prenex_quantifier_optimal::f_1(node_ptr n, node_ptr parent) {
+  uint32_t x;
+  if(d1_ == up) {
+    x = f_1_up(n, parent);
+  } else {
+    x = f_1_down(n, parent);
+  }
+
+  n->f = x;
+
+  for(auto c : n->children) {
+    f(c, n);
+  }
+  return x;
+}
+uint32_t
+prenex_quantifier_optimal::f_2(node_ptr n, node_ptr parent) {
+  if(d2_ == up) {
+    return f_2_up(n, parent);
+  } else {
+    return f_2_down(n, parent);
   }
 }
+
 uint32_t
-prenex_quantifier_optimal::f_down(node& n) {
-  assert(i->critical_path.size() > 0);
-
-  uint8_t quant_diff = n.quantifier == i->critical_path[0]->quantifier;
-  assert(quant_diff == 0 || quant_diff == 1);
-
-  auto fprime
-    = [this](uint32_t dp) { return i->critical_path.size() - dp + 1; };
-
-  uint32_t fn = fprime(n.depth);
-
-  return fn - ((quant_diff + fn) % 2) - 1;
+prenex_quantifier_optimal::f_1_up(node_ptr n, node_ptr parent) {
+  (void)parent;
+  return n->height;
 }
 uint32_t
-prenex_quantifier_optimal::f_up(node& n) {
-  return n.height - 1;
+prenex_quantifier_optimal::f_1_down(node_ptr n, node_ptr parent) {
+  (void)parent;
+  static_assert(static_cast<uint32_t>(op_type::Exists != op_type::Forall) == 1);
+  static_assert(static_cast<uint32_t>(op_type::Exists == op_type::Forall) == 0);
+
+  uint32_t x = i->critical_path.size() - n->depth;
+  uint32_t delta
+    = (static_cast<uint32_t>(prioritized_ == root_quantifier_) + x + 1) % 2;
+  return x - delta;
+}
+
+uint32_t
+prenex_quantifier_optimal::f_2_up(node_ptr n, node_ptr parent) {
+  n->f = [&n, &parent]() -> uint32_t {
+    if(parent) {
+      assert(parent->f != std::numeric_limits<uint32_t>::max());
+      return (parent->f)
+             + static_cast<uint32_t>(n->quantifier != parent->quantifier);
+    } else {
+      return 0;
+    }
+  }();
+
+  for(auto c : n->children) {
+    f(c, n);
+  }
+  return n->f;
+}
+uint32_t
+prenex_quantifier_optimal::f_2_down(node_ptr n, node_ptr parent) {
+  (void)parent;
+  uint32_t l = i->critical_path.size() - 1;
+  uint32_t delta
+    = (static_cast<uint32_t>(prioritized_ == root_quantifier_) + l) % 2;
+  uint32_t b = l - delta;
+
+  for(auto c : n->children) {
+    // n->f is still unassigned, but the f_2_up will never be called afterwards.
+    // Guarded by an assertion in f_2_up.
+    uint32_t x = f(c, n);
+    uint32_t gamma = c->quantifier != n->quantifier;
+    b = std::min(b, x - gamma);
+  }
+
+  n->f = b;
+  return b;
 }
 
 void
@@ -370,7 +314,7 @@ prenex_quantifier_optimal::prenex(node_ptr root) {
 
     if(!p->on_critical_path) {
       auto& src = p->vars;
-      auto& tgt = i->critical_path[p->g]->vars;
+      auto& tgt = i->critical_path[p->f]->vars;
       std::copy(src.begin(), src.end(), std::back_inserter(tgt));
     }
   }
@@ -679,12 +623,11 @@ prenex_quantifier_optimal::to_dot(op_manager& mgr,
                        p->height - 1,
                        fmt::join(v, ", "));
     else
-      o << fmt::format("{} (ht:{},dp:{},f:{},g:{}):\n{}",
+      o << fmt::format("{} (ht:{},dp:{},f:{}):\n{}",
                        type,
                        p->height,
                        p->depth,
                        p->f,
-                       p->g,
                        fmt::join(v, ", "));
     o << "\" ];\n";
 

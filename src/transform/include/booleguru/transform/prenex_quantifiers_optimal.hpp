@@ -33,7 +33,6 @@ struct prenex_quantifier_optimal {
   private:
   struct node;
   struct inner;
-  struct pass2;
 
   std::string animation_path_;
   bool animate_ = false;
@@ -95,6 +94,7 @@ struct prenex_quantifier_optimal {
   }
 
   const expression::op_type prioritized_ = extract_prioritized(kind_);
+  expression::op_type root_quantifier_ = expression::op_type::None;
   const dir d1_ = extract_d1(kind_);
   const dir d2_ = extract_d2(kind_);
 
@@ -103,23 +103,22 @@ struct prenex_quantifier_optimal {
   void preprocess(node_ptr& root);
 
   /// Assign depths and heights to nodes.
-  uint32_t assign_height_depth(node& n, uint32_t h = 1);
+  uint32_t assign_height_depth(node& n, uint32_t h = 0);
 
   /// Extract the critical path into i->critical_path.
   void extract_critical_path(const node_ptr& root);
 
-  /// Pass 1, compute f
-  void pass1(const node_ptr& root);
-
-  /// Pass 2, compute g
-  /// use the pass2 struct.
-
   /// Prenex the quantifiers according to kind_. Modifies i->s.
   void prenex(node_ptr root);
 
-  uint32_t f(node& n);
-  uint32_t f_down(node& n);
-  uint32_t f_up(node& n);
+  uint32_t f(node_ptr n, node_ptr parent = nullptr);
+  uint32_t f_1(node_ptr n, node_ptr parent);
+  uint32_t f_2(node_ptr n, node_ptr parent);
+
+  uint32_t f_1_up(node_ptr n, node_ptr parent);
+  uint32_t f_1_down(node_ptr n, node_ptr parent);
+  uint32_t f_2_up(node_ptr n, node_ptr parent);
+  uint32_t f_2_down(node_ptr n, node_ptr parent);
 
   void conditionally_create_animation_step(expression::op_manager& mgr,
                                            const node_ptr& root);
