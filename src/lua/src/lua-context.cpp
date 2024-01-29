@@ -39,8 +39,6 @@ prepare_state(sol::state& s) {
 
     if(name.ends_with("_lua")) {
       name.remove_suffix(4);
-      if(name == "quantlist")
-        fmt::println("Name: {}, Data Size: {}, Data: {}", name, data.size(), data);
       s.require_script(std::string(name), data);
       continue;
     }
@@ -54,8 +52,9 @@ prepare_state_after_fennel_install(sol::state& s) {
 
     if(name.ends_with("_fnl")) {
       name.remove_suffix(4);
-      s.require_script(std::string(name), 
-		       static_cast<std::string>(s["fennel"]["compileString"](data)));
+      s.require_script(
+        std::string(name),
+        static_cast<std::string>(s["fennel"]["compileString"](data)));
       continue;
     }
   }
