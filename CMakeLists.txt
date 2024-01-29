@@ -159,7 +159,7 @@ if(${CMAKE_BUILD_TYPE} MATCHES "Fuzz" OR {CMAKE_BUILD_TYPE} MATCHES "FuzzDebug")
 endif()
 
 if(TESTS)
-    find_package(Catch2)
+    find_package(Catch2 QUIET)
     if(TARGET Catch2::Catch2)
         message(STATUS "Catch2 version " ${Catch2_VERSION} " was found! Activating tests.")
         include(CTest)
