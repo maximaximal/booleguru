@@ -54,7 +54,8 @@ prepare_state_after_fennel_install(sol::state& s) {
 
     if(name.ends_with("_fnl")) {
       name.remove_suffix(4);
-      s.require_script(std::string(name), s["fennel"]["compileString"](data));
+      s.require_script(std::string(name), 
+		       static_cast<std::string>(s["fennel"]["compileString"](data)));
       continue;
     }
   }
