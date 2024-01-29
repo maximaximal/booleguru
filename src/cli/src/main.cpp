@@ -35,30 +35,62 @@ using namespace booleguru::cli;
 static void
 print_help() {
   using std::cout;
-  cout << "booleguru - boolean format multitool\n";
+  cout << "booleguru - boolean format multitool, propositional polyglot\n";
   cout << "\n";
   cout << "DOCUMENTATION:\n";
   cout << "  See web-based documentation at:\n";
   cout << "  https://booleguru.pages.sai.jku.at/booleguru/\n";
   cout << "QUICK USAGE EXAMPLE:\n";
-  cout << "  ./booleguru [parser-args] <formula> [output-args]\n";
+  cout << "  booleguru [parser-args] <formula> [output-args]\n";
   cout << "\n";
-  cout << "QUICK CLI EXPRESSION USAGE EXAMPLE:\n";
-  cout << "  ./booleguru <unop> [ file1.boole <binop> file2.boole ]\n";
+  cout << "QUICK CLI EXPRESSION USAGE EXAMPLES (** is the last expression):\n";
+  cout << "  booleguru <unop> [ file1.boole <binop> file2.boole ]\n";
+  cout << "  booleguru test.boole \":(b_and ** (b_not (solve **)))\" :solve\n";
+  cout << "  booleguru \"test.boole :rename@a@aa <-> test.boole\" --qcir\n";
   cout << "\n";
   cout << "SUPPORTED INPUT FORMATS:\n";
   cout << "  (Q)DIMACS\n";
   cout << "  Infix Logic Format (Limboole-esque)\n";
   cout << "  QCIR\n";
+  cout << "  SMT-LIB2\n";
+  cout << "  AIGER (AAG)\n";
   cout << "\n";
   cout << "SUPPORTED OUTPUT FORMATS (as [output-args]):\n";
+  cout << "  --boole\n";
   cout << "  --dimacs, --qdimacs\n";
   cout << "  --qcir\n";
-  cout << "SUPPORTED OPERATIONS (append after some CLI expression):\n";
+  cout << "  --smtlib\n";
+  cout << "\n";
+  cout << "SUPPORTED COLON OPERATORS (append after some CLI expression):\n";
+  cout << "    The @ separates arguments. You may also write these using "
+          "\":(func arg1)\"\n";
+  cout << "    [] marks optional arguments in this list.\n";
   cout << "  :unquantified\n";
+  cout << "  :dotter@[path]\n";
+  cout << "  :quantlist\n";
+  cout << "  :prefixtract\n";
+  cout << "  :quantblocks\n";
   cout << "  :tseitin\n";
+  cout << "  :eliminate-implication\n";
+  cout << "  :eliminate-equivalence\n";
+  cout << "  :eliminate-xor\n";
+  cout << "  :distribute-ors\n";
   cout << "  :distribute-to-cnf\n";
   cout << "  :solve\n";
+  cout << "  :rename@A@B\n";
+  cout << "  :prenex-quantifier-optimal{E,A}{up,down}-{up-down}\n";
+  cout << "  :prenex-quantifier-E{up,down}-A{up-down}\n";
+  cout << "  :counterfactuals (see docs)\n";
+  cout << "  :eqkbf (see docs)\n";
+  cout << "\n";
+  cout << "LUA and FENNEL:\n";
+  cout << "  You can write Fennel code in the CLI, e.g. :(print \"hello "
+          "world\")\n";
+  cout << "  See the Fennel guide: https://fennel-lang.org/reference\n";
+  cout << "  Set the following environment variables to add new scripts:\n";
+  cout << "    BOOLEGURU_LUA_PATH for .lua scripts\n";
+  cout << "    BOOLEGURU_FENNEL_PATH for .fnl scripts\n";
+  cout << "  Scripts are loaded automatically if called using a colon op.\n";
   cout << std::endl;
 }
 
@@ -87,7 +119,11 @@ main(int argc, const char* argv[]) {
     }
   }
 
-  // Preliminary stuff, just for testing!!
+  if(argc == 1) {
+    print_help();
+    return EXIT_SUCCESS;
+  }
+
   cli::cli_processor cli(argc, argv);
 
   auto result = cli.process();
