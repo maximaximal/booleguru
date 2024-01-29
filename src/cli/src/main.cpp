@@ -35,7 +35,7 @@ using namespace booleguru::cli;
 static void
 print_help() {
   using std::cout;
-  cout << "booleguru - boolean format multitool, propositional polyglot\n";
+  cout << "booleguru - boolean format multitool, propositional polyglot - " BOOLEGURU_VERSION "\n";
   cout << "\n";
   cout << "DOCUMENTATION:\n";
   cout << "  See web-based documentation at:\n";
