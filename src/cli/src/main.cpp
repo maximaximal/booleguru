@@ -77,7 +77,7 @@ print_help() {
   cout << "  :eliminate-xor\n";
   cout << "  :distribute-ors\n";
   cout << "  :distribute-to-cnf\n";
-  cout << "  :solve\n";
+  cout << "  :solve@[solver]@[args...]\n";
   cout << "  :rename@A@B\n";
   cout << "  :linearize-quants-{E,A}{up,down}-{up-down}\n";
   cout << "  :linearize-quants-legacy-E{up,down}-{up-down}\n";

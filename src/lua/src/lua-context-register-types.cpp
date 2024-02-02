@@ -6,8 +6,8 @@
 #include <booleguru/lua/binding-helpers.hpp>
 #include <booleguru/lua/lua-context.hpp>
 
-#include <booleguru/transform/variable_extend.hpp>
 #include <booleguru/transform/minimize_failing.hpp>
+#include <booleguru/transform/variable_extend.hpp>
 
 #include <booleguru/transform/eliminate_xor.hpp>
 
@@ -37,14 +37,26 @@ set_to_state(sol::state& s, const std::string& both, auto&& f) {
   set_to_state(s, both, both, f);
 }
 
+static std::optional<expression::op_ref>
+solve_sat_variadic(expression::op_ref o,
+                   std::string solver,
+                   sol::variadic_args va) {
+  std::vector<std::string> args;
+  std::transform(va.begin(),
+                 va.end(),
+                 std::back_inserter(args),
+                 [](const auto& lua_arg) -> std::string { return lua_arg; });
+  return helpers::solve_sat(o, solver, args);
+}
+
 #define xstr(s) str(s)
 #define str(s) #s
 
 #define BIND_PRENEX(L, F)                                      \
   set_to_state(                                                \
     s,                                                         \
-    "linearize_quants_legacy_" str(L),                               \
-    "linearize-quants-legacy-" F,                                    \
+    "linearize_quants_legacy_" str(L),                         \
+    "linearize-quants-legacy-" F,                              \
     sol::overload(                                             \
       &transform_prenex<transform::prenex_quantifier,          \
                         transform::prenex_quantifier::L>,      \
@@ -54,8 +66,8 @@ set_to_state(sol::state& s, const std::string& both, auto&& f) {
 #define BIND_PRENEX_OPTIMAL(L, F)                                         \
   set_to_state(                                                           \
     s,                                                                    \
-    "linearize_quants_" str(L),                                  \
-    "linearize-quants-" F,                                       \
+    "linearize_quants_" str(L),                                           \
+    "linearize-quants-" F,                                                \
     sol::overload(                                                        \
       &transform_prenex_optimal<transform::prenex_quantifier_optimal,     \
                                 transform::prenex_quantifier_optimal::L>, \
@@ -160,7 +172,7 @@ lua_context::register_booleguru_types() {
   set_to_state(
     s,
     "solve",
-    sol::overload(&helpers::solve_sat, helpers::solve_sat_default_args));
+    sol::overload(&helpers::solve_sat_default_args, &solve_sat_variadic));
 
   set_to_state(s, "prefix_vars", "prefix-vars", &helpers::prefix_variables);
 
