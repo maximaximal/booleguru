@@ -223,7 +223,10 @@ lua_context::eval_fennel(std::string_view code) {
 
     std::string fun_str(fun);
 
-    if(!s[fennel_mangle(fun_str)].valid()) {
+    // There are some special forms in Fennel that should not be
+    // loaded. We ignore them explicitly here.
+    
+    if(fun_str != "+" && fun_str != "-" && !s[fennel_mangle(fun_str)].valid()) {
       using namespace std::literals::string_literals;
       std::string call = "(let ["s + fun_str + " (require :" + fun_str + ")]\n"
                          + std::string(code) + ")";
