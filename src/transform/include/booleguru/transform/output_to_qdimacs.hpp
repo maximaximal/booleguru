@@ -210,15 +210,20 @@ class output_to_qdimacs {
     if(i->type == And)
       ++clauses;
 
-    s.emplace(behind_prefix);
-    while(!s.empty()) {
-      uint32_t i = s.top();
-      s.pop();
-      const expression::op& o = ops.getobj(i);
-      if(o.type == And) {
-        s.emplace(o.bin.l);
-        s.emplace(o.bin.r);
-        ++clauses;
+    if(const expression::op& o = ops.getobj(behind_prefix); o.type == Or) {
+      // Only one clause, which is immediately an Or
+      clauses = 1;
+    } else {
+      s.emplace(behind_prefix);
+      while(!s.empty()) {
+        uint32_t i = s.top();
+        s.pop();
+        const expression::op& o = ops.getobj(i);
+        if(o.type == And) {
+          s.emplace(o.bin.l);
+          s.emplace(o.bin.r);
+          ++clauses;
+        }
       }
     }
 
@@ -253,6 +258,10 @@ class output_to_qdimacs {
         } else {
           print_or_tree(ops, static_cast<uint32_t>(o->right()), inner_s, a);
         }
+      } else if(o->type == Or) {
+        print_or_tree(ops, i, inner_s, a);
+      } else {
+        assert(false);
       }
     }
   }
