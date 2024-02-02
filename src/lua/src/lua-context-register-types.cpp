@@ -144,9 +144,16 @@ lua_context::register_booleguru_types() {
   set_to_state(s, "impl", &helpers::binop<op_type::Impl>);
   set_to_state(s, "lpmi", &helpers::binop<op_type::Lpmi>);
   set_to_state(s, "xor", &helpers::binop<op_type::Xor>);
-  set_to_state(s, "b_and", "b-and", &helpers::binop<op_type::And>);
-  set_to_state(s, "b_or", "b-or", &helpers::binop<op_type::Or>);
-  set_to_state(s, "b_not", "b-not", &helpers::unop<op_type::Not>);
+  set_to_state(s, "b_and", &helpers::binop<op_type::And>);
+  s.set_function("b_or", &helpers::binop<op_type::Or>);
+  const std::string bor = s["fennel"]["mangle"]("b-or");
+  s.set_function(bor, &helpers::binop<op_type::Or>);
+  s.set_function("b_and", &helpers::binop<op_type::And>);
+  const std::string band = s["fennel"]["mangle"]("b-and");
+  s.set_function(band, &helpers::binop<op_type::And>);
+  s.set_function("b_not", &helpers::unop<op_type::Not>);
+  const std::string bnot = s["fennel"]["mangle"]("b-not");
+  s.set_function(bnot, &helpers::unop<op_type::Not>);
 
   set_to_state(s, "noop", [](expression::op_ref& o) { return o; });
 
