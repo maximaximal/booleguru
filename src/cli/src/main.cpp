@@ -96,6 +96,7 @@ print_help() {
   cout << "  Set the following environment variables to add new scripts:\n";
   cout << "    BOOLEGURU_LUA_PATH for .lua scripts\n";
   cout << "    BOOLEGURU_FENNEL_PATH for .fnl scripts\n";
+  cout << "  Scripts from standard Lua or Fennel directories are also loaded.\n";
   cout << "  Scripts are loaded automatically if called using a colon op.\n";
   cout << std::endl;
 }
