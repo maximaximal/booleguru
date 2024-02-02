@@ -43,8 +43,8 @@ set_to_state(sol::state& s, const std::string& both, auto&& f) {
 #define BIND_PRENEX(L, F)                                      \
   set_to_state(                                                \
     s,                                                         \
-    "prenex_quantifier_" str(L),                               \
-    "prenex-quantifier-" F,                                    \
+    "linearize_quants_legacy_" str(L),                               \
+    "linearize-quants-legacy-" F,                                    \
     sol::overload(                                             \
       &transform_prenex<transform::prenex_quantifier,          \
                         transform::prenex_quantifier::L>,      \
@@ -54,8 +54,8 @@ set_to_state(sol::state& s, const std::string& both, auto&& f) {
 #define BIND_PRENEX_OPTIMAL(L, F)                                         \
   set_to_state(                                                           \
     s,                                                                    \
-    "prenex_quantifier_optimal_" str(L),                                  \
-    "prenex-quantifier-optimal-" F,                                       \
+    "linearize_quants_" str(L),                                  \
+    "linearize-quants-" F,                                       \
     sol::overload(                                                        \
       &transform_prenex_optimal<transform::prenex_quantifier_optimal,     \
                                 transform::prenex_quantifier_optimal::L>, \
@@ -116,10 +116,10 @@ lua_context::register_booleguru_types() {
     return transform::tseitin<transform::output_to_op>(*ops_);
   }());
 
-  BIND_PRENEX(Eup_Aup, "Eup-Aup")
-  BIND_PRENEX(Eup_Adown, "Eup-Adown")
-  BIND_PRENEX(Edown_Aup, "Edown-Aup")
-  BIND_PRENEX(Edown_Adown, "Edown-Adown")
+  BIND_PRENEX(Eup_Aup, "Eup-up")
+  BIND_PRENEX(Eup_Adown, "Eup-down")
+  BIND_PRENEX(Edown_Aup, "Edown-up")
+  BIND_PRENEX(Edown_Adown, "Edown-down")
 
   BIND_PRENEX_OPTIMAL(Eup_up, "Eup-up")
   BIND_PRENEX_OPTIMAL(Eup_down, "Eup-down")
