@@ -35,7 +35,8 @@ using namespace booleguru::cli;
 static void
 print_help() {
   using std::cout;
-  cout << "booleguru - boolean format multitool, propositional polyglot - " BOOLEGURU_VERSION "\n";
+  cout << "booleguru - boolean format multitool, propositional polyglot "
+          "- " BOOLEGURU_VERSION "\n";
   cout << "\n";
   cout << "DOCUMENTATION:\n";
   cout << "  See web-based documentation at:\n";
@@ -110,7 +111,7 @@ int
 main(int argc, const char* argv[]) {
   if(argc > 1) {
     std::string_view arg1 = argv[1];
-    if(arg1 == "--help") {
+    if(arg1 == "--help" || arg1 == "-h" || arg1 == "-?" || arg1 == "--h") {
       print_help();
       return EXIT_SUCCESS;
     } else if(arg1 == "--version") {
