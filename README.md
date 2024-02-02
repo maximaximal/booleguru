@@ -1,17 +1,15 @@
 # Booleguru
 
-A symbolic logical calculator that can not only give results, but also transform
-what it reads. Supports multiple input- and output formats.
+Booleguru is a propositional polyglot! It provides a framework for
+efficiently working with logical formulas that may contain
+quantifiers.
 
-This is still very early in development and everything may change. We are very
-open for inputs and requests!
+  - Presentation at the MBMV'23 in Freiburg
+    ([Presentation](http://maximaximal.pages.sai.jku.at/mbmv23/),
+    [Workshop
+    Website](https://cca.informatik.uni-freiburg.de/mbmv23/)).
 
-Presented at MBMV'23 in Freiburg
-([Presentation](http://maximaximal.pages.sai.jku.at/mbmv23/), [Workshop
-Website](https://cca.informatik.uni-freiburg.de/mbmv23/)).
-
-Documentation is being written and [put up
-here](https://booleguru.pages.sai.jku.at/booleguru/).
+  - [Documentation](https://booleguru.pages.sai.jku.at/booleguru/).
 
 ## Structure
 
