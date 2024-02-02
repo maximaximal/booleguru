@@ -87,7 +87,7 @@ print_help() {
   cout << "BINARY OPERATORS (between two expressions):\n";
   cout << "  no supported binary operators at the moment\n";
   cout << "  implement fennel scripts using the global *l* and *r*\n";
-  cout << "  or lua scripts using the global right_op and right_op\n";
+  cout << "  or lua scripts using the global left_op and right_op\n";
   cout << "\n";
   cout << "LUA and FENNEL:\n";
   cout << "  You can write Fennel code in the CLI, e.g. :(print \"hello "
