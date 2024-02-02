@@ -267,7 +267,9 @@ lua_context::eval_fennel(std::string_view code,
                          const expression::op_ref& r) {
   ensure_fully_initialized();
   (*state_)[fennel_l_name_] = l;
+  (*state_)["left_op"] = l;
   (*state_)[fennel_r_name_] = r;
+  (*state_)["right_op"] = r;
   return eval_fennel(code);
 }
 
