@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.13)
 cmake_policy(SET CMP0048 NEW)
 cmake_policy(SET CMP0079 NEW)
 project(booleguru
-  VERSION 0.3)
+  VERSION 0.4.0)
 
 add_compile_definitions(BOOLEGURU_VERSION="${CMAKE_PROJECT_VERSION}")
 
@@ -159,7 +159,7 @@ if(${CMAKE_BUILD_TYPE} MATCHES "Fuzz" OR {CMAKE_BUILD_TYPE} MATCHES "FuzzDebug")
 endif()
 
 if(TESTS)
-    find_package(Catch2)
+    find_package(Catch2 QUIET)
     if(TARGET Catch2::Catch2)
         message(STATUS "Catch2 version " ${Catch2_VERSION} " was found! Activating tests.")
         include(CTest)
