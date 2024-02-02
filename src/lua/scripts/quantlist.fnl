@@ -23,5 +23,5 @@ ordered after the names."
         (set block [])))
     (table.insert block i.left)
     (set i i.right))
-  (print-block-of-kind (sort-block block) kind)
+  (when (not (= op i)) (print-block-of-kind (sort-block block) kind))
  op)
