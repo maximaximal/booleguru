@@ -77,6 +77,18 @@ class proxy {
   return proxy<op_manager>(std::string_view(name, l));
 }
 
+[[nodiscard]] inline op_ref
+varop(std::string name, std::shared_ptr<op_manager> mgr) {
+  return mgr->get(
+    op{ op_type::Var, mgr->vars().get(variable{ name }).get_id(), 0, 0 });
+}
+
+[[nodiscard]] inline op_ref
+varop(std::string name, op_manager &mgr) {
+  return mgr.get(
+    op{ op_type::Var, mgr.vars().get(variable{ name }).get_id(), 0, 0 });
+}
+
 [[nodiscard]] constexpr inline op_ref
 exists(op_ref variable, op_ref sub_tree) {
   if(!std::is_constant_evaluated()) {
