@@ -21,8 +21,10 @@ LBRACK : '[';
 RBRACK : ']';
 
 FENNEL_SUBST : ( ':F(' | ':(' | ':f(' | 'f:(' | 'L:(' ) { pushMode(CODE); };
+FENNEL_SUBST_BIN : ( '::F(' | '::(' | '::f(' | 'f::(' | 'L::(' ) { pushMode(CODE); };
 FENNEL : ( 'F(' | 'f(' ) { pushMode(CODE); };
 FENNEL_CALL : ( ':' ) { pushMode(CALL); };
+FENNEL_CALL_BIN : ( '::' ) { pushMode(CALL); };
 
 LUA_SUBST : ( ':L(' | ':l(' | 'l:(' | 'L:(' ) { pushMode(CODE); };
 LUA : ( 'L(' | 'l(' ) { pushMode(CODE); };

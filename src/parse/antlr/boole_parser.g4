@@ -35,20 +35,20 @@ expr returns [op_id o]:
     | l=expr IMPL r=expr { $o = ops->get_id(op(op_type::Impl, $l.o, $r.o)); }
     | l=expr LPMI r=expr { $o = ops->get_id(op(op_type::Lpmi, $l.o, $r.o)); }
     | l=expr EQUI r=expr { $o = ops->get_id(op(op_type::Equi, $l.o, $r.o)); }
-    | l=expr FENNEL_SUBST c=MATCHING_PAREN r=expr {
+    | l=expr FENNEL_SUBST_BIN c=MATCHING_PAREN r=expr {
             if(eval) {
                 auto ret = lua->eval_fennel("(" + $c.text + ")", (*ops)[$l.o], (*ops)[$r.o]);
                 if(std::holds_alternative<std::string>(ret)) {
                     notifyErrorListeners(std::get<std::string>(ret));
-                    $o = $last_op.o;
+                    $o = 0;
                 } else if(std::holds_alternative<op_ref>(ret)) {
                     $o = std::get<op_ref>(ret).get_id();
                 } else {
-                    $o = $last_op.o;
+                    $o = 0;
                 }
             }
         }
-    | l=expr FENNEL_CALL c=CALL_CODE r=expr {
+    | l=expr FENNEL_CALL_BIN c=CALL_CODE r=expr {
             if(eval) {
                 std::string code = $c.text;
                 if(code.find("@") != std::string::npos) {

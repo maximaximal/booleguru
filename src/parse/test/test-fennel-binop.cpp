@@ -12,7 +12,7 @@ using namespace booleguru::parse;
 using namespace booleguru::expression;
 
 TEST_CASE("Use a binop implemented in fennel", "[fennel_binop]") {
-  std::string_view input = "(#a ?b a^b) :model-equivalent@a@b (#a ?b a <-> !b)";
+  std::string_view input = "(#a ?b a^b) ::model-equivalent@a@b (#a ?b a <-> !b)";
   auto is = isviewstream(input);
   boole parser(is);
   parser.eval(true);

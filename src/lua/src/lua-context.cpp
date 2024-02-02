@@ -225,7 +225,7 @@ lua_context::eval_fennel(std::string_view code) {
 
     // There are some special forms in Fennel that should not be
     // loaded. We ignore them explicitly here.
-    
+
     if(fun_str != "+" && fun_str != "-" && !s[fennel_mangle(fun_str)].valid()) {
       using namespace std::literals::string_literals;
       std::string call = "(let ["s + fun_str + " (require :" + fun_str + ")]\n"
@@ -276,6 +276,21 @@ lua_context::eval_fennel_to_op_or_throw(std::string_view code,
                                         expression::op_ref last_op) {
   ensure_fully_initialized();
   auto res = eval_fennel(code, last_op);
+  if(std::string* s = std::get_if<std::string>(&res)) {
+    throw fennel_error(*s);
+  }
+  if(expression::op_ref* op = std::get_if<expression::op_ref>(&res)) {
+    return *op;
+  }
+  return expression::op_ref();
+}
+
+expression::op_ref
+lua_context::eval_fennel_to_op_or_throw(std::string_view code,
+                                        expression::op_ref l,
+                                        expression::op_ref r) {
+  ensure_fully_initialized();
+  auto res = eval_fennel(code, l, r);
   if(std::string* s = std::get_if<std::string>(&res)) {
     throw fennel_error(*s);
   }

@@ -58,6 +58,9 @@ class lua_context {
 
   expression::op_ref eval_fennel_to_op_or_throw(std::string_view code,
                                                 expression::op_ref last_op);
+  expression::op_ref eval_fennel_to_op_or_throw(std::string_view code,
+                                                expression::op_ref l,
+                                                expression::op_ref r);
   expression::op_ref eval_fennel_to_op_or_throw(std::string_view code);
 
   eval_result eval(std::string_view code);

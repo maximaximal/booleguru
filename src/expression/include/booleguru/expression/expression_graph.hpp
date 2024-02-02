@@ -76,6 +76,12 @@ class expression_graph {
     (void)last_op;
     return 0;
   }
+  virtual ref fennel_binop_(std::string_view code, ref l = 0, ref r = 0) {
+    (void)code;
+    (void)l;
+    (void)r;
+    return 0;
+  }
   virtual ref file_(std::string_view path, util::type type) {
     (void)type;
     (void)path;

@@ -89,6 +89,28 @@ expr returns [op_id o]:
     | v=var { $o = $v.o; }
     | {util::type file_format = util::type::boole;} (fo=format {file_format = $fo.t;})?
         p=PATH { $o = g->file_($p.text, file_format); }
+    | l=expr FENNEL_BIN_SUBST c=MATCHING_PAREN r=expr {
+	    auto res5 = g->fennel_binop_("(" + $c.text + ")", $l.o, $r.o);
+            if(res5 > 0) {
+                $o = res5;
+            } else {
+                throw error::fennel_did_not_return_op($c.text);
+            }
+        }
+    | l=expr FENNEL_BIN_CALL c=CALL_CODE r=expr {
+            std::string text{$c.text};
+            if(text.find("@") != std::string::npos) {
+                text += "\"";
+            }
+            util::str_replace_first_rest( text, "@", "\"", "\"\"");
+            std::string code = "(" + text + ")";
+	    auto res5 = g->fennel_binop_(code, $l.o, $r.o);
+            if(res5 > 0) {
+                $o = res5;
+            } else {
+                throw error::fennel_did_not_return_op($c.text);
+            }
+        }
     | FENNEL_SUBST f=MATCHING_PAREN {
             std::string text{$f.text};
             std::string code = "(" + text + ")";

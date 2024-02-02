@@ -35,6 +35,13 @@ class cli_graph : public expression::op_graph {
     expression::op_ref op = ops[last_op];
     return lua.eval_fennel_to_op_or_throw(code, op).get_id();
   }
+  virtual ref fennel_binop_(std::string_view code,
+                            ref l = 0,
+                            ref r = 0) final override {
+    expression::op_ref l_op = ops[l];
+    expression::op_ref r_op = ops[r];
+    return lua.eval_fennel_to_op_or_throw(code, l_op, r_op).get_id();
+  }
   virtual ref file_(std::string_view path, util::type type) final override {
     assert(f);
     return f(path, type).get_id();

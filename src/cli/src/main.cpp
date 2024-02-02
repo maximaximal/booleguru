@@ -78,8 +78,8 @@ print_help() {
   cout << "  :distribute-to-cnf\n";
   cout << "  :solve\n";
   cout << "  :rename@A@B\n";
-  cout << "  :prenex-quantifier-optimal{E,A}{up,down}-{up-down}\n";
-  cout << "  :prenex-quantifier-E{up,down}-A{up-down}\n";
+  cout << "  :linearize-quants-{E,A}{up,down}-{up-down}\n";
+  cout << "  :linearize-quants-legacy-E{up,down}-{up-down}\n";
   cout << "  :counterfactuals (see docs)\n";
   cout << "  :eqkbf (see docs)\n";
   cout << "\n";
