@@ -68,6 +68,7 @@ print_help() {
   cout << "    [] marks optional arguments in this list.\n";
   cout << "  :unquantified\n";
   cout << "  :dotter@[path]\n";
+  cout << "  :assignment-tree@[path]\n";
   cout << "  :quantlist\n";
   cout << "  :prefixtract\n";
   cout << "  :quantblocks\n";
