@@ -49,6 +49,11 @@ solve_sat_variadic(expression::op_ref o,
   return helpers::solve_sat(o, solver, args);
 }
 
+static bool
+is_valid(expression::op_ref& r) {
+  return r.valid();
+}
+
 #define xstr(s) str(s)
 #define str(s) #s
 
@@ -206,6 +211,7 @@ lua_context::register_booleguru_types() {
   reftype.set("child", sol::property(&get_op_left));
   reftype.set("r", sol::property(&get_op_right));
   reftype.set("right", sol::property(&get_op_right));
+  reftype.set("valid", sol::property(&is_valid));
 
   reftype.set("v", sol::property(&get_op_varop_v));
   reftype.set("q", sol::property(&get_op_varop_q));

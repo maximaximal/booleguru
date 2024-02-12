@@ -88,6 +88,10 @@ prefix_variables(expression::op_ref& r, const std::string& prefix);
 template<expression::op_type type>
 static expression::op_ref
 binop(expression::op_ref& l, expression::op_ref& r) {
+  if(l.valid() && !r.valid()) [[unlikely]]
+    return l;
+  if(!l.valid() && r.valid()) [[unlikely]]
+    return r;
   return l.get_mgr().get(expression::op(type, l.get_id(), r.get_id()));
 }
 
