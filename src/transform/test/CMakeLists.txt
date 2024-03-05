@@ -3,6 +3,7 @@ set(TEST_SRCS
   test_eliminate_implication.cpp
   test_output_to_qdimacs.cpp
   test_tseitin.cpp
+  test_polarity_extractor.cpp
 )
 
 add_executable(booleguru-transform-test ${TEST_SRCS})
