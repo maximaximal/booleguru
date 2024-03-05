@@ -12,6 +12,11 @@ option(TESTS "Enable Test-Target (requires Catch2)" ON)
 option(DOCS "Enable Generation of Documentation (requires Doxygen, Sphinx, and Breathe)" ON)
 option(FORCE_COLORED_OUTPUT "Always produce ANSI-colored output (GNU/Clang only)." TRUE)
 
+if(NOT PROJECT_IS_TOP_LEVEL)
+  set(TESTS CACHE BOOL OFF FORCE)
+  set(DOCS CACHE BOOL OFF FORCE)
+endif()
+
 get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
 
 # Credit to this article:
@@ -158,7 +163,7 @@ if(${CMAKE_BUILD_TYPE} MATCHES "Fuzz" OR {CMAKE_BUILD_TYPE} MATCHES "FuzzDebug")
     endif()
 endif()
 
-if(TESTS)
+if(TESTS AND PROJECT_IS_TOP_LEVEL)
     find_package(Catch2 QUIET)
     if(TARGET Catch2::Catch2)
         message(STATUS "Catch2 version " ${Catch2_VERSION} " was found! Activating tests.")
@@ -223,10 +228,9 @@ endif()
 
 include(GNUInstallDirs)
 
-if(DOCS)
+if(DOCS AND PROJECT_IS_TOP_LEVEL)
   add_subdirectory(docs)
 endif()
-
 
 # We only want to install Release builds that are not EMSCRIPTEN.
 if(${CMAKE_BUILD_TYPE} MATCHES "Release" AND NOT EMSCRIPTEN)
