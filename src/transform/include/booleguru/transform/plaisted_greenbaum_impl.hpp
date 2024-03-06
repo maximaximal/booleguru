@@ -39,9 +39,12 @@ compute_number_of_clauses_and_variables_in_marked_pg(
         ++num_variables;
         op.user_int32 = num_variables;
         break;
-      case expression::op_type::Or:
-        [[fallthrough]];
       case expression::op_type::And:
+        num_clauses += (pos_pol(op) ? 2 : 0) + (neg_pol(op) ? 1 : 0);
+        ++num_variables;
+        op.user_int32 = num_variables;
+        break;
+      case expression::op_type::Or:
         [[fallthrough]];
       case expression::op_type::Impl:
         [[fallthrough]];
@@ -51,7 +54,7 @@ compute_number_of_clauses_and_variables_in_marked_pg(
         op.user_int32 = num_variables;
         break;
       case expression::op_type::Not:
-        num_clauses += 2;
+        num_clauses += (pos_pol(op) ? 1 : 0) + (neg_pol(op) ? 1 : 0);
         ++num_variables;
         op.user_int32 = num_variables;
         break;
@@ -217,9 +220,9 @@ plaisted_greenbaum<O>::operator()(expression::op_ref o) {
         id l = o_.op_ref_to_ref(mgr.getobj(op.left()), op.left());
         id r = o_.op_ref_to_ref(mgr.getobj(op.right()), op.right());
         if(pos_pol(op))
-          o_.ternary(o_.not_op(l), o_.not_op(r), t);
-        if(neg_pol(op))
           o_.binary(l, o_.not_op(t)), o_.binary(r, o_.not_op(t));
+        if(neg_pol(op))
+          o_.ternary(o_.not_op(l), o_.not_op(r), t);
         break;
       }
       case expression::op_type::Impl: {
@@ -242,8 +245,10 @@ plaisted_greenbaum<O>::operator()(expression::op_ref o) {
       }
       case expression::op_type::Not: {
         id l = o_.op_ref_to_ref(mgr.getobj(op.left()), op.left());
-        o_.binary(o_.not_op(l), o_.not_op(t));
-        o_.binary(l, t);
+        if(pos_pol(op))
+          o_.binary(o_.not_op(l), o_.not_op(t));
+        if(neg_pol(op))
+          o_.binary(l, t);
         break;
       }
       case expression::op_type::Var:
