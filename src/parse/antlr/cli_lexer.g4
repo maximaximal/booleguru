@@ -7,7 +7,7 @@ lexer grammar cli_lexer;
 AND : '--and' | '\u2227' | '&';
 OR : '--or'| '/' | '\u2228' | '|';
 NOT : '!' | '~' ;
-XOR : '--xor';
+XOR : '--xor' | '^';
 LPAR : '(' | '--lpar';
 RPAR : ')' | '--rpar';
 IMPL : '--impl' | 'impl' | '->' ;

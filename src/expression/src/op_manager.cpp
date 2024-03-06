@@ -333,44 +333,6 @@ op_manager::mark_through_tree(op_manager::id root) {
   }
 }
 void
-op_manager::traverse_depth_first_through_tree(
-  op_manager::id root,
-  std::function<void(op_manager::id, const op&)>& visit) {
-  std::stack<op_manager::id> unvisited;
-  unvisited.push(root);
-
-  while(!unvisited.empty()) {
-    op_id id = unvisited.top();
-    const op& current = getobj(id);
-    unvisited.pop();
-
-    visit(id, current);
-
-    switch(current.type) {
-      case op_type::Exists:
-      case op_type::Forall:
-        unvisited.push(current.quant.e);
-        unvisited.push(current.quant.v);
-        break;
-      case op_type::Not:
-        unvisited.push(current.un.c);
-        break;
-      case op_type::And:
-      case op_type::Or:
-      case op_type::Equi:
-      case op_type::Impl:
-      case op_type::Lpmi:
-      case op_type::Xor:
-        unvisited.push(current.bin.r);
-        unvisited.push(current.bin.l);
-        break;
-      case op_type::Var:
-      case op_type::None:
-        break;
-    }
-  }
-}
-void
 op_manager::traverse_unmarked_depth_first_through_tree(
   op_manager::id root,
   std::function<void(op_manager::id, const op&)> visit) {
