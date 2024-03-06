@@ -1,6 +1,6 @@
-#include "booleguru/transform/tseitin.hpp"
 #include <booleguru/solve/sat.hpp>
 #include <booleguru/transform/output_to_qdimacs.hpp>
+#include <booleguru/transform/plaisted_greenbaum.hpp>
 #include <booleguru/util/file.hpp>
 
 #include <sstream>
@@ -254,7 +254,7 @@ sat::solve_with_solver(expression::op_ref& o, xcc_sat_solver& solver) {
       [&solver](int32_t l) { xcc_sat_solver_add(&solver, l); },
       false /* don't produce mappings */);
   } else {
-    // Re-use tseitin and the output stream provided here. Using non-standard
+    // Re-use plaisted_greenbaum and the output stream provided here. Using non-standard
     // APIs that make it more convenient.
     //
     // Inspired from https://stackoverflow.com/a/5253726
@@ -262,15 +262,15 @@ sat::solve_with_solver(expression::op_ref& o, xcc_sat_solver& solver) {
     int handle = fileno(solver.p.infd_handle);
     __gnu_cxx::stdio_filebuf<char> filebuf(handle, std::ios::out);
     std::ostream os(&filebuf);
-    transform::tseitin<transform::output_to_qdimacs> tseitin(os);
-    tseitin.mapping_comments(false);
-    tseitin(o);
+    transform::plaisted_greenbaum<transform::output_to_qdimacs> plaisted_greenbaum(os);
+    plaisted_greenbaum.mapping_comments(false);
+    plaisted_greenbaum(o);
 
-    solver.assignments = (char*)malloc(tseitin.variables() * sizeof(char) + 1);
-    solver.variables = tseitin.variables();
-    solver.clauses = tseitin.clauses();
+    solver.assignments = (char*)malloc(plaisted_greenbaum.variables() * sizeof(char) + 1);
+    solver.variables = plaisted_greenbaum.variables();
+    solver.clauses = plaisted_greenbaum.clauses();
 #else
-    throw(std::runtime_error("Cannot write non-cnf using tseitin transform and "
+    throw(std::runtime_error("Cannot write non-cnf using plaisted_greenbaum transform and "
                              "unsupported platform!"));
 #endif
   }
