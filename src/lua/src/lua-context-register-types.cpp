@@ -7,6 +7,7 @@
 #include <booleguru/lua/lua-context.hpp>
 
 #include <booleguru/transform/minimize_failing.hpp>
+#include <booleguru/transform/plaisted_greenbaum.hpp>
 #include <booleguru/transform/variable_extend.hpp>
 
 #include <booleguru/transform/eliminate_xor.hpp>
@@ -131,6 +132,9 @@ lua_context::register_booleguru_types() {
   set_to_state(s, "rename", "rename", &helpers::rename_vararg);
   set_to_state(s, "tseitin", "tseitin", [this]() {
     return transform::tseitin<transform::output_to_op>(*ops_);
+  }());
+  set_to_state(s, "plaisted_greenbaum", "plaisted-greenbaum", [this]() {
+    return transform::plaisted_greenbaum<transform::output_to_op>(*ops_);
   }());
 
   BIND_PRENEX(Eup_Aup, "Eup-up")

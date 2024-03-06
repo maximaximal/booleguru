@@ -12,7 +12,7 @@
 #include <booleguru/util/type.hpp>
 
 #include <booleguru/transform/output_to_qdimacs.hpp>
-#include <booleguru/transform/tseitin.hpp>
+#include <booleguru/transform/plaisted_greenbaum.hpp>
 
 #include <booleguru/cli/cli-processor.hpp>
 
@@ -153,7 +153,7 @@ main(int argc, const char* argv[]) {
         transform::output_to_qdimacs o(std::cout);
         o.serialize_cnf_op(result);
       } else {
-        transform::tseitin<transform::output_to_qdimacs> qdimacs(std::cout);
+        transform::plaisted_greenbaum<transform::output_to_qdimacs> qdimacs(std::cout);
         qdimacs(result);
       }
       return EXIT_SUCCESS;

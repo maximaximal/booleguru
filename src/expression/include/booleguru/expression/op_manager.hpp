@@ -52,9 +52,51 @@ class op_manager : public manager<op_ref, op_manager> {
   void modify_ops(modifier&& mod);
   void unmark();
   void mark_through_tree(id);
-  void traverse_depth_first_through_tree(
-    id root,
-    std::function<void(id, const op&)>& visit);
+
+  template<typename F>
+  inline void traverse_depth_first_through_tree(id root, F visit) {
+    std::stack<op_manager::id> unvisited;
+    unvisited.push(root);
+
+    while(!unvisited.empty()) {
+      op_id id = unvisited.top();
+      const op& current = getobj(id);
+      unvisited.pop();
+
+      visit(id, current);
+
+      switch(current.type) {
+        case op_type::Exists:
+          [[fallthrough]];
+        case op_type::Forall:
+          unvisited.push(current.quant.e);
+          unvisited.push(current.quant.v);
+          break;
+        case op_type::Not:
+          unvisited.push(current.un.c);
+          break;
+        case op_type::And:
+          [[fallthrough]];
+        case op_type::Or:
+          [[fallthrough]];
+        case op_type::Equi:
+          [[fallthrough]];
+        case op_type::Impl:
+          [[fallthrough]];
+        case op_type::Lpmi:
+          [[fallthrough]];
+        case op_type::Xor:
+          unvisited.push(current.bin.r);
+          unvisited.push(current.bin.l);
+          break;
+        case op_type::Var:
+          [[fallthrough]];
+        case op_type::None:
+          break;
+      }
+    }
+  }
+
   void traverse_unmarked_depth_first_through_tree(
     id root,
     std::function<void(id, const op&)> visit);

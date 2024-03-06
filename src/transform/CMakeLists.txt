@@ -11,6 +11,7 @@ set(SRCS
   src/minimize_failing.cpp
   src/polarity_extractor.cpp
   src/tseitin.cpp
+  src/plaisted_greenbaum.cpp
   src/cnf.cpp
 )
 

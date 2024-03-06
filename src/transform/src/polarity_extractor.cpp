@@ -12,49 +12,13 @@ polarity_extractor::~polarity_extractor() = default;
 
 void
 polarity_extractor::reset_user_4_5(expression::op_ref o) {
-  std::stack<expression::op_id> s;
-  s.push(o.get_id());
-
   expression::op_manager& mgr = o.get_mgr();
-
-  using enum expression::op_type;
-
-  while(!s.empty()) {
-    const expression::op& op = mgr.getobj(s.top());
-    s.pop();
-
-    op.user_flag4 = false;
-    op.user_flag5 = false;
-
-    switch(op.type) {
-      case None:
-        assert(false);
-        break;
-      case Exists:
-        [[fallthrough]];
-      case Forall:
-        [[fallthrough]];
-      case Equi:
-        [[fallthrough]];
-      case Impl:
-        [[fallthrough]];
-      case Lpmi:
-        [[fallthrough]];
-      case Or:
-        [[fallthrough]];
-      case And:
-        [[fallthrough]];
-      case Xor:
-        s.emplace(op.left());
-        s.emplace(op.right());
-        break;
-      case Not:
-        s.emplace(op.left());
-        break;
-      case Var:
-        break;
-    }
-  }
+  mgr.traverse_depth_first_through_tree(
+    o.get_id(), [](expression::op_id id, const expression::op& op) {
+      (void)id;
+      op.user_flag4 = false;
+      op.user_flag5 = false;
+    });
 }
 
 expression::op_ref
