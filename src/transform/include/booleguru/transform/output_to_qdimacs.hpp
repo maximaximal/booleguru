@@ -260,8 +260,11 @@ class output_to_qdimacs {
         }
       } else if(o->type == Or) {
         print_or_tree(ops, i, inner_s, a);
+      } else if(o->type == Var) {
+	a(o->user_int32);
+	a(0);
       } else {
-        assert(false);
+	assert(false);
       }
     }
   }
