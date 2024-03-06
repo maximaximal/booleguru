@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.13)
 cmake_policy(SET CMP0048 NEW)
 cmake_policy(SET CMP0079 NEW)
 project(booleguru
-  VERSION 0.5.0)
+  VERSION 0.6.0)
 
 add_compile_definitions(BOOLEGURU_VERSION="${CMAKE_PROJECT_VERSION}")
 

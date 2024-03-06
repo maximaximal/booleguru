@@ -58,7 +58,7 @@ print_help() {
   cout << "\n";
   cout << "SUPPORTED OUTPUT FORMATS (as [output-args]):\n";
   cout << "  --boole\n";
-  cout << "  --dimacs, --qdimacs\n";
+  cout << "  --dimacs, --qdimacs (use plaisted-greenbaum automatically)\n";
   cout << "  --qcir\n";
   cout << "  --smtlib\n";
   cout << "\n";
@@ -73,6 +73,7 @@ print_help() {
   cout << "  :prefixtract\n";
   cout << "  :quantblocks\n";
   cout << "  :tseitin\n";
+  cout << "  :plaisted-greenbaum\n";
   cout << "  :eliminate-implication\n";
   cout << "  :eliminate-equivalence\n";
   cout << "  :eliminate-xor\n";
