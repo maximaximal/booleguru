@@ -11,11 +11,12 @@ polarity_extractor::polarity_extractor() = default;
 polarity_extractor::~polarity_extractor() = default;
 
 void
-polarity_extractor::reset_user_4_5(expression::op_ref o) {
+polarity_extractor::reset_user_4_5_mark(expression::op_ref o) {
   expression::op_manager& mgr = o.get_mgr();
   mgr.traverse_depth_first_through_tree(
     o.get_id(), [](expression::op_id id, const expression::op& op) {
       (void)id;
+      op.mark = false;
       op.user_flag4 = false;
       op.user_flag5 = false;
     });
@@ -37,6 +38,7 @@ polarity_extractor::operator()(expression::op_ref o) {
 
     op.user_flag4 |= nots % 2 == 0;
     op.user_flag5 |= nots % 2 == 1;
+    op.mark = true;
 
     switch(op.type) {
       case None:

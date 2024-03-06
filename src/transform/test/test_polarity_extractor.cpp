@@ -20,7 +20,7 @@ TEST_CASE("Extract polarities of a simple expression 1") {
 
   a->user_flag4 = true;
 
-  ex.reset_user_4_5(f);
+  ex.reset_user_4_5_mark(f);
 
   REQUIRE_FALSE(a->user_flag4);
   REQUIRE_FALSE(a->user_flag5);
@@ -50,7 +50,7 @@ TEST_CASE("Extract polarities of a simple expression 2") {
   
   polarity_extractor ex;
 
-  ex.reset_user_4_5(f);
+  ex.reset_user_4_5_mark(f);
 
   ex(f);
 

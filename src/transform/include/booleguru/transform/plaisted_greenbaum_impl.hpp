@@ -94,7 +94,7 @@ plaisted_greenbaum<O>::operator()(expression::op_ref o) {
 
   {
     polarity_extractor pe;
-    pe.reset_user_4_5(o);
+    pe.reset_user_4_5_mark(o);
     pe(o);
   }
 
@@ -103,11 +103,6 @@ plaisted_greenbaum<O>::operator()(expression::op_ref o) {
     throw std::invalid_argument("Op is required to be in prenex form for "
                                 "plaisted greenbaum transformation!");
   }
-
-  // Mark all nodes that can be reached from the given node, so the next
-  // algorithm can work without recursion.
-  mgr.unmark();
-  mgr.mark_through_tree(o.get_id());
 
   // int32_t means that references actually map to literals in a solver call /
   // QDIMACS output. This also requires the problem to be initiated.
