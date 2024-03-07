@@ -1,7 +1,18 @@
 image: gitlab.sai.jku.at:5050/booleguru/builder/image:latest
 
 stages:
+  - package
   - deploy
+
+debian-package-job:
+  stage: package
+  script:
+    - mkdir -p build-release
+    - cmake -Bbuild-release -S. -DCMAKE_BUILD_TYPE=Release
+    - make -Cbuild
+    - cpack -Bbuild-release -G DEB
+  artifacts:
+    - *.deb
 
 pages:
   stage: deploy
