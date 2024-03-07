@@ -10,7 +10,7 @@ debian-package-job:
     - mkdir -p build-release
     - cmake -Bbuild-release -S. -DCMAKE_BUILD_TYPE=Release
     - make -Cbuild-release -j4
-    - cpack -Bbuild-release -G DEB
+    - cd build-release && cpack -G DEB
   artifacts:
     paths:
       - "*.deb"
