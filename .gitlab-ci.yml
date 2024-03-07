@@ -13,7 +13,7 @@ debian-package-job:
     - cd build-release && cpack -G DEB
   artifacts:
     paths:
-      - "*.deb"
+      - "build-release/*.deb"
 
 pages:
   stage: deploy
