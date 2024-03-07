@@ -9,7 +9,7 @@ debian-package-job:
   script:
     - mkdir -p build-release
     - cmake -Bbuild-release -S. -DCMAKE_BUILD_TYPE=Release
-    - make -Cbuild -j4
+    - make -Cbuild-release -j4
     - cpack -Bbuild-release -G DEB
   artifacts:
     paths:
