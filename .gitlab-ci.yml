@@ -9,10 +9,11 @@ debian-package-job:
   script:
     - mkdir -p build-release
     - cmake -Bbuild-release -S. -DCMAKE_BUILD_TYPE=Release
-    - make -Cbuild
+    - make -Cbuild -j4
     - cpack -Bbuild-release -G DEB
   artifacts:
-    - *.deb
+    paths:
+      - "*.deb"
 
 pages:
   stage: deploy
