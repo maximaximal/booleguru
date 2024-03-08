@@ -174,9 +174,14 @@ plaisted_greenbaum<O>::operator()(expression::op_ref o) {
   uint32_t bottom_id = 0;
 
   for(size_t i = 0; i < mgr.size(); ++i) {
+    const id t = [&mgr, i, this]() {
+      auto& e = mgr.objects()[i];
+      const expression::op& op = e.first;
+      return o_.op_ref_to_ref(op, e.second);
+    }();
+
     auto& e = mgr.objects()[i];
     const expression::op& op = e.first;
-    id t = o_.op_ref_to_ref(op, e.second);
 
     if(!op.mark)
       continue;
