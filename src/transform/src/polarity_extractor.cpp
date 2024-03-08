@@ -12,14 +12,11 @@ polarity_extractor::~polarity_extractor() = default;
 
 void
 polarity_extractor::reset_user_4_5_mark(expression::op_ref o) {
-  expression::op_manager& mgr = o.get_mgr();
-  mgr.traverse_depth_first_through_tree(
-    o.get_id(), [](expression::op_id id, const expression::op& op) {
-      (void)id;
-      op.mark = false;
-      op.user_flag4 = false;
-      op.user_flag5 = false;
-    });
+  for(auto& op : o.get_mgr().objects()) {
+    op.first.mark = false;
+    op.first.user_flag4 = false;
+    op.first.user_flag5 = false;
+  }
 }
 
 expression::op_ref
