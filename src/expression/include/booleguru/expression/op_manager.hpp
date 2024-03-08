@@ -101,6 +101,7 @@ class op_manager : public manager<op_ref, op_manager> {
     id root,
     std::function<void(id, const op&)> visit);
   void reset_op_user_vars();
+  void reset_op_user_vars_and_mark();
 
   /** @brief Traverse the expression tree in postorder and provide a facility to
    * return a changed tree.
