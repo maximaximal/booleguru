@@ -12,6 +12,10 @@ struct distribute_nots : public visitor<distribute_nots> {
       return (*this)(!l(child)) && (*this)(!r(child));
     } else if(child->type == op_type::Not) {
       return c(child);
+    } else if(child->type == op_type::Forall) {
+      return e.get_mgr().get(op(op_type::Exists, child->left(), ((*this)(!child.right())).get_id()));
+    } else if(child->type == op_type::Exists) {
+      return e.get_mgr().get(op(op_type::Forall, child->left(), ((*this)(!child.right())).get_id()));
     } else {
       return e.get_mgr().get(op(op_type::Not, e->un.c, 0));
     }
