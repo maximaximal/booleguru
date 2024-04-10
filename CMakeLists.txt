@@ -101,53 +101,55 @@ else()
     endif()
 endif()
 
-set(CMAKE_C_FLAGS_SANITIZE
-    "${CMAKE_C_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer -fsanitize=undefined" CACHE STRING
-    "Flags used by the C compiler for Sanitize build type or configuration." FORCE)
+if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "OpenBSD")
+    set(CMAKE_C_FLAGS_SANITIZE
+        "${CMAKE_C_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer -fsanitize=undefined" CACHE STRING
+        "Flags used by the C compiler for Sanitize build type or configuration." FORCE)
 
-set(CMAKE_CXX_FLAGS_SANITIZE
-    "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer -fsanitize=undefined" CACHE STRING
-    "Flags used by the C++ compiler for Sanitize build type or configuration." FORCE)
+    set(CMAKE_CXX_FLAGS_SANITIZE
+        "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer -fsanitize=undefined" CACHE STRING
+        "Flags used by the C++ compiler for Sanitize build type or configuration." FORCE)
 
-set(CMAKE_EXE_LINKER_FLAGS_SANITIZE
-    "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -fsanitize=address -fsanitize=undefined" CACHE STRING
-    "Linker flags to be used to create executables for Sanitize build type." FORCE)
+    set(CMAKE_EXE_LINKER_FLAGS_SANITIZE
+        "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -fsanitize=address -fsanitize=undefined" CACHE STRING
+        "Linker flags to be used to create executables for Sanitize build type." FORCE)
 
-set(CMAKE_SHARED_LINKER_FLAGS_SANITIZE
-    "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -fsanitize=address -fsanitize=undefined" CACHE STRING
-    "Linker lags to be used to create shared libraries for Sanitize build type." FORCE)
+    set(CMAKE_SHARED_LINKER_FLAGS_SANITIZE
+        "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -fsanitize=address -fsanitize=undefined" CACHE STRING
+        "Linker lags to be used to create shared libraries for Sanitize build type." FORCE)
 
-set(CMAKE_C_FLAGS_FUZZ
-    "${CMAKE_C_FLAGS_DEBUG} -fsanitize=address -O2 -fno-omit-frame-pointer -fsanitize=undefined" CACHE STRING
-    "Flags used by the C compiler for Sanitize build type or configuration." FORCE)
+    set(CMAKE_C_FLAGS_FUZZ
+        "${CMAKE_C_FLAGS_DEBUG} -fsanitize=address -O2 -fno-omit-frame-pointer -fsanitize=undefined" CACHE STRING
+        "Flags used by the C compiler for Sanitize build type or configuration." FORCE)
 
-set(CMAKE_CXX_FLAGS_FUZZ
-    "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address -O2 -fno-omit-frame-pointer -fsanitize=undefined" CACHE STRING
-    "Flags used by the C++ compiler for Sanitize build type or configuration." FORCE)
+    set(CMAKE_CXX_FLAGS_FUZZ
+        "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address -O2 -fno-omit-frame-pointer -fsanitize=undefined" CACHE STRING
+        "Flags used by the C++ compiler for Sanitize build type or configuration." FORCE)
 
-set(CMAKE_EXE_LINKER_FLAGS_FUZZ
-    "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -fsanitize=address -O2 -fsanitize=undefined" CACHE STRING
-    "Linker flags to be used to create executables for Sanitize build type." FORCE)
+    set(CMAKE_EXE_LINKER_FLAGS_FUZZ
+        "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -fsanitize=address -O2 -fsanitize=undefined" CACHE STRING
+        "Linker flags to be used to create executables for Sanitize build type." FORCE)
 
-set(CMAKE_SHARED_LINKER_FLAGS_FUZZ
-    "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -fsanitize=address -O2 -fsanitize=undefined" CACHE STRING
-    "Linker lags to be used to create shared libraries for Sanitize build type." FORCE)
+    set(CMAKE_SHARED_LINKER_FLAGS_FUZZ
+        "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -fsanitize=address -O2 -fsanitize=undefined" CACHE STRING
+        "Linker lags to be used to create shared libraries for Sanitize build type." FORCE)
 
-set(CMAKE_C_FLAGS_FUZZDEBUG
-    "${CMAKE_C_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer -fsanitize=undefined" CACHE STRING
-    "Flags used by the C compiler for Sanitize build type or configuration." FORCE)
+    set(CMAKE_C_FLAGS_FUZZDEBUG
+        "${CMAKE_C_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer -fsanitize=undefined" CACHE STRING
+        "Flags used by the C compiler for Sanitize build type or configuration." FORCE)
 
-set(CMAKE_CXX_FLAGS_FUZZDEBUG
-    "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer -fsanitize=undefined" CACHE STRING
-    "Flags used by the C++ compiler for Sanitize build type or configuration." FORCE)
+    set(CMAKE_CXX_FLAGS_FUZZDEBUG
+        "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer -fsanitize=undefined" CACHE STRING
+        "Flags used by the C++ compiler for Sanitize build type or configuration." FORCE)
 
-set(CMAKE_EXE_LINKER_FLAGS_FUZZDEBUG
-    "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -fsanitize=address -fsanitize=undefined" CACHE STRING
-    "Linker flags to be used to create executables for Sanitize build type." FORCE)
+    set(CMAKE_EXE_LINKER_FLAGS_FUZZDEBUG
+        "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -fsanitize=address -fsanitize=undefined" CACHE STRING
+        "Linker flags to be used to create executables for Sanitize build type." FORCE)
 
-set(CMAKE_SHARED_LINKER_FLAGS_FUZZDEBUG
-    "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -fsanitize=address -fsanitize=undefined" CACHE STRING
-    "Linker lags to be used to create shared libraries for Sanitize build type." FORCE)
+    set(CMAKE_SHARED_LINKER_FLAGS_FUZZDEBUG
+        "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -fsanitize=address -fsanitize=undefined" CACHE STRING
+        "Linker lags to be used to create shared libraries for Sanitize build type." FORCE)
+endif()
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
@@ -212,7 +214,7 @@ if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
   endif()
 endif()
 
-if(${CMAKE_BUILD_TYPE} MATCHES "Fuzz" OR ${CMAKE_BUILD_TYPE} MATCHES "FuzzDebug")
+if((${CMAKE_BUILD_TYPE} MATCHES "Fuzz" OR ${CMAKE_BUILD_TYPE} MATCHES "FuzzDebug") AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "OpenBSD")
   target_compile_options(antlr4_static PRIVATE -fsanitize=fuzzer,address,undefined)
   target_compile_options(booleguru-expression PRIVATE -fsanitize=fuzzer,address,undefined)
   target_compile_options(booleguru-transform PRIVATE -fsanitize=fuzzer,address,undefined)
