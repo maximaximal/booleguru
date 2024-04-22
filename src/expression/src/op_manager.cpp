@@ -17,7 +17,9 @@ op_ref::to_string() const {
 
 inline constexpr static bool
 parens_required(op_type p, op_type c) {
-  return static_cast<size_t>(p) > static_cast<size_t>(c);
+  return (p == op_type::Equi && c == op_type::Equi)
+         || (p == op_type::Xor && c == op_type::Xor)
+         || static_cast<size_t>(p) > static_cast<size_t>(c);
 }
 
 template<typename T>
@@ -293,7 +295,7 @@ op_manager::reset_op_user_vars() {
     op.first.user_int32 = 0;
   }
 }
-  
+
 void
 op_manager::reset_op_user_vars_and_mark() {
   for(auto& op : objects()) {
