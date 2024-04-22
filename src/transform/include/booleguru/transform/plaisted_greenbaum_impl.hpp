@@ -35,7 +35,7 @@ compute_number_of_clauses_and_variables_in_marked_pg(
       case expression::op_type::Equi:
         [[fallthrough]];
       case expression::op_type::Xor:
-        num_clauses += 4;
+        num_clauses += (pos_pol(op) ? 2 : 0) + (neg_pol(op) ? 2 : 0);
         ++num_variables;
         op.user_int32 = num_variables;
         break;
@@ -190,21 +190,21 @@ plaisted_greenbaum<O>::operator()(expression::op_ref o) {
       case expression::op_type::Equi: {
         id l = o_.op_ref_to_ref(mgr.getobj(op.left()), op.left());
         id r = o_.op_ref_to_ref(mgr.getobj(op.right()), op.right());
-	// Equi plaisted-greenbaum deactivated for the time being
-	// because of model inconsistencies.
-        o_.ternary(o_.not_op(t), o_.not_op(l), r),
-          o_.ternary(o_.not_op(t), l, o_.not_op(r));
-        o_.ternary(t, o_.not_op(l), o_.not_op(r)), o_.ternary(t, l, r);
+        if(pos_pol(op))
+          o_.ternary(o_.not_op(t), o_.not_op(l), r),
+            o_.ternary(o_.not_op(t), l, o_.not_op(r));
+        if(neg_pol(op))
+          o_.ternary(t, o_.not_op(l), o_.not_op(r)), o_.ternary(t, l, r);
         break;
       }
       case expression::op_type::Xor: {
         id l = o_.op_ref_to_ref(mgr.getobj(op.left()), op.left());
         id r = o_.op_ref_to_ref(mgr.getobj(op.right()), op.right());
-	// Xor plaisted-greenbaum deactivated for the time being
-	// because of model inconsistencies.
-        o_.ternary(o_.not_op(t), l, r),
-          o_.ternary(o_.not_op(t), o_.not_op(l), o_.not_op(r));
-        o_.ternary(t, o_.not_op(l), r), o_.ternary(t, l, o_.not_op(r));
+        if(pos_pol(op))
+          o_.ternary(o_.not_op(t), l, r),
+            o_.ternary(o_.not_op(t), o_.not_op(l), o_.not_op(r));
+        if(neg_pol(op))
+          o_.ternary(t, o_.not_op(l), r), o_.ternary(t, l, o_.not_op(r));
         break;
       }
       case expression::op_type::Or: {

@@ -44,17 +44,21 @@ polarity_extractor::operator()(expression::op_ref o) {
       case Equi:
         [[fallthrough]];
       case Xor:
+	// While this traversal is inefficient, this is a quick fix
+	// for issues with Plaisted-Greenbaum.
+        s.emplace(std::make_pair(op.left(), nots));
         s.emplace(std::make_pair(op.left(), nots + 1));
+        s.emplace(std::make_pair(op.right(), nots));
         s.emplace(std::make_pair(op.right(), nots + 1));
-	break;
+        break;
       case Impl:
         s.emplace(std::make_pair(op.left(), nots + 1));
         s.emplace(std::make_pair(op.right(), nots));
-	break;
+        break;
       case Lpmi:
         s.emplace(std::make_pair(op.left(), nots));
         s.emplace(std::make_pair(op.right(), nots + 1));
-	break;
+        break;
       case Exists:
         [[fallthrough]];
       case Forall:
