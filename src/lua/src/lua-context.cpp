@@ -6,6 +6,7 @@
 #include <fmt/format.h>
 
 #include <booleguru/lua/lua-context.hpp>
+#include <booleguru/util/str_replace.hpp>
 
 #include <booleguru/expression/literals.hpp>
 #include <booleguru/expression/op_manager.hpp>
@@ -39,7 +40,17 @@ prepare_state(sol::state& s) {
 
     if(name.ends_with("_lua")) {
       name.remove_suffix(4);
-      s.require_script(std::string(name), data);
+      std::string n = std::string(name);
+      s.require_script(n, data);
+      if(n.find("_") != std::string::npos) {
+	// Return the same script as above using an additional
+	// require. It will be resolved dynamically if needed, but the
+	// Lua state does not have to duplicate all of the scripts
+	// from before.
+        booleguru::util::str_replace(n, "_", "-");
+        s.require_script(
+          n, std::string("return require(\"") + std::string(name) + "\")");
+      }
       continue;
     }
   }
