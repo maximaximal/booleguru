@@ -6,7 +6,7 @@ lexer grammar cli_lexer;
 
 AND : '--and' | '\u2227' | '&';
 OR : '--or'| '/' | '\u2228' | '|';
-NOT : '!' | '~' ;
+NOT : '--not' | '!' | '~';
 XOR : '--xor' | '^';
 LPAR : '(' | '--lpar';
 RPAR : ')' | '--rpar';
