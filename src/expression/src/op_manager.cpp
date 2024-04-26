@@ -309,18 +309,6 @@ op_manager::reset_op_user_vars_and_mark() {
 }
 
 void
-op_manager::reset_op_user_vars_and_mark() {
-  for(auto& op : objects()) {
-    op.first.mark = false;
-    op.first.user_flag3 = false;
-    op.first.user_flag4 = false;
-    op.first.user_flag5 = false;
-    op.first.user_int16 = 0;
-    op.first.user_int32 = 0;
-  }
-}
-
-void
 op_manager::mark_through_tree(op_manager::id root) {
   std::stack<op_manager::id> unvisited;
   unvisited.push(root);
