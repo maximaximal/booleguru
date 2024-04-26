@@ -17,7 +17,6 @@
 #include <unordered_map>
 
 #include <fmt/format.h>
-#include <fmt/ranges.h>
 
 using namespace booleguru::expression;
 
