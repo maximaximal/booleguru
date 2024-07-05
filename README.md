@@ -4,11 +4,12 @@ Booleguru is a propositional polyglot! It provides a framework for
 efficiently working with logical formulas that may contain
 quantifiers.
 
+  - Presentation at IJCAR'24 in Nancy
+    ([Slides](https://general-public-talks.pages.sai.jku.at/ijcar-2024/),
   - Presentation at the MBMV'23 in Freiburg
     ([Presentation](http://maximaximal.pages.sai.jku.at/mbmv23/),
     [Workshop
     Website](https://cca.informatik.uni-freiburg.de/mbmv23/)).
-
   - [Documentation](https://booleguru.pages.sai.jku.at/booleguru/).
 
 ## Structure
@@ -55,3 +56,26 @@ enables users to generate more complex formulas.
 ## License
 
 MIT-License
+
+## Citing
+
+Please cite us when you use our tool for conversions or as a library! We are
+happy to hear about your use-cases. :)
+
+```
+@InProceedings{10.1007/978-3-031-63498-7_19,
+author="Heisinger, Maximilian
+and Heisinger, Simone
+and Seidl, Martina",
+editor="Benzm{\"u}ller, Christoph
+and Heule, Marijn J.H.
+and Schmidt, Renate A.",
+title="Booleguru, the Propositional Polyglot (Short Paper)",
+booktitle="Automated Reasoning",
+year="2024",
+publisher="Springer Nature Switzerland",
+address="Cham",
+pages="315--324",
+isbn="978-3-031-63498-7"
+}
+```
