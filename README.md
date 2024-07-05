@@ -5,7 +5,7 @@ efficiently working with logical formulas that may contain
 quantifiers.
 
   - Presentation at IJCAR'24 in Nancy
-    ([Slides](https://general-public-talks.pages.sai.jku.at/ijcar-2024/),
+    [Slides](https://general-public-talks.pages.sai.jku.at/ijcar-2024/)
   - Presentation at the MBMV'23 in Freiburg
     ([Presentation](http://maximaximal.pages.sai.jku.at/mbmv23/),
     [Workshop
