@@ -394,6 +394,14 @@ sat::solve_resultmap(expression::op_ref o) {
       switch(op.type) {
         case Or:
           [[fallthrough]];
+        case Equi:
+          [[fallthrough]];
+        case Impl:
+          [[fallthrough]];
+        case Lpmi:
+          [[fallthrough]];
+        case Xor:
+          [[fallthrough]];
         case And:
           s.emplace(op.bin.l);
           s.emplace(op.bin.r);
