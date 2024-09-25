@@ -22,6 +22,9 @@ antlr_target(cli_parser ${CMAKE_CURRENT_SOURCE_DIR}/antlr/cli_parser.g4 PARSER
   DEPENDS_ANTLR cli_lexer
   COMPILE_FLAGS -lib ${ANTLR_cli_lexer_OUTPUT_DIR})
 
+antlr_target(uvl_parser ${CMAKE_CURRENT_SOURCE_DIR}/antlr/uvl_parser.g4
+  PACKAGE booleguru::parse::antlr)
+
 add_library(booleguru-parse-antlr OBJECT
   ${ANTLR_boole_lexer_CXX_OUTPUTS}
   ${ANTLR_boole_parser_CXX_OUTPUTS}
@@ -31,6 +34,7 @@ add_library(booleguru-parse-antlr OBJECT
   ${ANTLR_qcir_parser_CXX_OUTPUTS}
   ${ANTLR_cli_lexer_CXX_OUTPUTS}
   ${ANTLR_cli_parser_CXX_OUTPUTS}
+  ${ANTLR_uvl_parser_CXX_OUTPUTS}
 )
 
 target_link_libraries(booleguru-parse-antlr PRIVATE fmt)
@@ -49,6 +53,7 @@ set(SRCS
   src/aiger.cpp
   src/smtlib2.cpp
   src/luascript.cpp
+  src/uvl.cpp
   src/cli.cpp
   src/let_map.cpp
 )
@@ -72,6 +77,7 @@ target_include_directories(booleguru-parse PRIVATE SYSTEM ${ANTLR_qcir_lexer_OUT
 target_include_directories(booleguru-parse PRIVATE SYSTEM ${ANTLR_qcir_parser_OUTPUT_DIR})
 target_include_directories(booleguru-parse PRIVATE SYSTEM ${ANTLR_cli_lexer_OUTPUT_DIR})
 target_include_directories(booleguru-parse PRIVATE SYSTEM ${ANTLR_cli_parser_OUTPUT_DIR})
+target_include_directories(booleguru-parse PRIVATE SYSTEM ${ANTLR_uvl_parser_OUTPUT_DIR})
 
 target_include_directories(booleguru-parse PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
