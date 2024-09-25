@@ -206,8 +206,31 @@ class op_manager : public manager<op_ref, op_manager> {
   }
 
   // Some shorthands that come in handy when working purely with IDs.
+  id encode_conjunct(id l, id r) {
+    if(l && r) {
+      return encode_and(l, r);
+    } else if(l) {
+      return l;
+    } else if(r) {
+      return r;
+    }
+    return 0;
+  }
+  id encode_disjunct(id l, id r) {
+    if(l && r) {
+      return encode_or(l, r);
+    } else if(l) {
+      return l;
+    } else if(r) {
+      return r;
+    }
+    return 0;
+  }
+  id encode_not(id l) { return get_id(op(op_type::Not, l)); }
   id encode_and(id l, id r) { return get_id(op(op_type::And, l, r)); }
   id encode_or(id l, id r) { return get_id(op(op_type::Or, l, r)); }
+  id encode_equi(id l, id r) { return get_id(op(op_type::Equi, l, r)); }
+  id encode_impl(id l, id r) { return get_id(op(op_type::Impl, l, r)); }
   id encode_xor(id l, id r) {
     id not_l = get_id(op(op_type::Not, l, 0));
     id not_r = get_id(op(op_type::Not, r, 0));

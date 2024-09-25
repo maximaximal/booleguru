@@ -14,6 +14,7 @@
 #include <booleguru/expression/var_manager.hpp>
 #include <booleguru/parse/base.hpp>
 #include <booleguru/parse/boole.hpp>
+#include <booleguru/parse/uvl.hpp>
 #include <booleguru/parse/luascript.hpp>
 #include <booleguru/parse/qcir.hpp>
 #include <booleguru/parse/qdimacs.hpp>
@@ -176,6 +177,8 @@ input_file::produce_parser(std::istream& is) {
     type_ = aiger;
   } else if(name_.ends_with(".py")) {
     type_ = py;
+  } else if(name_.ends_with(".uvl")) {
+    type_ = uvl;
   } else if(name_.ends_with(".lua")) {
     type_ = lua;
   }
@@ -205,6 +208,12 @@ input_file::produce_parser(std::istream& is) {
       }
       boole->eval(eval_);
       return boole;
+    }
+    case uvl: {
+      is >> std::noskipws;
+      auto uvl
+        = std::make_unique<parse::uvl>(is, ops_->vars_ptr(), ops_, lua_);
+      return uvl;
     }
     case lua: {
       is >> std::noskipws;
