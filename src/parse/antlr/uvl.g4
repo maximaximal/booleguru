@@ -174,12 +174,12 @@ imports: 'imports' NEWLINE INDENT importLine* DEDENT;
 importLine: ns=reference ('as' alias=reference)? NEWLINE;
 
 features returns [op_id o]
-  : 'features' NEWLINE INDENT f=feature { $o = $f.o; } DEDENT;
+  : 'features' NEWLINE INDENT f=feature[true] { $o = $f.o; } DEDENT;
 
-feature returns [op_id o]
+feature [ bool root ] returns [op_id o]
   : featureType? r=reference { op_id var = $r.o; $o = $r.o; }
     featureCardinality? attributes? NEWLINE
-    (INDENT g=group[var] { $o = $g.o; } ( g_=group[var] { $o = ops->encode_and($o, $g_.o); } )* DEDENT)?;
+    (INDENT g=group[var] { if(root) {$o = ops->encode_and($o, $g.o);} else {$o = $g.o;} } ( g_=group[var] { $o = ops->encode_and($o, $g_.o); } )* DEDENT)?;
 
 group [ op_id f ] returns [ op_id o ]
     : ORGROUP g=groupSpec[std::make_shared<uvl_subfeature_or>(ops, f)] { $o = $g.o; }          # OrGroup
@@ -190,7 +190,7 @@ group [ op_id f ] returns [ op_id o ]
     ;
 
 groupSpec [ std::shared_ptr<uvl_subfeature> s ] returns [ op_id o ]
-  : NEWLINE INDENT (f=feature {$s->add($f.o);})+ {$o = $s->finalize();} DEDENT;
+  : NEWLINE INDENT (f=feature[false] {$s->add($f.o);})+ {$o = $s->finalize();} DEDENT;
 
 featureCardinality: 'cardinality' CARDINALITY;
 
