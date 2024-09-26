@@ -1,3 +1,4 @@
+#include "booleguru/expression/op.hpp"
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
@@ -6,6 +7,7 @@
 #include <booleguru/lua/binding-helpers.hpp>
 #include <booleguru/lua/lua-context.hpp>
 
+#include <booleguru/transform/and_op_on_matching.hpp>
 #include <booleguru/transform/minimize_failing.hpp>
 #include <booleguru/transform/plaisted_greenbaum.hpp>
 #include <booleguru/transform/quantify.hpp>
@@ -106,11 +108,11 @@ lua_context::register_booleguru_types() {
   set_to_state(s,
                "universally_quantify",
                "universally-quantify",
-               &transform_op<transform::quantify, op_type::Forall>);
+               &quantify_op<transform::quantify, op_type::Forall>);
   set_to_state(s,
                "existentially_quantify",
                "existentially-quantify",
-               &transform_op<transform::quantify, op_type::Exists>);
+               &quantify_op<transform::quantify, op_type::Exists>);
 
   set_to_state(s,
                "eliminate_equivalence",
@@ -194,6 +196,33 @@ lua_context::register_booleguru_types() {
     sol::overload(&helpers::solve_sat_default_args, &solve_sat_variadic));
 
   set_to_state(s, "prefix_vars", "prefix-vars", &helpers::prefix_variables);
+  set_to_state(s, "suffix_vars", "suffix-vars", &helpers::suffix_variables);
+
+  set_to_state(
+    s, "vars_set_i", "vars-set-i", [](op_ref o, const std::string& a) {
+      return helpers::variables_set_i(o, std::atoi(a.c_str()));
+    });
+  set_to_state(
+    s, "vars_set_q", "vars-set-q", [](op_ref o, const std::string& a) {
+      return helpers::variables_set_q(o, std::atoi(a.c_str()));
+    });
+
+  set_to_state(s,
+               "and_op_on_matching",
+               "and-op-on-matching",
+               [](op_ref o,
+                  const std::string& a,
+                  const std::string& q1,
+                  const std::string& q2,
+                  const std::string& i1,
+                  const std::string& i2) {
+                 return transform::and_op_on_matching(
+                   expression::str_to_op_type(a.c_str()),
+                   std::atoi(q1.c_str()),
+                   std::atoi(q2.c_str()),
+                   std::atoi(i1.c_str()),
+                   std::atoi(i2.c_str()))(o);
+               });
 
   using namespace booleguru::transform;
   auto reftype = s.new_usertype<op_ref>(

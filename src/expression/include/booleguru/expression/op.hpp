@@ -41,6 +41,8 @@ const char*
 op_type_to_str(op_type t);
 const char*
 op_type_to_sym(op_type t);
+op_type
+str_to_op_type(const char*);
 
 struct op {
   op_type type : 8;

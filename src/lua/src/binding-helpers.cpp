@@ -1,4 +1,6 @@
 #include "booleguru/transform/variable_extend.hpp"
+#include "booleguru/transform/variable_set_i.hpp"
+#include "booleguru/transform/variable_set_q.hpp"
 #include <booleguru/lua/binding-helpers.hpp>
 #include <booleguru/transform/tseitin.hpp>
 #include <booleguru/util/istringviewstream.hpp>
@@ -128,6 +130,21 @@ rename_map(expression::op_ref& r,
 expression::op_ref
 prefix_variables(expression::op_ref& r, const std::string& prefix) {
   return transform::variable_extend(prefix, "")(r);
+}
+
+expression::op_ref
+suffix_variables(expression::op_ref& r, const std::string& suffix) {
+  return transform::variable_extend("", suffix)(r);
+}
+
+expression::op_ref
+variables_set_i(expression::op_ref& r, uint16_t i) {
+  return transform::variable_set_i(i)(r);
+}
+
+expression::op_ref
+variables_set_q(expression::op_ref& r, uint16_t q) {
+  return transform::variable_set_q(q)(r);
 }
 
 expression::op_ref

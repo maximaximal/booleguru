@@ -6,13 +6,26 @@
 
 namespace booleguru::transform {
 struct quantify : public visitor<quantify> {
-  quantify(op_type quantifier)
-    : quantifier(quantifier) {}
+  quantify(op_type quantifier,
+           std::optional<uint16_t> only_q,
+           std::optional<uint16_t> only_i)
+    : quantifier(quantifier)
+    , only_q(only_q)
+    , only_i(only_i) {}
 
   op_type quantifier;
+  std::optional<uint16_t> only_q;
+  std::optional<uint16_t> only_i;
+
   ankerl::unordered_dense::set<op_id> vars;
 
   inline op_ref walk_var(op_ref e) {
+    if(only_q && e->var.q != *only_q) {
+      return e;
+    }
+    if(only_i && e->var.i != *only_i) {
+      return e;
+    }
     vars.emplace(e.get_id());
     return e;
   };
@@ -24,10 +37,4 @@ struct quantify : public visitor<quantify> {
     return o;
   }
 };
-
-expression::op_ref
-operator+(expression::op_ref& e, const std::string& s);
-
-expression::op_ref
-operator+(expression::op_ref& e, int n);
 }

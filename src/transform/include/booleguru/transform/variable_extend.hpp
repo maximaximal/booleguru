@@ -1,7 +1,5 @@
 #pragma once
 
-#include <optional>
-
 #include "visitor.hpp"
 
 namespace booleguru::transform {

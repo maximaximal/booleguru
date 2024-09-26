@@ -85,6 +85,15 @@ rename_map(expression::op_ref& r,
 expression::op_ref
 prefix_variables(expression::op_ref& r, const std::string& prefix);
 
+expression::op_ref
+suffix_variables(expression::op_ref& r, const std::string& suffix);
+
+expression::op_ref
+variables_set_i(expression::op_ref& r, uint16_t);
+
+expression::op_ref
+variables_set_q(expression::op_ref& r, uint16_t);
+
 template<expression::op_type type>
 static expression::op_ref
 binop(expression::op_ref& l, expression::op_ref& r) {
@@ -109,8 +118,18 @@ transform_op(expression::op_ref& o) {
 
 template<class Transformer, expression::op_type op>
 static expression::op_ref
-transform_op(expression::op_ref& o) {
-  return Transformer(op)(o);
+quantify_op(expression::op_ref& o,
+            std::optional<std::string> only_q,
+            std::optional<std::string> only_i) {
+  std::optional<uint16_t> only_q_i, only_i_i;
+  if(only_q) {
+    only_q_i = std::atoi(only_q->c_str());
+  }
+  if(only_i) {
+    only_i_i = std::atoi(only_i->c_str());
+  }
+  
+  return Transformer(op, only_q_i, only_i_i)(o);
 }
 
 template<class Transformer, transform::prenex_quantifier::kind k>

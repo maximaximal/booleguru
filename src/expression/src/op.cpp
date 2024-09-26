@@ -60,6 +60,31 @@ op_type_to_sym(op_type t) {
   }
 }
 
+op_type
+str_to_op_type(const char* s) {
+  if(std::strcmp("and", s) == 0) {
+    return op_type::And;
+  } else if(std::strcmp("or", s) == 0) {
+    return op_type::Or;
+  } else if(std::strcmp("equi", s) == 0) {
+    return op_type::Equi;
+  } else if(std::strcmp("impl", s) == 0) {
+    return op_type::Impl;
+  } else if(std::strcmp("lpmi", s) == 0) {
+    return op_type::Lpmi;
+  } else if(std::strcmp("not", s) == 0) {
+    return op_type::Not;
+  } else if(std::strcmp("xor", s) == 0) {
+    return op_type::Xor;
+  } else if(std::strcmp("forall", s) == 0) {
+    return op_type::Forall;
+  } else if(std::strcmp("exists", s) == 0) {
+    return op_type::Exists;
+  } else {
+    return op_type::None;
+  }
+}
+
 std::ostream&
 operator<<(std::ostream& o, const op_type& t) {
   return o << op_type_to_str(t);
