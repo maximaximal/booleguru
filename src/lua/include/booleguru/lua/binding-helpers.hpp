@@ -107,6 +107,12 @@ transform_op(expression::op_ref& o) {
   return Transformer()(o);
 }
 
+template<class Transformer, expression::op_type op>
+static expression::op_ref
+transform_op(expression::op_ref& o) {
+  return Transformer(op)(o);
+}
+
 template<class Transformer, transform::prenex_quantifier::kind k>
 static expression::op_ref
 transform_prenex_animated(expression::op_ref& o, std::string animate = "") {

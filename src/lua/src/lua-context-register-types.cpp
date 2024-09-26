@@ -8,6 +8,7 @@
 
 #include <booleguru/transform/minimize_failing.hpp>
 #include <booleguru/transform/plaisted_greenbaum.hpp>
+#include <booleguru/transform/quantify.hpp>
 #include <booleguru/transform/variable_extend.hpp>
 
 #include <booleguru/transform/eliminate_xor.hpp>
@@ -101,6 +102,15 @@ lua_context::register_booleguru_types() {
                                     { "xor", op_type::Xor },
                                     { "not_", op_type::Not },
                                     { "var", op_type::Var } });
+
+  set_to_state(s,
+               "universally_quantify",
+               "universally-quantify",
+               &transform_op<transform::quantify, op_type::Forall>);
+  set_to_state(s,
+               "existentially_quantify",
+               "existentially-quantify",
+               &transform_op<transform::quantify, op_type::Exists>);
 
   set_to_state(s,
                "eliminate_equivalence",
