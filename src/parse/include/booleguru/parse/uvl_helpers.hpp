@@ -3,6 +3,8 @@
 #include <booleguru/expression/id.hpp>
 #include <booleguru/expression/manager.hpp>
 
+#include <booleguru/transform/exact-1.hpp>
+
 namespace booleguru::parse {
 struct uvl_subfeature {
   using op_id = booleguru::expression::op_id;
@@ -49,27 +51,24 @@ struct uvl_subfeature_or : public uvl_subfeature {
 };
 
 struct uvl_subfeature_xor : public uvl_subfeature {
-  op_id disj = 0;
+  transform::exact_1 ex1;
 
-  using uvl_subfeature::uvl_subfeature;
+  uvl_subfeature_xor(std::shared_ptr<expression::op_manager> ops, op_id parent)
+    : uvl_subfeature(ops, parent)
+    , ex1(*ops) {}
 
-  std::vector<op_id> subs;
-
-  virtual void add(op_id sub) override {
-    disj = ops->encode_disjunct(disj, sub);
-    subs.emplace_back(sub);
-  }
+  virtual void add(op_id sub) override { ex1.add(sub); }
   virtual op_id finalize() override {
-    op_id rhs = 0;
-    for(size_t i = 0; i < subs.size(); ++i) {
-      for(size_t j = 0; j < subs.size(); ++j) {
-        if(i == j)
-          continue;
-        rhs = ops->encode_conjunct(
-          rhs, ops->encode_not(ops->encode_and(subs[i], subs[j])));
-      }
+    op_id disj = 0;
+    for(op_id sub : ex1.subs) {
+      disj = ops->encode_disjunct(disj, sub);
     }
-    return ops->encode_and(ops->encode_equi(disj, f), rhs);
+
+    assert(f);
+    assert(disj);
+    
+    return ops->encode_and(ops->encode_impl(disj, f),
+                           ops->encode_impl(f, ex1.finalize()));
   }
 };
 
