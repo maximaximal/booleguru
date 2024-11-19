@@ -28,5 +28,5 @@ html_theme = 'sphinx_book_theme'
 # Sphinx Configuration
 project = "Booleguru"
 author = "Max Heisinger"
-copyright = "2023, Max Heisinger"
+copyright = "2023-2024, Max Heisinger"
 html_title = "Booleguru Docs"
