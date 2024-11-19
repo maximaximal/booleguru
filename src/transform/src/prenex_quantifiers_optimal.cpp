@@ -181,6 +181,7 @@ prenex_quantifier_optimal::extract_critical_path(const node_ptr& root) {
   size_t idx = 0;
   i->critical_path.resize(root->depth);
   while(n) {
+    assert(idx < i->critical_path.size());
     i->critical_path[idx++] = n;
     n->on_critical_path = true;
     auto it = std::max_element(n->children.begin(),
