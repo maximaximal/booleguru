@@ -4,7 +4,7 @@ message(STATUS "Found Java: ${Java_VERSION} as ${Java_JAVA_EXECUTABLE}")
 
 if(NOT ANTLR_EXECUTABLE)
   find_file(ANTLR_EXECUTABLE
-    NAMES antlr.jar antlr4.jar antlr-4.jar antlr-4.11.1-complete.jar
+    NAMES antlr.jar antlr4.jar antlr-4.jar antlr4-4.13.2-complete.jar
     PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/antlr/)
 endif()
 

@@ -132,12 +132,15 @@ namespace antlr4 {
 
     virtual std::string toString(const std::vector<std::string> &ruleNames, RuleContext *stop);
 
-    // Silence a warning by GCC 13
-    virtual bool operator == (const ParseTree &other) const override { return this == &other; } // Simple address comparison.
-    virtual bool operator == (const RuleContext &other) const { return this == &other; } // Simple address comparison.
+    virtual bool operator == (const RuleContext &other) { return this == &other; } // Simple address comparison.
 
   private:
     void InitializeInstanceFields();
+
+    // Silence warning about overriding base. Tip from:
+    // https://stackoverflow.com/a/30192779
+    using Base = tree::ParseTree;
+    using Base::operator==;
   };
 
 } // namespace antlr4
