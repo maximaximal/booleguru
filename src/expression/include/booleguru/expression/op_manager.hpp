@@ -232,6 +232,8 @@ class op_manager : public manager<op_ref, op_manager> {
   id encode_equi(id l, id r) { return get_id(op(op_type::Equi, l, r)); }
   id encode_impl(id l, id r) { return get_id(op(op_type::Impl, l, r)); }
   id encode_xor(id l, id r) {
+    assert(l);
+    assert(r);
     id not_l = get_id(op(op_type::Not, l, 0));
     id not_r = get_id(op(op_type::Not, r, 0));
     id l_and = get_id(op(op_type::And, not_l, r));
@@ -239,6 +241,9 @@ class op_manager : public manager<op_ref, op_manager> {
     return get_id(op(op_type::Or, l_and, r_and));
   }
   id encode_ite(id pred, id then, id otherwise) {
+    assert(pred);
+    assert(then);
+    assert(otherwise);
     id l = get_id(op(op_type::And, pred, then));
     id not_pred = get_id(op(op_type::Not, pred, 0));
     id r = get_id(op(op_type::And, not_pred, otherwise));

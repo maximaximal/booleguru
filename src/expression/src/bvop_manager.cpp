@@ -155,7 +155,12 @@ encode_bveq(op_manager& ops,
 
 static op_id
 sum(op_manager& ops, op_id a, op_id b, op_id cin) {
-  return ops.encode_xor(ops.encode_xor(a, b), cin);
+  assert(a);
+  assert(b);
+  assert(cin);
+  auto l = ops.encode_xor(a, b);
+  assert(l);
+  return ops.encode_xor(l, cin);
 }
 
 static op_id
@@ -198,7 +203,11 @@ encode_bvadd(op_manager& ops,
 
   for(uint16_t i = 0; i < width_l; ++i) {
     size_t jj = op_vec.size() - width_l - width_r + i;
-    op_vec[jj] = sum(ops, op_vec[A + i], op_vec[B + i], carry_bits[i]);
+    op_id a = op_vec[A + i];
+    op_id b = op_vec[B + i];
+    assert(a);
+    assert(b);
+    op_vec[jj] = sum(ops, a, b, carry_bits[i]);
   }
   op_vec.resize(op_vec.size() - width_l);
 }
@@ -428,9 +437,11 @@ bvop_ref::export_as_ops(op_manager& ops) {
     // order for the traversal to have correct states.
     if(bb.is_binop(bb.type) && bb.binop.l == bb.binop.r) {
       width_stack.push(width_stack.top());
-      std::copy(op_vec.begin() + op_vec.size() - width_stack.top(),
-                op_vec.begin() + op_vec.size(),
-                std::back_inserter(op_vec));
+
+      std::vector tmp(op_vec.begin() + (op_vec.size() - width_stack.top()),
+                      op_vec.end());
+
+      std::copy(tmp.begin(), tmp.end(), std::back_inserter(op_vec));
     }
 
     // fmt::println("Currently visiting {} ({})", bvop_type_to_str(bb.type),
