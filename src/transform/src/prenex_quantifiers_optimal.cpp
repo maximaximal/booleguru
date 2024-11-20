@@ -63,8 +63,24 @@ prenex_quantifier_optimal::operator()(expression::op_ref o) {
 
   assert(i->s.empty());
 
-  preprocess(t);
+  if(t)
+    conditionally_create_animation_step(o.get_mgr(), t);
+
   assign_height_depth(*t);
+
+  if(t)
+    conditionally_create_animation_step(o.get_mgr(), t);
+
+  preprocess(t);
+
+  if(t)
+    conditionally_create_animation_step(o.get_mgr(), t);
+
+  assign_height_depth(*t);
+
+  if(t)
+    conditionally_create_animation_step(o.get_mgr(), t);
+
   extract_critical_path(t);
 
   root_quantifier_ = t->quantifier;
@@ -91,9 +107,29 @@ prenex_quantifier_optimal::operator()(expression::op_ref o) {
 
 void
 prenex_quantifier_optimal::preprocess(node_ptr& root) {
+  for(auto& c : root->children) {
+    fmt::println("Child Quant: {} And Depth: {}", c->quantifier, c->depth);
+  }
+
   if(root->quantifier == expression::op_type::None) {
+    assert(root->children.size() > 0);
+    std::sort(
+      root->children.begin(),
+      root->children.end(),
+      [](const auto& l, const auto& r) { return l->depth >= r->depth; });
+
+    std::vector<node_ptr> highest_depths;
+    highest_depths.push_back(root->children[0]);
+    for(size_t i = 1; i < root->children.size(); ++i) {
+      if(root->children[i]->depth == highest_depths[0]->depth) {
+        highest_depths.push_back(root->children[i]);
+      } else {
+        break;
+      }
+    }
+
     auto it = std::find_if(
-      root->children.begin(), root->children.end(), [this](const node_ptr& p) {
+      highest_depths.begin(), highest_depths.end(), [this](const node_ptr& p) {
         if(d1_ == up) {
           return prioritized_ == p->quantifier;
         } else {
@@ -101,10 +137,17 @@ prenex_quantifier_optimal::preprocess(node_ptr& root) {
         }
       });
 
+    auto found = *it;
+
+    auto root_child_it = std::find_if(
+      root->children.begin(), root->children.end(), [found](const node_ptr& p) {
+        return p.get() == found.get();
+      });
+
     node_ptr new_root;
-    if(it != root->children.end()) {
-      new_root = *it;
-      root->children.erase(it);
+    if(root_child_it != root->children.end()) {
+      new_root = *root_child_it;
+      root->children.erase(root_child_it);
     } else {
       new_root = root->children[root->children.size() - 1];
       root->children.pop_back();
@@ -142,8 +185,27 @@ prenex_quantifier_optimal::preprocess(node_ptr& root) {
         n->children.emplace_back(c);
       }
     } else {
+      bool changing = true;
+      while(changing) {
+        changing = false;
+        for(size_t i = 0; i < n->children.size(); ++i) {
+          node_ptr c = n->children[i];
+
+          // Multiple children could have the same quantifier type. In
+          // this case, they must be merged with n.
+          if(c->quantifier == n->quantifier) {
+            std::copy(
+              c->vars.begin(), c->vars.end(), std::back_inserter(n->vars));
+            n->children.erase(n->children.begin() + i);
+            std::copy(c->children.begin(),
+                      c->children.end(),
+                      std::back_inserter(n->children));
+	    changing = true;
+          }
+        }
+      }
       for(auto c : n->children) {
-        s.emplace(c);
+	s.emplace(c);
       }
     }
   }
@@ -180,23 +242,45 @@ prenex_quantifier_optimal::extract_critical_path(const node_ptr& root) {
   node_ptr n = root;
   size_t idx = 0;
   i->critical_path.resize(root->depth);
+
+  fmt::println("Critical Path Size: {}", i->critical_path.size());
   while(n) {
     assert(idx < i->critical_path.size());
     i->critical_path[idx++] = n;
     n->on_critical_path = true;
-    auto it = std::max_element(n->children.begin(),
-                               n->children.end(),
-                               [&n](const node_ptr& a, const node_ptr& b) {
-                                 // This check is required, as there may be
-                                 // multiple children with the same depths but
-                                 // different quantifiers. Otherwise, wrong
-                                 // paths may be chosen!
-                                 if(a->depth == b->depth) {
-                                   return n->quantifier == a->quantifier;
-                                 }
-                                 return a->depth < b->depth;
-                               });
-    if(it != n->children.end()) {
+
+    for(auto& c : n->children) {
+      fmt::println(
+        "IDX {}, Child: Q {} D {}", idx - 1, c->quantifier, c->depth);
+    }
+
+    std::vector<node_ptr> filtered;
+    std::copy_if(
+      n->children.begin(),
+      n->children.end(),
+      std::back_inserter(filtered),
+      [&n](const node_ptr& e) { return e->quantifier != n->quantifier; });
+
+    auto it = std::max_element(
+      filtered.begin(),
+      filtered.end(),
+      [&n, idx](const node_ptr& a, const node_ptr& b) {
+        // This check is required, as there may be
+        // multiple children with the same depths but
+        // different quantifiers. Otherwise, wrong
+        // paths may be chosen!
+
+        fmt::println("IDX: {}, NQ: {}, Ad: {}, AQ: {}, Bd: {}, BQ: {}",
+                     idx - 1,
+                     n->quantifier,
+                     a->depth,
+                     a->quantifier,
+                     b->depth,
+                     b->quantifier);
+
+        return a->depth < b->depth;
+      });
+    if(it != filtered.end()) {
       n = *it;
     } else {
       n = nullptr;
@@ -313,7 +397,10 @@ prenex_quantifier_optimal::prenex(node_ptr root) {
     }
 
     if(!p->on_critical_path) {
+      fmt::println("f: {}, crit: {}", p->f, i->critical_path.size());
+      assert(p->f < i->critical_path.size());
       auto& src = p->vars;
+      assert(i->critical_path[p->f]);
       auto& tgt = i->critical_path[p->f]->vars;
       std::copy(src.begin(), src.end(), std::back_inserter(tgt));
     }
