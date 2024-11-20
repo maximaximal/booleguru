@@ -63,6 +63,10 @@ prenex_quantifier_optimal::operator()(expression::op_ref o) {
 
   assert(i->s.empty());
 
+  // TODO: Better approach is to keep the "None" node in the tree and
+  // remove it afterwards. The arithmetic-based approach still works
+  // out then (or at least it should).
+  
   if(t)
     conditionally_create_animation_step(o.get_mgr(), t);
 
