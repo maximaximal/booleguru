@@ -168,6 +168,8 @@ lua_context::register_booleguru_types() {
   s.set_function("b_var", &lua_context::get_var, this);
   s.set_function(bvar, &lua_context::get_var, this);
   s.set_function("v", &lua_context::get_var, this);
+  s.set_function("top", &op_manager::top, ops_.get());
+  s.set_function("bottom", &op_manager::bottom, ops_.get());
 
   auto op_type = s.new_usertype<op>("op");
 
