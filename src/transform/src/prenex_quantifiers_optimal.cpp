@@ -111,9 +111,9 @@ prenex_quantifier_optimal::operator()(expression::op_ref o) {
 
 void
 prenex_quantifier_optimal::preprocess(node_ptr& root) {
-  for(auto& c : root->children) {
-    fmt::println("Child Quant: {} And Depth: {}", c->quantifier, c->depth);
-  }
+  //for(auto& c : root->children) {
+  //  fmt::println("Child Quant: {} And Depth: {}", c->quantifier, c->depth);
+  //}
 
   if(root->quantifier == expression::op_type::None) {
     assert(root->children.size() > 0);
@@ -247,16 +247,16 @@ prenex_quantifier_optimal::extract_critical_path(const node_ptr& root) {
   size_t idx = 0;
   i->critical_path.resize(root->depth);
 
-  fmt::println("Critical Path Size: {}", i->critical_path.size());
+  // fmt::println("Critical Path Size: {}", i->critical_path.size());
   while(n) {
     assert(idx < i->critical_path.size());
     i->critical_path[idx++] = n;
     n->on_critical_path = true;
 
-    for(auto& c : n->children) {
-      fmt::println(
-        "IDX {}, Child: Q {} D {}", idx - 1, c->quantifier, c->depth);
-    }
+    // for(auto& c : n->children) {
+    //   fmt::println(
+    //     "IDX {}, Child: Q {} D {}", idx - 1, c->quantifier, c->depth);
+    // }
 
     std::vector<node_ptr> filtered;
     std::copy_if(
@@ -274,13 +274,13 @@ prenex_quantifier_optimal::extract_critical_path(const node_ptr& root) {
         // different quantifiers. Otherwise, wrong
         // paths may be chosen!
 
-        fmt::println("IDX: {}, NQ: {}, Ad: {}, AQ: {}, Bd: {}, BQ: {}",
-                     idx - 1,
-                     n->quantifier,
-                     a->depth,
-                     a->quantifier,
-                     b->depth,
-                     b->quantifier);
+        //fmt::println("IDX: {}, NQ: {}, Ad: {}, AQ: {}, Bd: {}, BQ: {}",
+        //             idx - 1,
+        //             n->quantifier,
+        //             a->depth,
+        //             a->quantifier,
+        //             b->depth,
+        //             b->quantifier);
 
         return a->depth < b->depth;
       });
@@ -401,7 +401,7 @@ prenex_quantifier_optimal::prenex(node_ptr root) {
     }
 
     if(!p->on_critical_path) {
-      fmt::println("f: {}, crit: {}", p->f, i->critical_path.size());
+      //fmt::println("f: {}, crit: {}", p->f, i->critical_path.size());
       assert(p->f < i->critical_path.size());
       auto& src = p->vars;
       assert(i->critical_path[p->f]);
