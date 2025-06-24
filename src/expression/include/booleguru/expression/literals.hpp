@@ -28,6 +28,7 @@ class handle {
    */
   static void reset_global() { instance_.reset(); }
 
+  std::shared_ptr<op_manager> get_op_manager_ptr() { return ops_; }
   op_manager& get_op_manager() { return *ops_; }
   var_manager& get_var_manager() { return ops_->vars(); }
 };

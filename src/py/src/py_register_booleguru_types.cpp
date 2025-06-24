@@ -1,3 +1,5 @@
+#include "booleguru/transform/output_to_qdimacs.hpp"
+#include "booleguru/transform/plaisted_greenbaum.hpp"
 #include <optional>
 #include <type_traits>
 
@@ -16,6 +18,8 @@
 #include <booleguru/py/solver.hpp>
 
 #include <booleguru/lua/binding-helpers.hpp>
+
+#include <booleguru/lua/lua-context.hpp>
 
 using namespace booleguru;
 using namespace booleguru::expression;
@@ -206,8 +210,7 @@ PYBIND11_MODULE(pybooleguru, m) {
     "solve",
     [](pyop_ref o, std::string solver, std::vector<std::string> args)
       -> std::optional<std::unordered_map<pyop_ref, bool>> {
-      booleguru::expression::op_manager& ops
-        = booleguru::expression::literals::handle::global().get_op_manager();
+      booleguru::expression::op_manager& ops = o.get_mgr();
       auto r = helpers::solve_sat_to_resultmap(o, solver, args);
       if(r) {
         std::unordered_map<pyop_ref, bool> m;
@@ -223,4 +226,30 @@ PYBIND11_MODULE(pybooleguru, m) {
     pybind11::arg("op"),
     pybind11::arg("solver") = "kissat",
     pybind11::arg("args") = std::vector<std::string>({ "-q" }));
+
+  // Specialized API for "Lua to Dimacs" with a new context each.
+  pybind11::class_<lua_context, std::shared_ptr<lua_context>>(m, "lua_context");
+  pybind11::class_<op_manager, std::shared_ptr<op_manager>>(m, "op_manager");
+  
+  m.def("make_lua_context", []() {
+    return std::make_shared<lua_context>(
+      expression::literals::handle::global().get_op_manager_ptr());
+  });
+  m.def("make_op_manager", []() { return std::make_shared<op_manager>(); });
+  m.def("dimacs_from_lua",
+        [](std::shared_ptr<lua_context> lua,
+           std::shared_ptr<op_manager> ops,
+           const std::string& code) -> std::optional<std::string> {
+          if(ops)
+            lua->override_op_manager(ops);
+          lua_context::eval_result res = lua->eval(code);
+          if(res.index() != 3) {
+            return std::nullopt;
+          }
+          std::stringstream out;
+          transform::plaisted_greenbaum<transform::output_to_qdimacs> trans(
+            out);
+          trans(std::get<op_ref>(res));
+          return out.str();
+        });
 }

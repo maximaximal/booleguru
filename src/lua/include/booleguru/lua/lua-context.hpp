@@ -65,5 +65,7 @@ class lua_context {
 
   eval_result eval(std::string_view code);
   eval_result eval(std::string_view code, const expression::op_ref& last_op);
+
+  void override_op_manager(std::shared_ptr<expression::op_manager> ops);
 };
 }

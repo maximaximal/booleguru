@@ -43,10 +43,10 @@ prepare_state(sol::state& s) {
       std::string n = std::string(name);
       s.require_script(n, data);
       if(n.find("_") != std::string::npos) {
-	// Return the same script as above using an additional
-	// require. It will be resolved dynamically if needed, but the
-	// Lua state does not have to duplicate all of the scripts
-	// from before.
+        // Return the same script as above using an additional
+        // require. It will be resolved dynamically if needed, but the
+        // Lua state does not have to duplicate all of the scripts
+        // from before.
         booleguru::util::str_replace(n, "_", "-");
         s.require_script(
           n, std::string("return require(\"") + std::string(name) + "\")");
@@ -316,6 +316,11 @@ lua_context::eval_fennel_to_op_or_throw(std::string_view code,
 expression::op_ref
 lua_context::eval_fennel_to_op_or_throw(std::string_view code) {
   return eval_fennel_to_op_or_throw(code, expression::op_ref());
+}
+
+void
+lua_context::override_op_manager(std::shared_ptr<expression::op_manager> ops) {
+  ops_ = ops;
 }
 
 }
